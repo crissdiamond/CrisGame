@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvoPlanet: Laboratory Dashboard</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styling -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP NAVIGATION BAR -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">🧬</span>
+                <div class="logo-text">
+                    <h1>EvoPlanet</h1>
+                    <span class="subtitle">System Designation: CRIS-982</span>
+                </div>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-label" id="system-status-text">SYSTEMS ACTIVE</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="dashboard-grid">
+            
+            <!-- LEFT PANEL: ENVIRONMENTAL CONTROLLER -->
+            <section class="panel glass-card" id="control-panel">
+                <h2 class="panel-title">Environmental Controls</h2>
+                <p class="panel-desc">Manipulate planetary variables to influence organic chemical synthesis and biological viability.</p>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="temp-slider"><span class="icon">🌡️</span> Temperature</label>
+                        <span class="control-value" id="temp-val">25°C</span>
+                    </div>
+                    <input type="range" id="temp-slider" min="-50" max="150" value="75" class="custom-slider">
+                    <div class="slider-labels">
+                        <span>Freezing (-50°C)</span>
+                        <span>Boiling (150°C)</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="water-slider"><span class="icon">💧</span> Water Coverage</label>
+                        <span class="control-value" id="water-val">30%</span>
+                    </div>
+                    <input type="range" id="water-slider" min="0" max="100" value="30" class="custom-slider">
+                    <div class="slider-labels">
+                        <span>Arid (0%)</span>
+                        <span>Oceanic (100%)</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="radiation-slider"><span class="icon">☢️</span> Cosmic Radiation</label>
+                        <span class="control-value" id="radiation-val">1.2 rad/s</span>
+                    </div>
+                    <input type="range" id="radiation-slider" min="0" max="10" step="0.1" value="3.5" class="custom-slider">
+                    <div class="slider-labels">
+                        <span>Shielded</span>
+                        <span>Extreme</span>
+                    </div>
+                </div>
+
+                <div class="event-triggers">
+                    <h3>Disaster Events</h3>
+                    <div class="btn-grid">
+                        <button id="btn-meteor" class="btn btn-warning">🌠 Meteor Strike</button>
+                        <button id="btn-volcano" class="btn btn-warning">🌋 Volcanic Erupt</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CENTER PANEL: planet VISUALIZATION -->
+            <section class="panel glass-card main-viewport" id="viewport-panel">
+                <div class="viewport-header">
+                    <div class="view-toggles">
+                        <button id="btn-view-macro" class="view-btn active">Planet View (Macro)</button>
+                        <button id="btn-view-micro" class="view-btn">Microscopic View (Micro)</button>
+                    </div>
+                    <div class="time-controls">
+                        <button id="btn-pause-play" class="control-icon-btn">⏸️ Pause</button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="simulation-canvas"></canvas>
+                </div>
+
+                <div class="telemetry-bar">
+                    <div class="telemetry-item">
+                        <span class="label">PLANET AGE</span>
+                        <span class="value" id="planet-age">0.0 Myr</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">HABITABILITY</span>
+                        <span class="value highlight" id="habitability-score">0%</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">ATMOSPHERE STATUS</span>
+                        <span class="value" id="atm-status">Toxic (Prebiotic)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: LIFE METRICS & TELEMETRY -->
+            <section class="panel glass-card" id="metrics-panel">
+                <h2 class="panel-title">Biological Telemetry</h2>
+                
+                <div class="metric-category">
+                    <h3>Organic Soup</h3>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-name">Amino Acids & Proteins</span>
+                            <span class="metric-value" id="soup-density">0.00 ppm</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="soup-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-category">
+                    <h3>Monocellular Life</h3>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-name">Anaerobic Bacteria</span>
+                            <span class="metric-value" id="anaerobic-pop">0.00 M/mL</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar anaerobic" id="anaerobic-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-name">Photosynthetic Bacteria</span>
+                            <span class="metric-value" id="photosynthetic-pop">0.00 M/mL</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar photosynthetic" id="photosynthetic-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-category">
+                    <h3>Complex Life</h3>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-name">Multicellular Organisms</span>
+                            <span class="metric-value" id="multicellular-pop">0</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar multicellular" id="multicellular-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="atmosphere-details">
+                    <h3>Gas Composition</h3>
+                    <div class="gas-bars">
+                        <div class="gas-item">
+                            <span>CO₂</span>
+                            <span id="gas-co2">95.0%</span>
+                        </div>
+                        <div class="gas-item">
+                            <span>N₂</span>
+                            <span id="gas-n2">4.9%</span>
+                        </div>
+                        <div class="gas-item">
+                            <span>O₂</span>
+                            <span id="gas-o2">0.1%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- BOTTOM PANEL: SCIENCE LOGS -->
+            <section class="panel glass-card full-width" id="log-panel">
+                <h2 class="panel-title console-title">Science Feed Console</h2>
+                <div class="console-box" id="science-log">
+                    <div class="log-entry system">[SYSTEM INITIALIZED] Welcome to the EvoPlanet Curatorial Terminal. Adjust sliders to begin chemical synthesis.</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>
