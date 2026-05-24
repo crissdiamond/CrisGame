@@ -1,6 +1,7 @@
 # Tooling
 .antigravitycli/
 server.py
+ai_agent_instructions.md
 
 # OS files
 .DS_Store
