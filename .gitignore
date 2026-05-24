@@ -1,5 +1,6 @@
 # Tooling
 .antigravitycli/
+server.py
 
 # OS files
 .DS_Store
