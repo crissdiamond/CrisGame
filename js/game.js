@@ -2,6 +2,7 @@ import { Planet } from './planet.js';
 import { BiologySimulation } from './simulation.js';
 import { GameUI } from './ui.js';
 import { GameVisualizer } from './visualization.js';
+import { EventSystem } from './events.js';
 
 class GameController {
     constructor() {
@@ -10,6 +11,7 @@ class GameController {
         this.biology = new BiologySimulation();
         this.ui = new GameUI();
         this.visualizer = new GameVisualizer('simulation-canvas');
+        this.eventSystem = new EventSystem();
 
         // Loop / Timing State
         this.isPlaying = true;
@@ -89,7 +91,17 @@ class GameController {
                 });
             }
 
-            // 2. Update planet physical state using biological outputs (O2 / CO2 cycle)
+            // 2. Tick random events
+            const eventLogs = this.eventSystem.tick(this.planet, this.biology, tickRate);
+            if (eventLogs && eventLogs.length > 0) {
+                eventLogs.forEach(evt => {
+                    this.ui.logEvent(evt.title, evt.desc, evt.type);
+                });
+                // Sync sliders back to planet values since events can alter targets
+                this.ui.syncSliders(this.planet);
+            }
+
+            // 3. Update planet physical state using biological outputs (O2 / CO2 cycle)
             this.planet.update(tickRate, bioUpdate.biologicalImpact);
         }
 

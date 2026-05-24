@@ -24,6 +24,9 @@ export class Planet {
         // Environmental multipliers
         this.isDisasterActive = false;
         this.disasterDuration = 0;
+        this.hasMoon = false;
+        this.hasMagnetosphere = false;
+        this.isGlaciated = false;
     }
 
     /**
@@ -134,9 +137,14 @@ export class Planet {
         this.age += tickRate;
 
         // Smoothly interpolate current parameter values towards target values set by user sliders
-        this.temperature += (this.targetTemperature - this.temperature) * 0.05;
+        // Magnetosphere blocks 75% of radiation
+        const effectiveTargetRad = this.hasMagnetosphere ? this.targetRadiation * 0.25 : this.targetRadiation;
+        // Glaciation forces temperature to drop
+        const effectiveTargetTemp = this.isGlaciated ? -45.0 : this.targetTemperature;
+
+        this.temperature += (effectiveTargetTemp - this.temperature) * 0.05;
         this.waterCoverage += (this.targetWaterCoverage - this.waterCoverage) * 0.05;
-        this.radiation += (this.targetRadiation - this.radiation) * 0.05;
+        this.radiation += (effectiveTargetRad - this.radiation) * 0.05;
 
         // Apply biological feedback loop to atmosphere
         // Life consumes CO2 and produces O2

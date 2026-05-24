@@ -37,8 +37,10 @@ export class BiologySimulation {
             const tempFactor = 1 - Math.abs(planet.temperature - 70) / 50; // peaks at 70C
             const radFactor = Math.min(2.0, planet.radiation * 0.5); // some radiation speeds up synthesis
             const waterFactor = planet.waterCoverage / 100;
+            // Moon tides boost prebiotic synthesis by 2.5x
+            const tideBoost = planet.hasMoon ? 2.5 : 1.0;
             
-            const synthesisRate = Math.max(0, tempFactor) * radFactor * waterFactor * 8.0;
+            const synthesisRate = Math.max(0, tempFactor) * radFactor * waterFactor * 8.0 * tideBoost;
             this.organicSoup = Math.min(100.0, this.organicSoup + synthesisRate * tickRate);
             
             if (!this.unlockedSoup && this.organicSoup > 5.0) {
@@ -74,7 +76,9 @@ export class BiologySimulation {
         if (this.anaerobicPop > 0) {
             // Environment viability factors
             const tempViability = this.getTempViability(planet.temperature, 0, 45, 80); // peaks at 45C
-            const waterViability = planet.waterCoverage > 15 ? 1.0 : (planet.waterCoverage / 15);
+            let waterViability = planet.waterCoverage > 15 ? 1.0 : (planet.waterCoverage / 15);
+            // Glaciation restricts liquid water access
+            if (planet.isGlaciated) waterViability *= 0.4;
             // Radiation hazard: high radiation kills unless resistance is high
             const radViability = Math.max(0, 1 - (planet.radiation * (1 - this.radiationResistance)) / 6.0);
             // Oxygen is toxic to strict anaerobes (Great Oxidation Event effect)
@@ -106,8 +110,9 @@ export class BiologySimulation {
         // 3. PHOTOSYNTHETIC BACTERIA (Aerobic/oxygen-releasing bacteria)
         // ----------------------------------------------------
         if (this.unlockedAnaerobic && this.anaerobicPop > 30.0 && !this.unlockedPhotosynthetic) {
-            // Mutation chance scales with radiation
-            const mutationChance = Math.min(0.2, planet.radiation * 0.02 * tickRate);
+            // Mutation chance scales with radiation. Solar flares boost mutation chance by 3x.
+            const flareBoost = planet.radiation > 7.0 ? 3.0 : 1.0;
+            const mutationChance = Math.min(0.5, planet.radiation * 0.02 * tickRate * flareBoost);
             if (Math.random() < mutationChance || planet.age > 40.0) { // guarantee at some point
                 this.photosyntheticPop = 0.1;
                 this.unlockedPhotosynthetic = true;
@@ -121,7 +126,9 @@ export class BiologySimulation {
 
         if (this.photosyntheticPop > 0) {
             const tempViability = this.getTempViability(planet.temperature, 5, 30, 60); // peaks at 30C
-            const waterViability = planet.waterCoverage > 25 ? 1.0 : Math.max(0, (planet.waterCoverage - 5) / 20);
+            let waterViability = planet.waterCoverage > 25 ? 1.0 : Math.max(0, (planet.waterCoverage - 5) / 20);
+            // Glaciation severely blocks light and liquid water
+            if (planet.isGlaciated) waterViability *= 0.1;
             const radViability = Math.max(0, 1 - (planet.radiation * (1 - this.radiationResistance)) / 5.0);
             
             const totalViability = tempViability * waterViability * radViability;
@@ -165,7 +172,9 @@ export class BiologySimulation {
 
         if (this.multicellularPop > 0) {
             const tempViability = this.getTempViability(planet.temperature, 10, 22, 45); // peaks at 22C (very sensitive)
-            const waterViability = planet.waterCoverage > 30 ? 1.0 : Math.max(0, (planet.waterCoverage - 15) / 15);
+            let waterViability = planet.waterCoverage > 30 ? 1.0 : Math.max(0, (planet.waterCoverage - 15) / 15);
+            // Glaciation decimates multicellular mobility
+            if (planet.isGlaciated) waterViability *= 0.05;
             // Radiation is very dangerous for complex DNA structure
             const radViability = Math.max(0, 1 - planet.radiation / 3.0);
             const o2Viability = planet.o2 >= 15.0 ? 1.0 : (planet.o2 / 15.0);
