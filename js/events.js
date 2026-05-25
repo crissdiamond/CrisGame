@@ -564,12 +564,20 @@ export class EventSystem {
      * Evolve nudging
      */
     nudgeEvolution(adaptationId, cost, biology) {
-        if (this.tokens >= cost) {
-            this.tokens -= cost;
-            biology.applyAdaptation(adaptationId);
-            return { success: true, msg: `Nudge successful! Unlocked gene adaptation: ${adaptationId.toUpperCase()}` };
+        if (this.tokens < cost) {
+            return { success: false, msg: `Insufficient tokens (need ${cost}).` };
         }
-        return { success: false, msg: "Insufficient tokens." };
+        this.tokens -= cost;
+        biology.applyAdaptation(adaptationId);
+        biology.pendingNudges[adaptationId] = {
+            multiplier: 20,
+            remainingMyr: 5.0
+        };
+        const label = adaptationId.replace(/_/g, ' ').toUpperCase();
+        return {
+            success: true,
+            msg: `Selection pressure applied: ${label} — breakthrough odds boosted ×20 for next 5 Myr.`
+        };
     }
 
     /**
@@ -623,16 +631,11 @@ export class EventSystem {
         const accrual = (0.2 + biomassRating * 0.15) * tickRate;
         this.tokens = Math.min(99.0, this.tokens + accrual);
 
-        // Check milestones and award flat bonuses
+        // Milestone token awards moved to the per-event tier system. This loop
+        // only marks the seen-set so a stale flag flip won't re-emit a popup.
         for (const k in this.prevUnlocks) {
             if (biology[k] && !this.prevUnlocks[k]) {
                 this.prevUnlocks[k] = true;
-                this.tokens = Math.min(99.0, this.tokens + 5.0);
-                outputLogs.push({
-                    title: "🎁 MILESTONE UNLOCKED (+5 tokens)",
-                    desc: `Your planet achieved a biological leap: ${k.replace('unlocked', '').toUpperCase()}`,
-                    type: "system_silent" // Silent log that doesn't trigger the modal popup
-                });
             }
         }
 

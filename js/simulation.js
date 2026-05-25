@@ -3,7 +3,24 @@
  * 1. Water Line: Primordial Soup -> Anaerobic -> Photosynthetic -> Eukaryotic -> Multicellular -> Cambrian -> Land Plants -> Arthropods -> Tetrapods -> Sauropsids (Dinosaurs) & Synapsids (Mammals)
  * 2. Ammonia Line: Ammonic Soup -> Proto-Ammonic -> Ammonic Multicellular -> Silico-Flora -> Cryo-Fauna
  * 3. Methane Line: Hydrocarbon Soup -> Methanotrophic Proto -> Methane Multicellular -> Cryo-Organisms
+ *
+ * Each life-stage transition fires as a Poisson event while its gate is
+ * satisfied. Rarity tiers set the base hazard rate per Myr; solvent kinetics
+ * scale that; per-transition condition multipliers reward well-tuned planets;
+ * player-bought nudges multiply the rate for a 5 Myr window.
  */
+
+export const RARITY = Object.freeze({
+    COMMON:   { name: 'COMMON',   rate: 10.0, award: 2  },
+    NOTABLE:  { name: 'NOTABLE',  rate: 2.0,  award: 5  },
+    MAJOR:    { name: 'MAJOR',    rate: 0.7,  award: 12 },
+    SINGULAR: { name: 'SINGULAR', rate: 0.3,  award: 25 }
+});
+
+const SOLVENT_RATE_FACTOR = { water: 1.0, ammonia: 0.7, methane: 0.5 };
+
+function clamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
 export class BiologySimulation {
     constructor() {
         // --- Water Line Populations ---
@@ -12,7 +29,7 @@ export class BiologySimulation {
         this.photosyntheticPop = 0.0;       // M cells/mL
         this.eukaryoticPop = 0.0;           // M cells/mL
         this.multicellularPop = 0.0;        // Complexity Index (0 to 100)
-        
+
         // New intermediate water animals
         this.spongesPop = 0.0;
         this.medusesPop = 0.0;
@@ -114,6 +131,10 @@ export class BiologySimulation {
         // --- Genetic Adaptations / Nudges (unlocked via tokens) ---
         this.activeAdaptations = new Set(); // e.g., 'endosymbiosis', 'vascular_tissue', 'amniotic_egg', 'endothermy', 'scales', 'silicon_chains', 'cryo_polymers', etc.
 
+        // Active per-transition rate boosts from nudges. Keyed by transition id;
+        // each entry: { multiplier, remainingMyr }. Decays each tick.
+        this.pendingNudges = {};
+
         // General Mutation / Adaptation Level
         this.radiationResistance = 0.1;
     }
@@ -126,9 +147,36 @@ export class BiologySimulation {
     }
 
     /**
+     * Decay all pending nudge windows in real sim-time.
+     */
+    _decayPendingNudges(tickRate) {
+        for (const id in this.pendingNudges) {
+            const entry = this.pendingNudges[id];
+            entry.remainingMyr -= tickRate;
+            if (entry.remainingMyr <= 0) delete this.pendingNudges[id];
+        }
+    }
+
+    /**
+     * Poisson roll: returns true if a transition with the given hazard rate
+     * (per Myr) fires this tick. Time-step-invariant via 1 - exp(-lambda*dt).
+     */
+    tryFire(transitionKey, rarity, conditionMult, tickRate, planet) {
+        if (!(tickRate > 0)) return false;
+        const solventMult = SOLVENT_RATE_FACTOR[planet.activeSolvent] ?? 1.0;
+        const nudge = this.pendingNudges[transitionKey];
+        const nudgeMult = nudge ? nudge.multiplier : 1.0;
+        const lambda = rarity.rate * solventMult * conditionMult * nudgeMult;
+        const p = 1 - Math.exp(-lambda * tickRate);
+        return Math.random() < p;
+    }
+
+    /**
      * Compute biological updates over one simulation step
      */
     update(tickRate, planet) {
+        this._decayPendingNudges(tickRate);
+
         const events = [];
         let o2Prod = 0;
         let co2Cons = 0;
@@ -153,13 +201,18 @@ export class BiologySimulation {
                 this.organicSoup = Math.min(100.0, this.organicSoup + synthesisRate * tickRate);
 
                 if (!this.unlockedSoup && this.organicSoup > 5.0) {
-                    this.unlockedSoup = true;
-                    events.push({
-                        title: "🧪 PRIMORDIAL SOUP FORMED",
-                        desc: "Liquid water has enabled amino acid synthesis. Organic soup accumulation active.",
-                        scientificDetails: "Organic molecules (amino acids, nucleobases, lipids) accumulate in water bodies, synthesized via stellar UV radiolysis, atmospheric spark discharges, and mineral catalysis at hydrothermal vents. This prebiotic chemistry serves as the raw material for early biochemical structures.",
-                        type: "success"
-                    });
+                    if (this.tryFire('soup', RARITY.COMMON, 1.0, tickRate, planet)) {
+                        this.unlockedSoup = true;
+                        events.push({
+                            title: "🧪 PRIMORDIAL SOUP FORMED",
+                            desc: "Liquid water has enabled amino acid synthesis. Organic soup accumulation active.",
+                            scientificDetails: "Organic molecules (amino acids, nucleobases, lipids) accumulate in water bodies, synthesized via stellar UV radiolysis, atmospheric spark discharges, and mineral catalysis at hydrothermal vents. This prebiotic chemistry serves as the raw material for early biochemical structures.",
+                            type: "success",
+                            tier: RARITY.COMMON.name,
+                            tokens: RARITY.COMMON.award,
+                            unlockKey: 'unlockedSoup'
+                        });
+                    }
                 }
             } else {
                 const decay = planet.temperature > 95 ? 0.3 : 0.02;
@@ -168,26 +221,38 @@ export class BiologySimulation {
 
             // External Membrane
             if (this.unlockedSoup && this.organicSoup > 8.0 && !this.unlockedMembrane) {
-                this.unlockedMembrane = true;
-                events.push({
-                    title: "🦠 EXTERNAL MEMBRANE FORMED",
-                    desc: "Lipid molecules spontaneously form bilayers, creating an enclosed vesicle to isolate chemical reactions.",
-                    scientificDetails: "Self-assembling amphiphilic fatty acids spontaneously form spherical bilayer vesicles (liposomes). This compartmentalization isolates metabolic loops and early genetic molecules from environmental entropy, keeping reactants concentrated.",
-                    type: "success"
-                });
+                if (this.tryFire('membrane', RARITY.COMMON, 1.0, tickRate, planet)) {
+                    this.unlockedMembrane = true;
+                    events.push({
+                        title: "🦠 EXTERNAL MEMBRANE FORMED",
+                        desc: "Lipid molecules spontaneously form bilayers, creating an enclosed vesicle to isolate chemical reactions.",
+                        scientificDetails: "Self-assembling amphiphilic fatty acids spontaneously form spherical bilayer vesicles (liposomes). This compartmentalization isolates metabolic loops and early genetic molecules from environmental entropy, keeping reactants concentrated.",
+                        type: "success",
+                        tier: RARITY.COMMON.name,
+                        tokens: RARITY.COMMON.award,
+                        unlockKey: 'unlockedMembrane'
+                    });
+                }
             }
 
             // Bacteria / Archea (strict anaerobes)
             if (this.unlockedMembrane && this.organicSoup > 15.0 && this.anaerobicPop === 0) {
-                this.anaerobicPop = 0.1;
-                this.unlockedBacteria = true;
-                this.unlockedAnaerobic = true;
-                events.push({
-                    title: "🦠 PROKARYOTES UNLOCKED",
-                    desc: "Simple prokaryotic cells emerge. Lacking a nucleus or complex organelles, they require minimal metabolic energy.",
-                    scientificDetails: "Unicellular prokaryotic life establishes itself in the oceans. Characterized by naked DNA and the absence of membrane-bound internal organelles (like nuclei or mitochondria), these early bacteria require very little complexity or energy to survive, utilising simple anaerobic metabolic pathways.",
-                    type: "success"
-                });
+                // Abiogenesis-equivalent. Condition richness from soup concentration.
+                const condMult = 1.0 + 2.0 * clamp01((this.organicSoup - 15.0) / 30.0);
+                if (this.tryFire('anaerobic', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.anaerobicPop = 0.1;
+                    this.unlockedBacteria = true;
+                    this.unlockedAnaerobic = true;
+                    events.push({
+                        title: "🦠 PROKARYOTES UNLOCKED",
+                        desc: "Simple prokaryotic cells emerge. Lacking a nucleus or complex organelles, they require minimal metabolic energy.",
+                        scientificDetails: "Unicellular prokaryotic life establishes itself in the oceans. Characterized by naked DNA and the absence of membrane-bound internal organelles (like nuclei or mitochondria), these early bacteria require very little complexity or energy to survive, utilising simple anaerobic metabolic pathways.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedAnaerobic'
+                    });
+                }
             }
 
             if (this.anaerobicPop > 0) {
@@ -209,15 +274,20 @@ export class BiologySimulation {
 
             // Photosynthetic Bacteria (Cyanobacteria - consumes CO2, releases O2)
             if (this.unlockedBacteria && this.anaerobicPop > 25.0 && !this.unlockedPhotosynthetic) {
-                const mutationChance = Math.min(0.5, planet.getEffectiveRadiation() * 0.05 * tickRate);
-                if (Math.random() < mutationChance || planet.age > 30.0) {
+                // Radiation-driven mutation pressure is the natural condition richness here.
+                const radBoost = Math.min(3.0, planet.getEffectiveRadiation() * 0.6);
+                const condMult = 1.0 + radBoost; // 1.0 .. 4.0
+                if (this.tryFire('photosynthesis', RARITY.MAJOR, condMult, tickRate, planet)) {
                     this.photosyntheticPop = 0.1;
                     this.unlockedPhotosynthetic = true;
                     events.push({
                         title: "🍃 OXYGENIC PHOTOSYNTHESIS EVOLVED",
                         desc: "Cyanobacteria strains mutate, harvesting stellar energy to split water, venting O₂ gas.",
                         scientificDetails: "The evolution of the oxygen-evolving complex in photosystem II enables cyanobacteria to split abundant water (H2O) molecules for metabolic electrons, releasing molecular oxygen (O2) as a byproduct and replacing anaerobic energy paths.",
-                        type: "success"
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedPhotosynthetic'
                     });
                 }
             }
@@ -236,7 +306,7 @@ export class BiologySimulation {
                 }
             }
 
-            // Great Oxidation Event trigger
+            // Great Oxidation Event trigger (atmospheric milestone, not a stage unlock)
             if (this.unlockedPhotosynthetic && planet.o2 >= 15.0 && !planet.goeAlertTriggered) {
                 planet.goeAlertTriggered = true;
                 events.push({
@@ -249,27 +319,39 @@ export class BiologySimulation {
 
             // Cellular Nucleus
             if (this.unlockedPhotosynthetic && this.photosyntheticPop > 15.0 && !this.unlockedNucleus) {
-                this.unlockedNucleus = true;
-                events.push({
-                    title: "🧬 CELLULAR NUCLEUS FORMATION",
-                    desc: "A protective nuclear envelope wraps around chromosomal strands, organizing genetic code.",
-                    scientificDetails: "Eukaryogenesis begins as a protective double-membrane envelops the DNA. This compartmentalization prevents mechanical strain on genomic strands and decouples transcription (in the nucleus) from translation (in the cytoplasm), optimizing protein synthesis.",
-                    type: "success"
-                });
+                if (this.tryFire('nucleus', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.unlockedNucleus = true;
+                    events.push({
+                        title: "🧬 CELLULAR NUCLEUS FORMATION",
+                        desc: "A protective nuclear envelope wraps around chromosomal strands, organizing genetic code.",
+                        scientificDetails: "Eukaryogenesis begins as a protective double-membrane envelops the DNA. This compartmentalization prevents mechanical strain on genomic strands and decouples transcription (in the nucleus) from translation (in the cytoplasm), optimizing protein synthesis.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedNucleus'
+                    });
+                }
             }
 
-            // Mitochondria (Endosymbiosis)
-            const canEndosymbiosis = this.unlockedNucleus && (planet.o2 > 1.2 || this.activeAdaptations.has('endosymbiosis'));
-            if (canEndosymbiosis && !this.unlockedMitochondria) {
-                this.unlockedMitochondria = true;
-                this.eukaryoticPop = 0.1;
-                this.unlockedEukaryotic = true;
-                events.push({
-                    title: "⚡ MITOCHONDRIA ENDOSYMBIOSIS",
-                    desc: "An aerobic bacterium is engulfed by a host nucleus cell, establishing high-energy ATP respiration.",
-                    scientificDetails: "An ancestral archaeal cell engulfs an aerobic alphaproteobacterium. Rather than digested, it stabilizes as an endosymbiont. The host provides safe housing and pyruvate substrates, while the proto-mitochondrion performs oxidative phosphorylation, generating 15x more ATP.",
-                    type: "success"
-                });
+            // Mitochondria (Endosymbiosis) — SINGULAR in Earth history.
+            if (this.unlockedNucleus && planet.o2 > 1.2 && !this.unlockedMitochondria) {
+                const o2Score = clamp01((planet.o2 - 1.2) / 5.0);
+                const popScore = clamp01(this.anaerobicPop / 60);
+                const condMult = 1.0 + 3.0 * (0.6 * o2Score + 0.4 * popScore);
+                if (this.tryFire('endosymbiosis', RARITY.SINGULAR, condMult, tickRate, planet)) {
+                    this.unlockedMitochondria = true;
+                    this.eukaryoticPop = 0.1;
+                    this.unlockedEukaryotic = true;
+                    events.push({
+                        title: "⚡ MITOCHONDRIA ENDOSYMBIOSIS",
+                        desc: "An aerobic bacterium is engulfed by a host nucleus cell, establishing high-energy ATP respiration.",
+                        scientificDetails: "An ancestral archaeal cell engulfs an aerobic alphaproteobacterium. Rather than digested, it stabilizes as an endosymbiont. The host provides safe housing and pyruvate substrates, while the proto-mitochondrion performs oxidative phosphorylation, generating 15x more ATP.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedMitochondria'
+                    });
+                }
             }
 
             if (this.eukaryoticPop > 0) {
@@ -287,27 +369,38 @@ export class BiologySimulation {
                 }
             }
 
-            // Sexual Reproduction
+            // Sexual Reproduction — once in eukaryote stem; MAJOR.
             if (this.unlockedMitochondria && this.eukaryoticPop > 20.0 && !this.unlockedSexualReproduction) {
-                this.unlockedSexualReproduction = true;
-                events.push({
-                    title: "🔀 SEXUAL REPRODUCTION EVOLVED",
-                    desc: "DNA recombination is introduced, exponentially accelerating gene diversity.",
-                    scientificDetails: "Moving from simple mitosis (cloning) to meiosis allows homologous recombination. Offspring receive unique genetic combinations, dramatically increasing variance and allowing life to adapt rapidly to changing climates and parasites.",
-                    type: "success"
-                });
+                const condMult = 1.0 + 2.0 * clamp01((this.eukaryoticPop - 20) / 60);
+                if (this.tryFire('sexual_reproduction', RARITY.MAJOR, condMult, tickRate, planet)) {
+                    this.unlockedSexualReproduction = true;
+                    events.push({
+                        title: "🔀 SEXUAL REPRODUCTION EVOLVED",
+                        desc: "DNA recombination is introduced, exponentially accelerating gene diversity.",
+                        scientificDetails: "Moving from simple mitosis (cloning) to meiosis allows homologous recombination. Offspring receive unique genetic combinations, dramatically increasing variance and allowing life to adapt rapidly to changing climates and parasites.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedSexualReproduction'
+                    });
+                }
             }
 
-            // Multicellular Life
+            // Multicellular Life — evolved ≥25 times on Earth; NOTABLE given eukaryotes.
             if (this.unlockedSexualReproduction && this.eukaryoticPop > 45.0 && planet.o2 >= 8.0 && !this.unlockedMulticellular) {
-                this.multicellularPop = 0.1;
-                this.unlockedMulticellular = true;
-                events.push({
-                    title: "🌱 MULTICELLULARITY IGNITED",
-                    desc: "Eukaryotic cells cluster, specializing tissues into early marine sponges and algae.",
-                    scientificDetails: "Cell-adhesion structures (like cadherins) and chemical signaling networks enable individual cells to coordinate. This allows division of labor, differentiating cells into somatic structural tissues and specialized germlines.",
-                    type: "success"
-                });
+                if (this.tryFire('multicellular', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.multicellularPop = 0.1;
+                    this.unlockedMulticellular = true;
+                    events.push({
+                        title: "🌱 MULTICELLULARITY IGNITED",
+                        desc: "Eukaryotic cells cluster, specializing tissues into early marine sponges and algae.",
+                        scientificDetails: "Cell-adhesion structures (like cadherins) and chemical signaling networks enable individual cells to coordinate. This allows division of labor, differentiating cells into somatic structural tissues and specialized germlines.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedMulticellular'
+                    });
+                }
             }
 
             if (this.multicellularPop > 0) {
@@ -327,14 +420,19 @@ export class BiologySimulation {
 
             // 1. Sponges
             if (this.unlockedMulticellular && this.multicellularPop > 20.0 && !this.unlockedSponges) {
-                this.spongesPop = 0.1;
-                this.unlockedSponges = true;
-                events.push({
-                    title: "🧽 MARINE SPONGES EMERGE",
-                    desc: "Simple sessile multicellular organisms filter organic soup from ocean water.",
-                    scientificDetails: "Sponges (Porifera) represent the earliest animal lineage. Lacking true tissues or organs, they rely on specialized flagellated collar cells (choanocytes) to pump water through pores, filtering organic matter and bacteria for nutrients.",
-                    type: "success"
-                });
+                if (this.tryFire('sponges', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.spongesPop = 0.1;
+                    this.unlockedSponges = true;
+                    events.push({
+                        title: "🧽 MARINE SPONGES EMERGE",
+                        desc: "Simple sessile multicellular organisms filter organic soup from ocean water.",
+                        scientificDetails: "Sponges (Porifera) represent the earliest animal lineage. Lacking true tissues or organs, they rely on specialized flagellated collar cells (choanocytes) to pump water through pores, filtering organic matter and bacteria for nutrients.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedSponges'
+                    });
+                }
             }
 
             if (this.spongesPop > 0) {
@@ -353,14 +451,19 @@ export class BiologySimulation {
 
             // 2. Meduses (Jellyfish / Cnidarians)
             if (this.unlockedSponges && this.spongesPop > 25.0 && !this.unlockedMeduses) {
-                this.medusesPop = 0.1;
-                this.unlockedMeduses = true;
-                events.push({
-                    title: "🪼 JELLYFISH RADIAL RADIATION",
-                    desc: "Free-swimming cnidarians develop stinging cells, introducing early marine predation.",
-                    scientificDetails: "Cnidarians (like jellyfish and anemones) evolve radial symmetry, basic nervous nets, and distinct tissue layers. They utilize specialized stinging cells (nematocysts) to capture prey, marking the advent of active macropredation.",
-                    type: "success"
-                });
+                if (this.tryFire('meduses', RARITY.COMMON, 1.0, tickRate, planet)) {
+                    this.medusesPop = 0.1;
+                    this.unlockedMeduses = true;
+                    events.push({
+                        title: "🪼 JELLYFISH RADIAL RADIATION",
+                        desc: "Free-swimming cnidarians develop stinging cells, introducing early marine predation.",
+                        scientificDetails: "Cnidarians (like jellyfish and anemones) evolve radial symmetry, basic nervous nets, and distinct tissue layers. They utilize specialized stinging cells (nematocysts) to capture prey, marking the advent of active macropredation.",
+                        type: "success",
+                        tier: RARITY.COMMON.name,
+                        tokens: RARITY.COMMON.award,
+                        unlockKey: 'unlockedMeduses'
+                    });
+                }
             }
 
             if (this.medusesPop > 0) {
@@ -378,14 +481,19 @@ export class BiologySimulation {
 
             // 3. Bilateral Water Worms
             if (this.unlockedMeduses && this.medusesPop > 30.0 && !this.unlockedWorms) {
-                this.wormsPop = 0.1;
-                this.unlockedWorms = true;
-                events.push({
-                    title: "🪱 BILATERAL WORMS",
-                    desc: "Burrowing marine worms introduce bilateral symmetry, head-tail polarization, and central nerves.",
-                    scientificDetails: "Bilateral worms (bilateria) develop cephalization (a defined head with sensory organs) and triploblastic tissue layers. This enables directed locomotion, burrowing through sediment, and sets the stage for all complex animal body plans.",
-                    type: "success"
-                });
+                if (this.tryFire('worms', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.wormsPop = 0.1;
+                    this.unlockedWorms = true;
+                    events.push({
+                        title: "🪱 BILATERAL WORMS",
+                        desc: "Burrowing marine worms introduce bilateral symmetry, head-tail polarization, and central nerves.",
+                        scientificDetails: "Bilateral worms (bilateria) develop cephalization (a defined head with sensory organs) and triploblastic tissue layers. This enables directed locomotion, burrowing through sediment, and sets the stage for all complex animal body plans.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedWorms'
+                    });
+                }
             }
 
             if (this.wormsPop > 0) {
@@ -403,14 +511,19 @@ export class BiologySimulation {
 
             // 4. Early Vertebrate Fish
             if (this.unlockedWorms && this.wormsPop > 30.0 && !this.unlockedFish) {
-                this.fishPop = 0.1;
-                this.unlockedFish = true;
-                events.push({
-                    title: "🐟 VERTEBRATE FISH EVOLUTION",
-                    desc: "Jawless and jawed fish develop spinal columns, internal skeletons, and gills.",
-                    scientificDetails: "Early chordates evolve a cartilaginous or bony spinal column (notochord), muscular gills for breathing, and paired fins. Jawed fish (gnathostomes) develop powerful bite mechanics, dominating the marine food web.",
-                    type: "success"
-                });
+                if (this.tryFire('fish', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.fishPop = 0.1;
+                    this.unlockedFish = true;
+                    events.push({
+                        title: "🐟 VERTEBRATE FISH EVOLUTION",
+                        desc: "Jawless and jawed fish develop spinal columns, internal skeletons, and gills.",
+                        scientificDetails: "Early chordates evolve a cartilaginous or bony spinal column (notochord), muscular gills for breathing, and paired fins. Jawed fish (gnathostomes) develop powerful bite mechanics, dominating the marine food web.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedFish'
+                    });
+                }
             }
 
             if (this.fishPop > 0) {
@@ -428,14 +541,19 @@ export class BiologySimulation {
 
             // 5. Cambrian Explosion (Marine Invertebrates)
             if (this.unlockedWorms && this.wormsPop > 20.0 && planet.o2 >= 15.0 && !this.unlockedCambrian) {
-                this.cambrianPop = 0.1;
-                this.unlockedCambrian = true;
-                events.push({
-                    title: "🦀 CAMBRIAN EXPLOSION ACTIVE",
-                    desc: "Massive biological radiation of ocean invertebrates (trilobites, mollusks, early arthropods).",
-                    scientificDetails: "Driven by rising atmospheric oxygen levels and the development of predator-prey dynamics, the Cambrian period triggers a rapid diversification of bilateral body plans. Mineralized shells, compound eyes, and early chordate structures emerge in the fossil record.",
-                    type: "success"
-                });
+                if (this.tryFire('cambrian', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.cambrianPop = 0.1;
+                    this.unlockedCambrian = true;
+                    events.push({
+                        title: "🦀 CAMBRIAN EXPLOSION ACTIVE",
+                        desc: "Massive biological radiation of ocean invertebrates (trilobites, mollusks, early arthropods).",
+                        scientificDetails: "Driven by rising atmospheric oxygen levels and the development of predator-prey dynamics, the Cambrian period triggers a rapid diversification of bilateral body plans. Mineralized shells, compound eyes, and early chordate structures emerge in the fossil record.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedCambrian'
+                    });
+                }
             }
 
             if (this.cambrianPop > 0) {
@@ -452,17 +570,22 @@ export class BiologySimulation {
                 }
             }
 
-            // 6. Non-Vascular Mosses (starts land soil plants)
-            const canMossesGo = this.unlockedFish && this.fishPop > 25.0 && (this.activeAdaptations.has('vascular_tissue') || (planet.ozone > 0.5 && planet.hasMagnetosphere));
-            if (canMossesGo && !this.unlockedMosses) {
-                this.mossesPop = 0.1;
-                this.unlockedMosses = true;
-                events.push({
-                    title: "🟢 MOSSES COLONIZE SOIL",
-                    desc: "Primitive non-vascular bryophytes carpet wet shores, initiating terrestrial soil creation.",
-                    scientificDetails: "Bryophytes adapt to dry land by developing basic cuticles and rhizoids (anchoring cells). Lacking xylem/phloem, they stay small and require external water films for sperm transport during reproduction.",
-                    type: "success"
-                });
+            // 6. Non-Vascular Mosses (starts land soil plants) — needs UV shield to plausibly colonize land.
+            if (this.unlockedFish && this.fishPop > 25.0 && planet.ozone > 0.5 && planet.hasMagnetosphere && !this.unlockedMosses) {
+                const condMult = 1.0 + 1.5 * clamp01((planet.ozone - 0.5) / 0.4);
+                if (this.tryFire('vascular_tissue', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.mossesPop = 0.1;
+                    this.unlockedMosses = true;
+                    events.push({
+                        title: "🟢 MOSSES COLONIZE SOIL",
+                        desc: "Primitive non-vascular bryophytes carpet wet shores, initiating terrestrial soil creation.",
+                        scientificDetails: "Bryophytes adapt to dry land by developing basic cuticles and rhizoids (anchoring cells). Lacking xylem/phloem, they stay small and require external water films for sperm transport during reproduction.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedMosses'
+                    });
+                }
             }
 
             if (this.mossesPop > 0) {
@@ -481,14 +604,19 @@ export class BiologySimulation {
 
             // 7. Vascular Ferns
             if (this.unlockedMosses && this.mossesPop > 30.0 && planet.o2 >= 16.0 && !this.unlockedFerns) {
-                this.fernsPop = 0.1;
-                this.unlockedFerns = true;
-                events.push({
-                    title: "🌿 VASCULAR FERNS RADIATION",
-                    desc: "Ferns develop vascular networks (xylem/phloem), growing tall and creating early coal forests.",
-                    scientificDetails: "Vascular tissue networks let ferns transport water and nutrients vertically, defying gravity to grow several meters tall. They utilize rigid lignin in cell walls, which locks carbon into organic coal sediments.",
-                    type: "success"
-                });
+                if (this.tryFire('ferns', RARITY.COMMON, 1.0, tickRate, planet)) {
+                    this.fernsPop = 0.1;
+                    this.unlockedFerns = true;
+                    events.push({
+                        title: "🌿 VASCULAR FERNS RADIATION",
+                        desc: "Ferns develop vascular networks (xylem/phloem), growing tall and creating early coal forests.",
+                        scientificDetails: "Vascular tissue networks let ferns transport water and nutrients vertically, defying gravity to grow several meters tall. They utilize rigid lignin in cell walls, which locks carbon into organic coal sediments.",
+                        type: "success",
+                        tier: RARITY.COMMON.name,
+                        tokens: RARITY.COMMON.award,
+                        unlockKey: 'unlockedFerns'
+                    });
+                }
             }
 
             if (this.fernsPop > 0) {
@@ -506,16 +634,20 @@ export class BiologySimulation {
             }
 
             // 8. Gymnosperms (Conifers)
-            const canConifersGo = this.unlockedFerns && this.fernsPop > 30.0 && (this.activeAdaptations.has('seed_evolution') || planet.age > 80.0);
-            if (canConifersGo && !this.unlockedConifers) {
-                this.conifersPop = 0.1;
-                this.unlockedConifers = true;
-                events.push({
-                    title: "🌲 CONIFERS & GYMNOSPERMS",
-                    desc: "Gymnosperms evolve seeds and pollen, freeing plants from water-dependent reproduction.",
-                    scientificDetails: "Conifers protect their embryos inside moisture-locked seed husks and rely on wind-pollination rather than water films. This allows them to populate drier, colder, inland continental zones.",
-                    type: "success"
-                });
+            if (this.unlockedFerns && this.fernsPop > 30.0 && !this.unlockedConifers) {
+                if (this.tryFire('seed_evolution', RARITY.COMMON, 1.0, tickRate, planet)) {
+                    this.conifersPop = 0.1;
+                    this.unlockedConifers = true;
+                    events.push({
+                        title: "🌲 CONIFERS & GYMNOSPERMS",
+                        desc: "Gymnosperms evolve seeds and pollen, freeing plants from water-dependent reproduction.",
+                        scientificDetails: "Conifers protect their embryos inside moisture-locked seed husks and rely on wind-pollination rather than water films. This allows them to populate drier, colder, inland continental zones.",
+                        type: "success",
+                        tier: RARITY.COMMON.name,
+                        tokens: RARITY.COMMON.award,
+                        unlockKey: 'unlockedConifers'
+                    });
+                }
             }
 
             if (this.conifersPop > 0) {
@@ -534,14 +666,19 @@ export class BiologySimulation {
 
             // 9. Angiosperms (Flowering Plants)
             if (this.unlockedConifers && this.conifersPop > 30.0 && planet.o2 >= 18.0 && !this.unlockedAngiosperms) {
-                this.angiospermsPop = 0.1;
-                this.unlockedAngiosperms = true;
-                events.push({
-                    title: "🌸 ANGIOSEPRM FLOWERS BLOOM",
-                    desc: "Flowering plants evolve, creating fruit and nectar that drive co-evolution with insects.",
-                    scientificDetails: "Angiosperms develop enclosed seeds, petals, and sweet nectar. This recruits insects for targeted pollination and animals for seed dispersal, resulting in highly efficient cycles of growth and explosive biodiversity.",
-                    type: "success"
-                });
+                if (this.tryFire('angiosperms', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.angiospermsPop = 0.1;
+                    this.unlockedAngiosperms = true;
+                    events.push({
+                        title: "🌸 ANGIOSEPRM FLOWERS BLOOM",
+                        desc: "Flowering plants evolve, creating fruit and nectar that drive co-evolution with insects.",
+                        scientificDetails: "Angiosperms develop enclosed seeds, petals, and sweet nectar. This recruits insects for targeted pollination and animals for seed dispersal, resulting in highly efficient cycles of growth and explosive biodiversity.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedAngiosperms'
+                    });
+                }
             }
 
             if (this.angiospermsPop > 0) {
@@ -564,14 +701,19 @@ export class BiologySimulation {
 
             // Terrestrial Invertebrates (Insects / Arthropods)
             if (this.unlockedMosses && this.mossesPop > 25.0 && !this.unlockedArthropod) {
-                this.arthropodPop = 0.1;
-                this.unlockedArthropod = true;
-                events.push({
-                    title: "🕷️ INSECT COLONIZATION",
-                    desc: "Arthropods migrate to land. Higher O₂ enables gigantism (e.g. giant centipedes).",
-                    scientificDetails: "Arthropods exploit land niches. Their chitinous exoskeletons prevent water loss and provide structural support under gravity, while simple tracheal tube systems directly oxygenate tissues, enabling gigantism when oxygen levels are high.",
-                    type: "success"
-                });
+                if (this.tryFire('arthropods', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.arthropodPop = 0.1;
+                    this.unlockedArthropod = true;
+                    events.push({
+                        title: "🕷️ INSECT COLONIZATION",
+                        desc: "Arthropods migrate to land. Higher O₂ enables gigantism (e.g. giant centipedes).",
+                        scientificDetails: "Arthropods exploit land niches. Their chitinous exoskeletons prevent water loss and provide structural support under gravity, while simple tracheal tube systems directly oxygenate tissues, enabling gigantism when oxygen levels are high.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedArthropod'
+                    });
+                }
             }
 
             if (this.arthropodPop > 0) {
@@ -589,16 +731,24 @@ export class BiologySimulation {
                 }
             }
 
-            // Tetrapods (Amphibians migrating to land)
+            // Tetrapods — Earth's once-only sarcopterygian -> land transition; MAJOR.
             if (this.unlockedFish && this.fishPop > 30.0 && this.unlockedMosses && this.mossesPop > 30.0 && !this.unlockedTetrapod) {
-                this.tetrapodPop = 0.1;
-                this.unlockedTetrapod = true;
-                events.push({
-                    title: "🦎 TETRAPODS WALK LAND",
-                    desc: "Early tetrapods crawl out of swamps. Air-breathing amphibians adapt to terrestrial life.",
-                    scientificDetails: "Lobe-finned sarcopterygian fish evolve weight-bearing limb bones, flexible neck structures, and simple lungs. These adaptations allow them to navigate marshy shores and shallow swamps, bridging the gap to land-dwelling tetrapods.",
-                    type: "success"
-                });
+                const ozoneScore = clamp01((planet.ozone - 0.3) / 0.7);
+                const o2Score = clamp01((planet.o2 - 17) / 8);
+                const condMult = 1.0 + 1.5 * ozoneScore + 1.5 * o2Score; // 1.0 .. 4.0
+                if (this.tryFire('tetrapods', RARITY.MAJOR, condMult, tickRate, planet)) {
+                    this.tetrapodPop = 0.1;
+                    this.unlockedTetrapod = true;
+                    events.push({
+                        title: "🦎 TETRAPODS WALK LAND",
+                        desc: "Early tetrapods crawl out of swamps. Air-breathing amphibians adapt to terrestrial life.",
+                        scientificDetails: "Lobe-finned sarcopterygian fish evolve weight-bearing limb bones, flexible neck structures, and simple lungs. These adaptations allow them to navigate marshy shores and shallow swamps, bridging the gap to land-dwelling tetrapods.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedTetrapod'
+                    });
+                }
             }
 
             if (this.tetrapodPop > 0) {
@@ -617,30 +767,43 @@ export class BiologySimulation {
             }
 
             // Branching Amniote Split: Sauropsids (Dinosaurs) vs Synapsids (Mammals)
-            const splitRequirements = this.unlockedTetrapod && this.tetrapodPop > 30.0 && (this.activeAdaptations.has('amniotic_egg') || planet.o2 > 17.0);
+            // Hard gate keeps the O2-dependence; rolls are independent so they can fire on different ticks.
+            const splitGate = this.unlockedTetrapod && this.tetrapodPop > 30.0 && planet.o2 > 17.0;
 
             // Sauropsids (Dinosaur Line)
-            if (splitRequirements && !this.unlockedSauropsid) {
-                this.sauropsidPop = 0.1;
-                this.unlockedSauropsid = true;
-                events.push({
-                    title: "🦕 SAUROPSID DIVERSIFICATION",
-                    desc: "Amniotes adapt scales and dry-waste systems. Dinosaur precursors appear, thriving in warm climates.",
-                    scientificDetails: "The Sauropsid branch develops dry, keratinous scales to shield moisture loss and evolves uric acid excretion, minimizing nitrogenous waste water cost. These adaptations make them highly resilient to warm, arid Mesozoic greenhouse conditions.",
-                    type: "success"
-                });
+            if (splitGate && !this.unlockedSauropsid) {
+                const condMult = planet.temperature > 25 ? 1.5 : 1.0;
+                if (this.tryFire('scales', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.sauropsidPop = 0.1;
+                    this.unlockedSauropsid = true;
+                    events.push({
+                        title: "🦕 SAUROPSID DIVERSIFICATION",
+                        desc: "Amniotes adapt scales and dry-waste systems. Dinosaur precursors appear, thriving in warm climates.",
+                        scientificDetails: "The Sauropsid branch develops dry, keratinous scales to shield moisture loss and evolves uric acid excretion, minimizing nitrogenous waste water cost. These adaptations make them highly resilient to warm, arid Mesozoic greenhouse conditions.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedSauropsid'
+                    });
+                }
             }
 
             // Synapsids (Mammal Line)
-            if (splitRequirements && !this.unlockedSynapsid) {
-                this.synapsidPop = 0.1;
-                this.unlockedSynapsid = true;
-                events.push({
-                    title: "🦧 SYNAPSIDS DIVERSIFICATION",
-                    desc: "Amniotes evolve higher metabolism. Proto-mammal lines appear, thriving in stable, temperate climates.",
-                    scientificDetails: "The Synapsid branch develops endothermic high metabolisms, insulation hair, and sweat glands. This constant thermal state enables rapid aerobic activity and mammalian brain expansion in cooler, highly oxygenated Cenozoic conditions.",
-                    type: "success"
-                });
+            if (splitGate && !this.unlockedSynapsid) {
+                const condMult = planet.o2 > 20 ? 1.5 : 1.0;
+                if (this.tryFire('endthermy', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.synapsidPop = 0.1;
+                    this.unlockedSynapsid = true;
+                    events.push({
+                        title: "🦧 SYNAPSIDS DIVERSIFICATION",
+                        desc: "Amniotes evolve higher metabolism. Proto-mammal lines appear, thriving in stable, temperate climates.",
+                        scientificDetails: "The Synapsid branch develops endothermic high metabolisms, insulation hair, and sweat glands. This constant thermal state enables rapid aerobic activity and mammalian brain expansion in cooler, highly oxygenated Cenozoic conditions.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedSynapsid'
+                    });
+                }
             }
 
             // Competitions between Mammals and Dinosaurs
@@ -648,7 +811,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 12, 32, 45); // Loves warmth
                 const plantViability = Math.min(1.0, this.landPlantsPop / 25.0);
                 const scaleBoost = this.activeAdaptations.has('scales') ? 1.3 : 1.0;
-                
+
                 // Outcompete mammals in greenhouse climates (>28°C)
                 const competitionFactor = planet.temperature > 28.0 ? 1.2 : 0.8;
                 const totalViability = tempViability * plantViability * scaleBoost * competitionFactor;
@@ -666,7 +829,7 @@ export class BiologySimulation {
                 const plantViability = Math.min(1.0, this.landPlantsPop / 25.0);
                 const o2Requirement = planet.o2 >= 20.0 ? 1.0 : (planet.o2 / 20.0); // High oxygen dependence
                 const endothermyBoost = this.activeAdaptations.has('endothermy') ? 1.5 : 1.0;
-                
+
                 // Outcompete dinosaurs in cooler/highly oxygenated conditions
                 const competitionFactor = (planet.temperature <= 28.0 && planet.o2 > 20.0) ? 1.3 : 0.7;
                 const totalViability = tempViability * plantViability * o2Requirement * endothermyBoost * competitionFactor;
@@ -679,17 +842,22 @@ export class BiologySimulation {
                 }
             }
 
-            // Cognitive Species (Intelligent Hominids / Raptors precursor)
-            const cognitiveRequirements = (this.synapsidPop > 45.0 || this.sauropsidPop > 45.0) && planet.o2 >= 19.0 && (this.activeAdaptations.has('neural_networking') || planet.age > 150.0);
-            if (cognitiveRequirements && !this.unlockedCognitive) {
-                this.cognitiveSpeciesPop = 0.1;
-                this.unlockedCognitive = true;
-                events.push({
-                    title: "🧠 COGNITIVE SPECIES EMERGE",
-                    desc: "Neocortex expansions lead to complex tool-making. A self-aware species begins shaping the biosphere.",
-                    scientificDetails: "Extreme encephalization and neocortex enlargement support symbolic reasoning, language syntax, and complex manual tool usage. The species begins actively modifying its niche and environment, bypassing slow genetic adaptations.",
-                    type: "success"
-                });
+            // Cognitive Species (Intelligent Hominids / Raptors precursor) — MAJOR.
+            if ((this.synapsidPop > 45.0 || this.sauropsidPop > 45.0) && planet.o2 >= 19.0 && !this.unlockedCognitive) {
+                const condMult = 1.0 + 1.5 * clamp01(Math.max(this.synapsidPop, this.sauropsidPop) / 80);
+                if (this.tryFire('cognitive', RARITY.MAJOR, condMult, tickRate, planet)) {
+                    this.cognitiveSpeciesPop = 0.1;
+                    this.unlockedCognitive = true;
+                    events.push({
+                        title: "🧠 COGNITIVE SPECIES EMERGE",
+                        desc: "Neocortex expansions lead to complex tool-making. A self-aware species begins shaping the biosphere.",
+                        scientificDetails: "Extreme encephalization and neocortex enlargement support symbolic reasoning, language syntax, and complex manual tool usage. The species begins actively modifying its niche and environment, bypassing slow genetic adaptations.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedCognitive'
+                    });
+                }
             }
 
             if (this.cognitiveSpeciesPop > 0) {
@@ -706,17 +874,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Technological Silicon AI (Post-Biological Intelligence)
-            const aiRequirements = this.unlockedCognitive && this.cognitiveSpeciesPop > 35.0 && (this.activeAdaptations.has('technological_singularity') || planet.age > 220.0);
-            if (aiRequirements && !this.unlockedTechnologicalAI) {
-                this.technologicalAIPop = 0.1;
-                this.unlockedTechnologicalAI = true;
-                events.push({
-                    title: "🤖 TECHNOLOGICAL SINGULARITY",
-                    desc: "Cognitive beings code autonomous self-replicating silicon neural networks. Post-biological evolution begins.",
-                    scientificDetails: "Cognitive agents construct silicon-substrate neural architectures that mimic biological synapses but run at clock-rates 10,000x faster. These autonomous nodes self-replicate and improve their own algorithms, decoupling intelligence from organic carbon-based biology.",
-                    type: "success"
-                });
+            // Technological Silicon AI (Post-Biological Intelligence) — MAJOR.
+            if (this.unlockedCognitive && this.cognitiveSpeciesPop > 35.0 && !this.unlockedTechnologicalAI) {
+                if (this.tryFire('technological_singularity', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.technologicalAIPop = 0.1;
+                    this.unlockedTechnologicalAI = true;
+                    events.push({
+                        title: "🤖 TECHNOLOGICAL SINGULARITY",
+                        desc: "Cognitive beings code autonomous self-replicating silicon neural networks. Post-biological evolution begins.",
+                        scientificDetails: "Cognitive agents construct silicon-substrate neural architectures that mimic biological synapses but run at clock-rates 10,000x faster. These autonomous nodes self-replicate and improve their own algorithms, decoupling intelligence from organic carbon-based biology.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedTechnologicalAI'
+                    });
+                }
             }
 
             if (this.technologicalAIPop > 0) {
@@ -734,17 +906,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Cyborg Hybrids (requires cognitive pop > 40)
-            const cyborgRequirements = this.unlockedCognitive && this.cognitiveSpeciesPop > 40.0 && (this.activeAdaptations.has('cybernetic_implants') || planet.o2 >= 18.0);
-            if (cyborgRequirements && !this.unlockedCyborg) {
-                this.cyborgPop = 0.1;
-                this.unlockedCyborg = true;
-                events.push({
-                    title: "🦿 CYBORG SYMBIO-INTEGRATION",
-                    desc: "Cognitive beings integrate neural implants and micro-machinery into their physiology. Cybernetic hybridization begins.",
-                    scientificDetails: "Cybernetic integration bypasses biological evolutionary bottlenecks. Silicon-neural interfaces link directly to nerve fibers, allowing real-time telemetry processing, artificial organ self-regulation, and expanded somatic durability.",
-                    type: "success"
-                });
+            // Cyborg Hybrids — NOTABLE continuation of tech lineage.
+            if (this.unlockedCognitive && this.cognitiveSpeciesPop > 40.0 && planet.o2 >= 18.0 && !this.unlockedCyborg) {
+                if (this.tryFire('cybernetic_implants', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.cyborgPop = 0.1;
+                    this.unlockedCyborg = true;
+                    events.push({
+                        title: "🦿 CYBORG SYMBIO-INTEGRATION",
+                        desc: "Cognitive beings integrate neural implants and micro-machinery into their physiology. Cybernetic hybridization begins.",
+                        scientificDetails: "Cybernetic integration bypasses biological evolutionary bottlenecks. Silicon-neural interfaces link directly to nerve fibers, allowing real-time telemetry processing, artificial organ self-regulation, and expanded somatic durability.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedCyborg'
+                    });
+                }
             }
 
             if (this.cyborgPop > 0) {
@@ -761,17 +937,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Planetary AI Noosphere (requires technological AI > 45 or Cyborg > 45)
-            const noosphereRequirements = (this.unlockedTechnologicalAI && this.technologicalAIPop > 45.0 || this.unlockedCyborg && this.cyborgPop > 45.0) && (this.activeAdaptations.has('global_consciousness') || planet.hasMagnetosphere);
-            if (noosphereRequirements && !this.unlockedNoosphere) {
-                this.noospherePop = 0.1;
-                this.unlockedNoosphere = true;
-                events.push({
-                    title: "🌐 PLANETARY NOOSPHERE",
-                    desc: "Silicon AI and cybernetic minds link into a global network shell, establishing a unified planetary consciousness.",
-                    scientificDetails: "A planetary network of low-latency wireless transmitters and computational grids links biological and artificial nodes. The collective intelligence operates as a global thinking sphere, optimizing resource allocations and planetary energy usage.",
-                    type: "success"
-                });
+            // Planetary AI Noosphere — MAJOR phase shift.
+            if (((this.unlockedTechnologicalAI && this.technologicalAIPop > 45.0) || (this.unlockedCyborg && this.cyborgPop > 45.0)) && planet.hasMagnetosphere && !this.unlockedNoosphere) {
+                if (this.tryFire('global_consciousness', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.noospherePop = 0.1;
+                    this.unlockedNoosphere = true;
+                    events.push({
+                        title: "🌐 PLANETARY NOOSPHERE",
+                        desc: "Silicon AI and cybernetic minds link into a global network shell, establishing a unified planetary consciousness.",
+                        scientificDetails: "A planetary network of low-latency wireless transmitters and computational grids links biological and artificial nodes. The collective intelligence operates as a global thinking sphere, optimizing resource allocations and planetary energy usage.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedNoosphere'
+                    });
+                }
             }
 
             if (this.noospherePop > 0) {
@@ -787,17 +967,22 @@ export class BiologySimulation {
                 }
             }
 
-            // Gaia Biosphere Hivemind (requires Cyborg > 45 or Land Plants > 60)
-            const gaiaRequirements = (this.unlockedCyborg && this.cyborgPop > 45.0 || this.unlockedLandPlants && this.landPlantsPop > 60.0) && (this.activeAdaptations.has('ecological_integration') || (planet.ozone > 0.6 && planet.o2 >= 20.0));
-            if (gaiaRequirements && !this.unlockedGaiaHivemind) {
-                this.gaiaHivemindPop = 0.1;
-                this.unlockedGaiaHivemind = true;
-                events.push({
-                    title: "🌿 GAIA BIOSPHERE HIVEMIND",
-                    desc: "A self-aware planetary mycelial-neural web integrates all organic species, establishing biological homeostasis.",
-                    scientificDetails: "A feedback-stabilized system of chemical signaling, mycelial networks, and atmospheric regulation. The global biomass operates as a complex homeostatic system adjusting planetary parameters to optimize survival conditions.",
-                    type: "success"
-                });
+            // Gaia Biosphere Hivemind — coupled bio-tech-planet superorganism; SINGULAR.
+            if (((this.unlockedCyborg && this.cyborgPop > 45.0) || (this.unlockedLandPlants && this.landPlantsPop > 60.0)) && planet.ozone > 0.6 && planet.o2 >= 20.0 && !this.unlockedGaiaHivemind) {
+                const condMult = 1.0 + 1.5 * clamp01((planet.ozone - 0.6) / 0.4) + 1.5 * clamp01((planet.o2 - 20) / 5);
+                if (this.tryFire('ecological_integration', RARITY.SINGULAR, condMult, tickRate, planet)) {
+                    this.gaiaHivemindPop = 0.1;
+                    this.unlockedGaiaHivemind = true;
+                    events.push({
+                        title: "🌿 GAIA BIOSPHERE HIVEMIND",
+                        desc: "A self-aware planetary mycelial-neural web integrates all organic species, establishing biological homeostasis.",
+                        scientificDetails: "A feedback-stabilized system of chemical signaling, mycelial networks, and atmospheric regulation. The global biomass operates as a complex homeostatic system adjusting planetary parameters to optimize survival conditions.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedGaiaHivemind'
+                    });
+                }
             }
 
             if (this.gaiaHivemindPop > 0) {
@@ -841,13 +1026,18 @@ export class BiologySimulation {
                 this.ammonicSoup = Math.min(100.0, this.ammonicSoup + synthesisRate * tickRate);
 
                 if (!this.unlockedAmmonicSoup && this.ammonicSoup > 5.0) {
-                    this.unlockedAmmonicSoup = true;
-                    events.push({
-                        title: "🧪 AMMONIC SYNTHESIS DETECTED",
-                        desc: "Liquid ammonia has acted as a solvent for non-polar prebiotic synthesis.",
-                        scientificDetails: "In cryogenic environments, liquid ammonia acts as a ionizing solvent, enabling nucleophilic reactions and metal-ammonia reductions. Prebiotic organic precursors accumulate, bypassing the need for liquid water solvent systems.",
-                        type: "success"
-                    });
+                    if (this.tryFire('ammonic_soup', RARITY.COMMON, 1.0, tickRate, planet)) {
+                        this.unlockedAmmonicSoup = true;
+                        events.push({
+                            title: "🧪 AMMONIC SYNTHESIS DETECTED",
+                            desc: "Liquid ammonia has acted as a solvent for non-polar prebiotic synthesis.",
+                            scientificDetails: "In cryogenic environments, liquid ammonia acts as a ionizing solvent, enabling nucleophilic reactions and metal-ammonia reductions. Prebiotic organic precursors accumulate, bypassing the need for liquid water solvent systems.",
+                            type: "success",
+                            tier: RARITY.COMMON.name,
+                            tokens: RARITY.COMMON.award,
+                            unlockKey: 'unlockedAmmonicSoup'
+                        });
+                    }
                 }
             } else {
                 this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicSoup * 0.05 * tickRate);
@@ -855,14 +1045,19 @@ export class BiologySimulation {
 
             // Ammonic Anaerobes
             if (this.unlockedAmmonicSoup && this.ammonicSoup > 10.0 && this.ammonicProtoPop === 0) {
-                this.ammonicProtoPop = 0.1;
-                this.unlockedAmmonicProto = true;
-                events.push({
-                    title: "🦠 AMMONIC PROKARYOTES",
-                    desc: "Simple, organelle-less cells emerge using liquid ammonia as an intracellular fluid.",
-                    scientificDetails: "Early prokaryotic cells develop membranes constructed of lipids or specialized polymers that remain fluid at -50°C, utilizing liquid ammonia as their primary intracellular solvent and exploiting nitrogenous metabolic cycles.",
-                    type: "success"
-                });
+                if (this.tryFire('ammonic_proto', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.ammonicProtoPop = 0.1;
+                    this.unlockedAmmonicProto = true;
+                    events.push({
+                        title: "🦠 AMMONIC PROKARYOTES",
+                        desc: "Simple, organelle-less cells emerge using liquid ammonia as an intracellular fluid.",
+                        scientificDetails: "Early prokaryotic cells develop membranes constructed of lipids or specialized polymers that remain fluid at -50°C, utilizing liquid ammonia as their primary intracellular solvent and exploiting nitrogenous metabolic cycles.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedAmmonicProto'
+                    });
+                }
             }
 
             if (this.ammonicProtoPop > 0) {
@@ -879,16 +1074,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Ammonic Multicellularity
+            // Ammonic Multicellularity — MAJOR (no O2 analogue to drive complex biochem).
             if (this.unlockedAmmonicProto && this.ammonicProtoPop > 35.0 && !this.unlockedAmmonicMulti) {
-                this.ammonicMultiPop = 0.1;
-                this.unlockedAmmonicMulti = true;
-                events.push({
-                    title: "❄️ CRYOGENIC COMPLEXITY",
-                    desc: "Ammonic cells cluster into tissue layers, adapting to sub-freezing marine networks.",
-                    scientificDetails: "Low-temperature cellular groupings form early macro-structures. Because kinetic reaction rates are slow in cold ammonia, these organisms rely on highly efficient internal catalyst enzymes to coordinate multicellular tissue systems.",
-                    type: "success"
-                });
+                if (this.tryFire('ammonic_multi', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.ammonicMultiPop = 0.1;
+                    this.unlockedAmmonicMulti = true;
+                    events.push({
+                        title: "❄️ CRYOGENIC COMPLEXITY",
+                        desc: "Ammonic cells cluster into tissue layers, adapting to sub-freezing marine networks.",
+                        scientificDetails: "Low-temperature cellular groupings form early macro-structures. Because kinetic reaction rates are slow in cold ammonia, these organisms rely on highly efficient internal catalyst enzymes to coordinate multicellular tissue systems.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedAmmonicMulti'
+                    });
+                }
             }
 
             if (this.ammonicMultiPop > 0) {
@@ -904,17 +1104,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Silico-Flora (requires silicon nudge or very cold rock composition)
-            const canSilicoFlora = this.unlockedAmmonicMulti && (this.activeAdaptations.has('silicon_chains') || planet.temperature < -45.0);
-            if (canSilicoFlora && !this.unlockedSilicoFlora) {
-                this.silicoFloraPop = 0.1;
-                this.unlockedSilicoFlora = true;
-                events.push({
-                    title: "💎 SILICO-FLORA ESTABLISHED",
-                    desc: "Silicon-backbone plants rise along ammonia glaciers, absorbing volcanic sulfur.",
-                    scientificDetails: "In dry, sub-freezing conditions, silicone-oxygen polymer chains (silicones) replace carbon backbones. These crystalline plants thrive along glaciers, absorbing geothermal sulfur compounds and ambient radiation.",
-                    type: "success"
-                });
+            // Silico-Flora
+            if (this.unlockedAmmonicMulti && planet.temperature < -45.0 && !this.unlockedSilicoFlora) {
+                if (this.tryFire('silicon_chains', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.silicoFloraPop = 0.1;
+                    this.unlockedSilicoFlora = true;
+                    events.push({
+                        title: "💎 SILICO-FLORA ESTABLISHED",
+                        desc: "Silicon-backbone plants rise along ammonia glaciers, absorbing volcanic sulfur.",
+                        scientificDetails: "In dry, sub-freezing conditions, silicone-oxygen polymer chains (silicones) replace carbon backbones. These crystalline plants thrive along glaciers, absorbing geothermal sulfur compounds and ambient radiation.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedSilicoFlora'
+                    });
+                }
             }
 
             if (this.silicoFloraPop > 0) {
@@ -932,14 +1136,19 @@ export class BiologySimulation {
 
             // Cryo-Fauna (speculative ammonic animals)
             if (this.unlockedSilicoFlora && this.silicoFloraPop > 30.0 && !this.unlockedCryoFauna) {
-                this.cryoFaunaPop = 0.1;
-                this.unlockedCryoFauna = true;
-                events.push({
-                    title: "🦕 AMMONIC MEGAFAUNA EMERGED",
-                    desc: "Speculative cryo-fauna walk the ammonium frost, breathing ambient nitrogenous compounds.",
-                    scientificDetails: "Speculative mobile fauna emerge, using liquid ammonia in their circulatory systems. They graze on silico-flora and metabolize nitrogenous chemical gradients, venting inert molecular nitrogen gas.",
-                    type: "success"
-                });
+                if (this.tryFire('cryo_fauna', RARITY.NOTABLE, 1.0, tickRate, planet)) {
+                    this.cryoFaunaPop = 0.1;
+                    this.unlockedCryoFauna = true;
+                    events.push({
+                        title: "🦕 AMMONIC MEGAFAUNA EMERGED",
+                        desc: "Speculative cryo-fauna walk the ammonium frost, breathing ambient nitrogenous compounds.",
+                        scientificDetails: "Speculative mobile fauna emerge, using liquid ammonia in their circulatory systems. They graze on silico-flora and metabolize nitrogenous chemical gradients, venting inert molecular nitrogen gas.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedCryoFauna'
+                    });
+                }
             }
 
             if (this.cryoFaunaPop > 0) {
@@ -955,16 +1164,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Crystalline Cognitive Swarms
+            // Crystalline Cognitive Swarms — MAJOR.
             if (this.unlockedCryoFauna && this.cryoFaunaPop > 35.0 && !this.unlockedCrystallineCognitive) {
-                this.crystallineCognitivePop = 0.1;
-                this.unlockedCrystallineCognitive = true;
-                events.push({
-                    title: "💎 CRYSTALLINE COGNITIVE SWARMS",
-                    desc: "Silico-ammonia cells evolve collective consciousness, forming vibrating crystalline networks.",
-                    scientificDetails: "Speculative cryo-fauna evolve piezoelectric crystalline structures that transmit electrical oscillations. Vibrating in resonance across ammonia ice plates, they achieve collective neural-like cognition.",
-                    type: "success"
-                });
+                if (this.tryFire('crystalline_collective', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.crystallineCognitivePop = 0.1;
+                    this.unlockedCrystallineCognitive = true;
+                    events.push({
+                        title: "💎 CRYSTALLINE COGNITIVE SWARMS",
+                        desc: "Silico-ammonia cells evolve collective consciousness, forming vibrating crystalline networks.",
+                        scientificDetails: "Speculative cryo-fauna evolve piezoelectric crystalline structures that transmit electrical oscillations. Vibrating in resonance across ammonia ice plates, they achieve collective neural-like cognition.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedCrystallineCognitive'
+                    });
+                }
             }
 
             if (this.crystallineCognitivePop > 0) {
@@ -979,17 +1193,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Solid-State Quantum Lattices (requires crystallineCognitivePop > 40)
-            const quantumRequirements = this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && (this.activeAdaptations.has('quantum_alignment') || planet.temperature < -50.0);
-            if (quantumRequirements && !this.unlockedQuantumLattice) {
-                this.quantumLatticePop = 0.1;
-                this.unlockedQuantumLattice = true;
-                events.push({
-                    title: "🧊 SOLID-STATE QUANTUM LATTICES",
-                    desc: "Crystalline networks align into stable, superconducting quantum computation sheets within ice glaciers.",
-                    scientificDetails: "At cryogenic temperatures (below -50°C), thermal decoherence is minimized. Crystalline silicon-ammonia lattices align their electron spins, achieving stable macroscopic quantum coherence. These frozen sheets function as massive, low-power parallel computers.",
-                    type: "success"
-                });
+            // Solid-State Quantum Lattices — SINGULAR. Requires deep cold.
+            if (this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && planet.temperature < -50.0 && !this.unlockedQuantumLattice) {
+                if (this.tryFire('quantum_alignment', RARITY.SINGULAR, 1.0, tickRate, planet)) {
+                    this.quantumLatticePop = 0.1;
+                    this.unlockedQuantumLattice = true;
+                    events.push({
+                        title: "🧊 SOLID-STATE QUANTUM LATTICES",
+                        desc: "Crystalline networks align into stable, superconducting quantum computation sheets within ice glaciers.",
+                        scientificDetails: "At cryogenic temperatures (below -50°C), thermal decoherence is minimized. Crystalline silicon-ammonia lattices align their electron spins, achieving stable macroscopic quantum coherence. These frozen sheets function as massive, low-power parallel computers.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedQuantumLattice'
+                    });
+                }
             }
 
             if (this.quantumLatticePop > 0) {
@@ -1005,17 +1223,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Cryo-Biosphere Hivemind (requires crystallineCognitivePop > 40 & silicoFloraPop > 45)
-            const cryoHiveRequirements = this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && this.silicoFloraPop > 45.0 && (this.activeAdaptations.has('cryo_neural_webs') || planet.ammoniaCoverage > 25.0);
-            if (cryoHiveRequirements && !this.unlockedCryoHivemind) {
-                this.cryoHivemindPop = 0.1;
-                this.unlockedCryoHivemind = true;
-                events.push({
-                    title: "💜 CRYO-BIOSPHERE HIVEMIND",
-                    desc: "Glacier-spanning chemical and crystalline networks weave silico-flora and cryo-fauna into a cold planetary brain.",
-                    scientificDetails: "Silicate chemical pathways and low-resistance nitrogenous signaling channels link stationary flora and motile fauna. The biosphere operates as a single homeostatic unit optimized for energy retention in sub-zero conditions.",
-                    type: "success"
-                });
+            // Cryo-Biosphere Hivemind — SINGULAR.
+            if (this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && this.silicoFloraPop > 45.0 && planet.ammoniaCoverage > 25.0 && !this.unlockedCryoHivemind) {
+                if (this.tryFire('cryo_neural_webs', RARITY.SINGULAR, 1.0, tickRate, planet)) {
+                    this.cryoHivemindPop = 0.1;
+                    this.unlockedCryoHivemind = true;
+                    events.push({
+                        title: "💜 CRYO-BIOSPHERE HIVEMIND",
+                        desc: "Glacier-spanning chemical and crystalline networks weave silico-flora and cryo-fauna into a cold planetary brain.",
+                        scientificDetails: "Silicate chemical pathways and low-resistance nitrogenous signaling channels link stationary flora and motile fauna. The biosphere operates as a single homeostatic unit optimized for energy retention in sub-zero conditions.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedCryoHivemind'
+                    });
+                }
             }
 
             if (this.cryoHivemindPop > 0) {
@@ -1055,28 +1277,38 @@ export class BiologySimulation {
                 this.methaneSoup = Math.min(100.0, this.methaneSoup + synthesisRate * tickRate);
 
                 if (!this.unlockedMethaneSoup && this.methaneSoup > 5.0) {
-                    this.unlockedMethaneSoup = true;
-                    events.push({
-                        title: "🧪 HYDROCARBON SOUP DETECTED",
-                        desc: "Liquid hydrocarbons pool. Prebiotic chains form at cryogenic temperatures.",
-                        scientificDetails: "In Titan-like environments, liquid methane and ethane act as non-polar solvents. Organic photochemistry in the upper atmosphere deposits nitriles and acetylene onto the surface, creating a rich cryogenic prebiotic chemical reservoir.",
-                        type: "success"
-                    });
+                    if (this.tryFire('methane_soup', RARITY.COMMON, 1.0, tickRate, planet)) {
+                        this.unlockedMethaneSoup = true;
+                        events.push({
+                            title: "🧪 HYDROCARBON SOUP DETECTED",
+                            desc: "Liquid hydrocarbons pool. Prebiotic chains form at cryogenic temperatures.",
+                            scientificDetails: "In Titan-like environments, liquid methane and ethane act as non-polar solvents. Organic photochemistry in the upper atmosphere deposits nitriles and acetylene onto the surface, creating a rich cryogenic prebiotic chemical reservoir.",
+                            type: "success",
+                            tier: RARITY.COMMON.name,
+                            tokens: RARITY.COMMON.award,
+                            unlockKey: 'unlockedMethaneSoup'
+                        });
+                    }
                 }
             } else {
                 this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneSoup * 0.05 * tickRate);
             }
 
-            // Methanotrophic Proto-cells (consumes H2, produces CH4)
+            // Methanotrophic Proto-cells — MAJOR (azotosome stability hypothetical).
             if (this.unlockedMethaneSoup && this.methaneSoup > 10.0 && this.methaneProtoPop === 0) {
-                this.unlockedMethaneProto = true;
-                this.methaneProtoPop = 0.1;
-                events.push({
-                    title: "🦠 CRYO-METHANOGEN PROKARYOTES",
-                    desc: "Simple azotosome-based membranes form. Living cells emerge feeding off hydrogen gas.",
-                    scientificDetails: "Speculative cryo-cells emerge using nitrogen-based membranes (azotosomes) that remain flexible at 90 Kelvin. Lacking internal organelles, these simple prokaryotes feed on organic compounds and hydrogen gas, producing methane.",
-                    type: "success"
-                });
+                if (this.tryFire('methane_proto', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.unlockedMethaneProto = true;
+                    this.methaneProtoPop = 0.1;
+                    events.push({
+                        title: "🦠 CRYO-METHANOGEN PROKARYOTES",
+                        desc: "Simple azotosome-based membranes form. Living cells emerge feeding off hydrogen gas.",
+                        scientificDetails: "Speculative cryo-cells emerge using nitrogen-based membranes (azotosomes) that remain flexible at 90 Kelvin. Lacking internal organelles, these simple prokaryotes feed on organic compounds and hydrogen gas, producing methane.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedMethaneProto'
+                    });
+                }
             }
 
             if (this.methaneProtoPop > 0) {
@@ -1093,16 +1325,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Methane Multicellularity
+            // Methane Multicellularity — SINGULAR (apolar solvent, no proton chemistry).
             if (this.unlockedMethaneProto && this.methaneProtoPop > 30.0 && !this.unlockedMethaneMulti) {
-                this.methaneMultiPop = 0.1;
-                this.unlockedMethaneMulti = true;
-                events.push({
-                    title: "❄️ AZOTOSOME CHAINS UNLOCKED",
-                    desc: "Cryo-cells link together, creating long macromolecular structures.",
-                    scientificDetails: "Azotosome vesicles self-assemble into polymer chains. Despite cryogenic constraints on molecule speed, these chains optimize nutrient absorption across vast surface-to-volume ratios.",
-                    type: "success"
-                });
+                if (this.tryFire('methane_multi', RARITY.SINGULAR, 1.0, tickRate, planet)) {
+                    this.methaneMultiPop = 0.1;
+                    this.unlockedMethaneMulti = true;
+                    events.push({
+                        title: "❄️ AZOTOSOME CHAINS UNLOCKED",
+                        desc: "Cryo-cells link together, creating long macromolecular structures.",
+                        scientificDetails: "Azotosome vesicles self-assemble into polymer chains. Despite cryogenic constraints on molecule speed, these chains optimize nutrient absorption across vast surface-to-volume ratios.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedMethaneMulti'
+                    });
+                }
             }
 
             if (this.methaneMultiPop > 0) {
@@ -1117,17 +1354,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Cryo-Organisms (Requires polymers nudge or extreme stability)
-            const canCryo = this.unlockedMethaneMulti && (this.activeAdaptations.has('cryo_polymers') || planet.age > 80.0);
-            if (canCryo && !this.unlockedCryoOrganisms) {
-                this.cryoOrganismsPop = 0.1;
-                this.unlockedCryoOrganisms = true;
-                events.push({
-                    title: "👾 CYTO-PLASMIC BEASTS",
-                    desc: "Speculative methane animals graze on organic crusts, operating at 90 Kelvin.",
-                    scientificDetails: "Advanced cryogenic animals adapt to crawl along hydrocarbon snow deposits. They digest atmospheric tholins and utilize acetylene as a high-energy metabolic source in a highly efficient enzyme matrix.",
-                    type: "success"
-                });
+            // Cryo-Organisms — MAJOR.
+            if (this.unlockedMethaneMulti && !this.unlockedCryoOrganisms) {
+                if (this.tryFire('cryo_polymers', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.cryoOrganismsPop = 0.1;
+                    this.unlockedCryoOrganisms = true;
+                    events.push({
+                        title: "👾 CYTO-PLASMIC BEASTS",
+                        desc: "Speculative methane animals graze on organic crusts, operating at 90 Kelvin.",
+                        scientificDetails: "Advanced cryogenic animals adapt to crawl along hydrocarbon snow deposits. They digest atmospheric tholins and utilize acetylene as a high-energy metabolic source in a highly efficient enzyme matrix.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedCryoOrganisms'
+                    });
+                }
             }
 
             if (this.cryoOrganismsPop > 0) {
@@ -1143,16 +1384,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Cryo-Polymer Networks
+            // Cryo-Polymer Networks — MAJOR.
             if (this.unlockedCryoOrganisms && this.cryoOrganismsPop > 30.0 && !this.unlockedCryoPolymerNetwork) {
-                this.cryoPolymerNetworkPop = 0.1;
-                this.unlockedCryoPolymerNetwork = true;
-                events.push({
-                    title: "🍊 CRYO-POLYMER NETWORKS",
-                    desc: "Hydrocarbon structures form planetary networks that function as cryogenic supercomputing lattices.",
-                    scientificDetails: "Organic polymers organize into interconnected grid sheets across tholin dunes. These structures propagate mechanical and electrical signaling, operating as a solid-state cryogenic computing lattice.",
-                    type: "success"
-                });
+                if (this.tryFire('cryo_polymer_network', RARITY.MAJOR, 1.0, tickRate, planet)) {
+                    this.cryoPolymerNetworkPop = 0.1;
+                    this.unlockedCryoPolymerNetwork = true;
+                    events.push({
+                        title: "🍊 CRYO-POLYMER NETWORKS",
+                        desc: "Hydrocarbon structures form planetary networks that function as cryogenic supercomputing lattices.",
+                        scientificDetails: "Organic polymers organize into interconnected grid sheets across tholin dunes. These structures propagate mechanical and electrical signaling, operating as a solid-state cryogenic computing lattice.",
+                        type: "success",
+                        tier: RARITY.MAJOR.name,
+                        tokens: RARITY.MAJOR.award,
+                        unlockKey: 'unlockedCryoPolymerNetwork'
+                    });
+                }
             }
 
             if (this.cryoPolymerNetworkPop > 0) {
@@ -1167,17 +1413,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Thinking Hydrocarbon Oceans (requires cryoPolymerNetworkPop > 40)
-            const thinkingOceanRequirements = this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && (this.activeAdaptations.has('colloidal_solids') || planet.methaneCoverage > 40.0);
-            if (thinkingOceanRequirements && !this.unlockedThinkingOcean) {
-                this.thinkingOceanPop = 0.1;
-                this.unlockedThinkingOcean = true;
-                events.push({
-                    title: "🌊 THINKING HYDROCARBON OCEANS",
-                    desc: "Macromolecular sheets self-assemble, turning entire methane seas into cognitive liquid membranes.",
-                    scientificDetails: "In cryogenic methane basins, dissolved organic polymers accumulate into sheets. Under wave action and tides, these fluid-crystalline layers act as mechanical logic gates. Currents carry signaling states, turning entire oceans into slow cognitive media.",
-                    type: "success"
-                });
+            // Thinking Hydrocarbon Oceans — SINGULAR.
+            if (this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && planet.methaneCoverage > 40.0 && !this.unlockedThinkingOcean) {
+                if (this.tryFire('colloidal_solids', RARITY.SINGULAR, 1.0, tickRate, planet)) {
+                    this.thinkingOceanPop = 0.1;
+                    this.unlockedThinkingOcean = true;
+                    events.push({
+                        title: "🌊 THINKING HYDROCARBON OCEANS",
+                        desc: "Macromolecular sheets self-assemble, turning entire methane seas into cognitive liquid membranes.",
+                        scientificDetails: "In cryogenic methane basins, dissolved organic polymers accumulate into sheets. Under wave action and tides, these fluid-crystalline layers act as mechanical logic gates. Currents carry signaling states, turning entire oceans into slow cognitive media.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedThinkingOcean'
+                    });
+                }
             }
 
             if (this.thinkingOceanPop > 0) {
@@ -1193,17 +1443,21 @@ export class BiologySimulation {
                 }
             }
 
-            // Megastructure Cryo-Colloids (requires cryoPolymerNetworkPop > 40 & cryoOrganismsPop > 45)
-            const cryoColloidRequirements = this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && this.cryoOrganismsPop > 45.0 && (this.activeAdaptations.has('macromolecular_assembly') || planet.h2 > 10.0);
-            if (cryoColloidRequirements && !this.unlockedCryoColloid) {
-                this.cryoColloidPop = 0.1;
-                this.unlockedCryoColloid = true;
-                events.push({
-                    title: "👾 MEGASTRUCTURE CRYO-COLLOIDS",
-                    desc: "Azotosome-based beasts coordinate into massive colloidal lattices, forming living computer structures.",
-                    scientificDetails: "Cryogenic animals self-assemble into macro-scale colloidal structures. Lacking warm blood, they coordinate metabolic processes through slow cryogenic convection and chemical signaling, forming massive decentralized computational grids.",
-                    type: "success"
-                });
+            // Megastructure Cryo-Colloids — SINGULAR.
+            if (this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && this.cryoOrganismsPop > 45.0 && planet.h2 > 10.0 && !this.unlockedCryoColloid) {
+                if (this.tryFire('macromolecular_assembly', RARITY.SINGULAR, 1.0, tickRate, planet)) {
+                    this.cryoColloidPop = 0.1;
+                    this.unlockedCryoColloid = true;
+                    events.push({
+                        title: "👾 MEGASTRUCTURE CRYO-COLLOIDS",
+                        desc: "Azotosome-based beasts coordinate into massive colloidal lattices, forming living computer structures.",
+                        scientificDetails: "Cryogenic animals self-assemble into macro-scale colloidal structures. Lacking warm blood, they coordinate metabolic processes through slow cryogenic convection and chemical signaling, forming massive decentralized computational grids.",
+                        type: "success",
+                        tier: RARITY.SINGULAR.name,
+                        tokens: RARITY.SINGULAR.award,
+                        unlockKey: 'unlockedCryoColloid'
+                    });
+                }
             }
 
             if (this.cryoColloidPop > 0) {
@@ -1258,7 +1512,7 @@ export class BiologySimulation {
     getTempViability(temp, min, optimal, max) {
         if (temp <= min || temp >= max) return 0;
         if (temp === optimal) return 1.0;
-        
+
         if (temp < optimal) {
             return (temp - min) / (optimal - min);
         } else {

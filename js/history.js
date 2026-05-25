@@ -108,6 +108,7 @@ export class HistoryRecorder {
     }
 
     _classifyEvent(evt) {
+        if (evt.tier) return evt.tier;
         const t = (evt.type || '').toLowerCase();
         if (t === 'success') return 'milestone';
         if (t === 'hazard') return 'hazard';

@@ -159,9 +159,14 @@ class GameController {
             // Print any biological milestones / events to the science feed
             if (bioUpdate.events && bioUpdate.events.length > 0) {
                 bioUpdate.events.forEach(evt => {
+                    if (typeof evt.tokens === 'number') {
+                        this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + evt.tokens);
+                    }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type);
-                    if (evt.type === 'success') {
+                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
+                    // Major and Singular breakthroughs always get the popup.
+                    // Other 'success' (non-tiered) events keep their existing popup behavior.
+                    if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || (evt.type === 'success' && !evt.tier)) {
                         this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
                     }
                 });
@@ -171,9 +176,12 @@ class GameController {
             const eventLogs = this.eventSystem.tick(this.planet, this.biology, tickRate);
             if (eventLogs && eventLogs.length > 0) {
                 eventLogs.forEach(evt => {
+                    if (typeof evt.tokens === 'number') {
+                        this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + evt.tokens);
+                    }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type);
-                    if (evt.type === 'success' || evt.type === 'hazard') {
+                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
+                    if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard') {
                         this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
                     }
                 });

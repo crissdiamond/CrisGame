@@ -763,6 +763,27 @@ body {
     color: var(--accent-red);
 }
 
+.log-entry.tier-common {
+    border-left: 2px solid rgba(148, 163, 184, 0.4);
+    padding-left: 0.5rem;
+}
+
+.log-entry.tier-notable {
+    border-left: 2px solid var(--accent-cyan);
+    padding-left: 0.5rem;
+}
+
+.log-entry.tier-major {
+    border-left: 3px solid var(--accent-purple);
+    padding-left: 0.5rem;
+}
+
+.log-entry.tier-singular {
+    border-left: 3px solid var(--accent-amber);
+    padding-left: 0.5rem;
+    background: rgba(245, 158, 11, 0.06);
+}
+
 /* Keyframe Animations */
 @keyframes rotate-dna {
     0% {

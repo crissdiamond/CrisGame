@@ -20,10 +20,25 @@ const PALETTE = {
 };
 
 const MARKER_COLOR = {
+    SINGULAR: 'rgba(245, 158, 11, 0.85)',
+    MAJOR:    'rgba(168, 85, 247, 0.70)',
+    NOTABLE:  'rgba(0, 242, 254, 0.55)',
+    COMMON:   'rgba(148, 163, 184, 0.30)',
     milestone: 'rgba(0, 242, 254, 0.55)',
-    hazard: 'rgba(239, 68, 68, 0.55)',
-    alert: 'rgba(245, 158, 11, 0.5)',
-    system: 'rgba(148, 163, 184, 0.35)'
+    hazard:    'rgba(239, 68, 68, 0.55)',
+    alert:     'rgba(245, 158, 11, 0.5)',
+    system:    'rgba(148, 163, 184, 0.35)'
+};
+
+const MARKER_WIDTH = {
+    SINGULAR: 2,
+    MAJOR: 1.5,
+    NOTABLE: 1,
+    COMMON: 1,
+    milestone: 1,
+    hazard: 1,
+    alert: 1,
+    system: 1
 };
 
 const GROUPS = {
@@ -152,7 +167,7 @@ export class HistoryView {
                 const x = t * w;
                 ctx.beginPath();
                 ctx.strokeStyle = MARKER_COLOR[m.category] || MARKER_COLOR.system;
-                ctx.lineWidth = 1;
+                ctx.lineWidth = MARKER_WIDTH[m.category] || 1;
                 ctx.moveTo(x + 0.5, 0);
                 ctx.lineTo(x + 0.5, h);
                 ctx.stroke();

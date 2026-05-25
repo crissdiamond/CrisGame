@@ -476,13 +476,17 @@ export class GameUI {
     /**
      * Add entry to scientific feed console
      */
-    logEvent(title, desc, type = 'system') {
+    logEvent(title, desc, type = 'system', meta = null) {
         const entry = document.createElement('div');
-        entry.className = `log-entry ${type}`;
-        
+        const tierClass = meta && meta.tier ? ` tier-${meta.tier.toLowerCase()}` : '';
+        entry.className = `log-entry ${type}${tierClass}`;
+
+        const tierPrefix = meta && meta.tier
+            ? `[${meta.tier}${typeof meta.tokens === 'number' ? ` +${meta.tokens}T` : ''}] `
+            : '';
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        entry.innerHTML = `<span>[${timestamp}]</span> <strong>${title}:</strong> ${desc}`;
-        
+        entry.innerHTML = `<span>[${timestamp}]</span> <strong>${tierPrefix}${title}:</strong> ${desc}`;
+
         this.scienceLog.appendChild(entry);
         this.scienceLog.scrollTop = this.scienceLog.scrollHeight;
     }
