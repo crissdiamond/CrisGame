@@ -197,6 +197,7 @@ export class GameUI {
         this.popupOverlay = document.getElementById('milestone-popup');
         this.popupTitle = document.getElementById('popup-title');
         this.popupDesc = document.getElementById('popup-desc');
+        this.popupReward = document.getElementById('popup-reward');
         this.popupCloseBtn = document.getElementById('popup-close-btn');
         this.popupDismissBtn = document.getElementById('popup-dismiss-btn');
         this.popupDossierContainer = document.getElementById('popup-dossier-container');
@@ -381,7 +382,7 @@ export class GameUI {
         }
     }
 
-    showMilestonePopup(title, desc, scientificDetails = null) {
+    showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null) {
         this.popupTitle.textContent = title;
         this.popupDesc.textContent = desc;
         
@@ -394,6 +395,14 @@ export class GameUI {
             this.popupDossierContainer.style.display = 'block';
         } else {
             this.popupDossierContainer.style.display = 'none';
+        }
+
+        // Dynamically set reward text
+        if (typeof rewardTokens === 'number' && rewardTokens > 0) {
+            this.popupReward.textContent = `Curator Reward: +${rewardTokens} Evo-Tokens`;
+            this.popupReward.style.display = 'block';
+        } else {
+            this.popupReward.style.display = 'none';
         }
         
         this.popupOverlay.style.display = 'flex';
@@ -474,8 +483,14 @@ export class GameUI {
         });
 
         // Close popup listeners
-        this.popupCloseBtn.addEventListener('click', () => this.hidePopup());
-        this.popupDismissBtn.addEventListener('click', () => this.hidePopup());
+        this.popupCloseBtn.addEventListener('click', () => {
+            this.hidePopup();
+            if (handlers.onPopupClose) handlers.onPopupClose();
+        });
+        this.popupDismissBtn.addEventListener('click', () => {
+            this.hidePopup();
+            if (handlers.onPopupClose) handlers.onPopupClose();
+        });
     }
 
     /**

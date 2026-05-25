@@ -25,6 +25,7 @@ class GameController {
         // Loop / Timing State
         this.isPlaying = false;
         this.lastTime = 0;
+        this.wasPlayingBeforePopup = false;
         
         // Time scale: 1 real second = 0.1 Million Years (Myr)
         this.timeScale = 0.1; 
@@ -81,12 +82,11 @@ class GameController {
                 this.lastTime = performance.now();
             },
             
-            // Interventions
             onIntervention: (type) => {
                 const res = this.eventSystem.triggerIntervention(type, this.planet, this.biology);
                 if (res.success) {
                     this.ui.logEvent(res.title, res.msg, "success");
-                    this.ui.showMilestonePopup(res.title, res.msg, res.scientificDetails);
+                    this.triggerPopup(res.title, res.msg, res.scientificDetails);
                     this.ui.syncSliders(this.planet);
                 } else {
                     this.ui.logEvent("INTERVENTION FAILED", res.msg, "hazard");
@@ -139,6 +139,15 @@ class GameController {
 
             onLoadState: () => {
                 this.loadGame();
+            },
+
+            onPopupClose: () => {
+                if (this.wasPlayingBeforePopup) {
+                    this.isPlaying = true;
+                    this.ui.setPlayState(this.isPlaying);
+                    this.lastTime = performance.now(); // reset timer to avoid huge delta-time jump
+                    this.wasPlayingBeforePopup = false;
+                }
             }
         });
 
@@ -188,7 +197,7 @@ class GameController {
                     // Major and Singular breakthroughs always get the popup.
                     // Other 'success' (non-tiered) events keep their existing popup behavior.
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || (evt.type === 'success' && !evt.tier)) {
-                        this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
+                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, evt.tokens);
                     }
                 });
             }
@@ -203,7 +212,7 @@ class GameController {
                     this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard') {
-                        this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
+                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, evt.tokens);
                     }
                 });
                 // Sync sliders back to planet values since events can alter targets
@@ -237,6 +246,15 @@ class GameController {
 
         // Keep loop running
         requestAnimationFrame((time) => this.loop(time));
+    }
+
+    triggerPopup(title, desc, details, rewardTokens = null) {
+        if (this.isPlaying) {
+            this.isPlaying = false;
+            this.ui.setPlayState(this.isPlaying);
+            this.wasPlayingBeforePopup = true;
+        }
+        this.ui.showMilestonePopup(title, desc, details, rewardTokens);
     }
 
     saveGame() {
