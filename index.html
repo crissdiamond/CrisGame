@@ -24,35 +24,43 @@
                     <span class="subtitle">System Designation: CRIS-982</span>
                 </div>
             </div>
-            <div class="system-status">
-                <span class="status-indicator online"></span>
-                <span class="status-label" id="system-status-text">SYSTEMS ACTIVE</span>
+            
+            <div class="header-right">
+                <button id="btn-open-interventions" class="btn btn-action header-action-btn">☄️ TRIGGER EVENT</button>
+                <div class="token-container">
+                    <span class="token-icon">🧬</span>
+                    <span class="token-label">EVO-TOKENS:</span>
+                    <span class="token-value" id="token-balance">15.0</span>
+                </div>
+                <div class="system-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-label" id="system-status-text">SYSTEMS ACTIVE</span>
+                </div>
             </div>
         </header>
 
         <!-- MAIN LAYOUT -->
         <main class="dashboard-grid">
             
-            <!-- LEFT PANEL: ENVIRONMENTAL CONTROLLER -->
+            <!-- LEFT PANEL: ENVIRONMENTAL CONTROLLER & INTERVENTIONS -->
             <section class="panel glass-card" id="control-panel">
                 <h2 class="panel-title">Environmental Controls</h2>
-                <p class="panel-desc">Manipulate planetary variables to influence organic chemical synthesis and biological viability.</p>
                 
                 <div class="control-group">
                     <div class="control-header">
                         <label for="temp-slider"><span class="icon">🌡️</span> Temperature</label>
                         <span class="control-value" id="temp-val">25°C</span>
                     </div>
-                    <input type="range" id="temp-slider" min="-50" max="150" value="75" class="custom-slider">
+                    <input type="range" id="temp-slider" min="-200" max="150" value="75" class="custom-slider">
                     <div class="slider-labels">
-                        <span>Freezing (-50°C)</span>
+                        <span>Cryo (-200°C)</span>
                         <span>Boiling (150°C)</span>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <div class="control-header">
-                        <label for="water-slider"><span class="icon">💧</span> Water Coverage</label>
+                        <label for="water-slider"><span class="icon" id="solvent-icon">💧</span> <span id="solvent-label">Liquid Solvent</span> Coverage</label>
                         <span class="control-value" id="water-val">30%</span>
                     </div>
                     <input type="range" id="water-slider" min="0" max="100" value="30" class="custom-slider">
@@ -74,16 +82,17 @@
                     </div>
                 </div>
 
-                <div class="event-triggers">
-                    <h3>Disaster Events</h3>
-                    <div class="btn-grid">
-                        <button id="btn-meteor" class="btn btn-warning">🌠 Meteor Strike</button>
-                        <button id="btn-volcano" class="btn btn-warning">🌋 Volcanic Erupt</button>
+                <!-- THREAT CENTRE -->
+                <div class="threat-center">
+                    <h3 class="panel-sub-title">Threat Center</h3>
+                    <div id="threat-list" class="threat-list-box">
+                        <div class="no-threats-msg">No active threats detected.</div>
                     </div>
                 </div>
+
             </section>
 
-            <!-- CENTER PANEL: planet VISUALIZATION -->
+            <!-- CENTER PANEL: PLANET VISUALIZATION -->
             <section class="panel glass-card main-viewport" id="viewport-panel">
                 <div class="viewport-header">
                     <div class="view-toggles">
@@ -109,78 +118,222 @@
                         <span class="value highlight" id="habitability-score">0%</span>
                     </div>
                     <div class="telemetry-item">
-                        <span class="label">ATMOSPHERE STATUS</span>
-                        <span class="value" id="atm-status">Toxic (Prebiotic)</span>
+                        <span class="label">SOLVENT STATE</span>
+                        <span class="value text-cyan" id="solvent-state">Water</span>
+                    </div>
+                </div>
+                
+                <div class="telemetry-bar secondary">
+                    <div class="telemetry-item">
+                        <span class="label">MAGNETIC SHIELD</span>
+                        <span class="value" id="magnet-shield">100%</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">OZONE LAYER</span>
+                        <span class="value" id="ozone-layer">0%</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">STAR LUMINOSITY</span>
+                        <span class="value" id="star-luminosity">1.00x</span>
+                    </div>
+                    <div class="telemetry-item" id="moon-indicator" style="display:none;">
+                        <span class="label">MOON</span>
+                        <span class="value text-cyan" id="moon-status">🌕 PRESENT</span>
                     </div>
                 </div>
             </section>
 
-            <!-- RIGHT PANEL: LIFE METRICS & TELEMETRY -->
+            <!-- RIGHT PANEL: LIFE METRICS & EVOLUTION ROADMAP -->
             <section class="panel glass-card" id="metrics-panel">
                 <h2 class="panel-title">Biological Telemetry</h2>
                 
-                <div class="metric-category">
-                    <h3>Organic Soup</h3>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-name">Amino Acids & Proteins</span>
-                            <span class="metric-value" id="soup-density">0.00 ppm</span>
+                <!-- Tab Controls -->
+                <div class="tab-controls">
+                    <button id="tab-metrics" class="tab-btn active">Biomass</button>
+                    <button id="tab-roadmap" class="tab-btn">Evolution Tree</button>
+                </div>
+
+                <!-- BIOMASS TAB CONTENT -->
+                <div id="tab-content-metrics" class="tab-content active">
+                    <div class="metric-category">
+                        <h3>Atmosphere & Gas</h3>
+                        <div class="atmosphere-details-compact">
+                            <div class="gas-bars-horizontal">
+                                <div class="gas-bar-wrapper"><span class="gas-name">CO₂</span><div class="gas-bar-bg"><div class="gas-bar-fill co2" id="bar-co2" style="width:95%"></div></div><span id="gas-co2-val">95.0%</span></div>
+                                <div class="gas-bar-wrapper"><span class="gas-name">N₂</span><div class="gas-bar-bg"><div class="gas-bar-fill n2" id="bar-n2" style="width:5%"></div></div><span id="gas-n2-val">4.9%</span></div>
+                                <div class="gas-bar-wrapper"><span class="gas-name">O₂</span><div class="gas-bar-bg"><div class="gas-bar-fill o2" id="bar-o2" style="width:0%"></div></div><span id="gas-o2-val">0.1%</span></div>
+                                <div class="gas-bar-wrapper" id="ch4-gas-wrapper" style="display:none;"><span class="gas-name">CH₄</span><div class="gas-bar-bg"><div class="gas-bar-fill ch4" id="bar-ch4" style="width:0%"></div></div><span id="gas-ch4-val">0.0%</span></div>
+                                <div class="gas-bar-wrapper" id="h2-gas-wrapper" style="display:none;"><span class="gas-name">H₂</span><div class="gas-bar-bg"><div class="gas-bar-fill h2" id="bar-h2" style="width:0%"></div></div><span id="gas-h2-val">0.0%</span></div>
+                            </div>
                         </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" id="soup-progress" style="width: 0%"></div>
+                    </div>
+
+                    <div class="metric-category" id="biomass-readouts">
+                        <h3>Biomasses</h3>
+                        <!-- Water Solvent Biomass -->
+                        <div class="solvent-metrics-group" id="water-metrics">
+                            <div class="metric-card" id="soup-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Prebiotic Soup</span><span class="metric-value" id="soup-density">0.00 ppm</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="soup-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="anaerobic-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Anaerobic Archea</span><span class="metric-value" id="anaerobic-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar anaerobic" id="anaerobic-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="photosynthetic-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Cyanobacteria</span><span class="metric-value" id="photosynthetic-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar photosynthetic" id="photosynthetic-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="eukaryotic-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Complex Eukaryotes</span><span class="metric-value" id="eukaryotic-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar eukaryotic" id="eukaryotic-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="multicellular-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Multicellular Organisms</span><span class="metric-value" id="multicellular-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar multicellular" id="multicellular-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Sponges -->
+                            <div class="metric-card" id="sponges-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Marine Sponges</span><span class="metric-value" id="sponges-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar sponges" id="sponges-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Meduses -->
+                            <div class="metric-card" id="meduses-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Jellyfish & Meduses</span><span class="metric-value" id="meduses-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar meduses" id="meduses-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Water Worms -->
+                            <div class="metric-card" id="worms-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Bilateral Water Worms</span><span class="metric-value" id="worms-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar worms" id="worms-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Early Fish -->
+                            <div class="metric-card" id="fish-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Early Fish</span><span class="metric-value" id="fish-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar fish" id="fish-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Non-Vascular Mosses -->
+                            <div class="metric-card" id="mosses-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Non-Vascular Mosses</span><span class="metric-value" id="mosses-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar mosses" id="mosses-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Vascular Ferns -->
+                            <div class="metric-card" id="ferns-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Vascular Ferns</span><span class="metric-value" id="ferns-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar ferns" id="ferns-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Conifers -->
+                            <div class="metric-card" id="conifers-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Gymnosperms (Conifers)</span><span class="metric-value" id="conifers-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar conifers" id="conifers-progress" style="width: 0%"></div></div>
+                            </div>
+                            <!-- Flowering Plants -->
+                            <div class="metric-card" id="angiosperms-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Angiosperms (Flowers)</span><span class="metric-value" id="angiosperms-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar angiosperms" id="angiosperms-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="sauropsid-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Sauropsida (Dinosaurs)</span><span class="metric-value" id="sauropsid-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar sauropsid" id="sauropsid-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="synapsid-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Synapsida (Mammals)</span><span class="metric-value" id="synapsid-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar synapsid" id="synapsid-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="cyborg-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Cyborg Hybrids</span><span class="metric-value" id="cyborg-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="cyborg-progress" style="width: 0%; background: linear-gradient(90deg, #10b981, #06b6d4);"></div></div>
+                            </div>
+                            <div class="metric-card" id="noosphere-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Planetary Noosphere</span><span class="metric-value" id="noosphere-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="noosphere-progress" style="width: 0%; background: linear-gradient(90deg, #f59e0b, #06b6d4);"></div></div>
+                            </div>
+                            <div class="metric-card" id="gaia-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Gaia Biosphere Hivemind</span><span class="metric-value" id="gaia-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="gaia-progress" style="width: 0%; background: linear-gradient(90deg, #10b981, #ec4899);"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- Ammonia Solvent Biomass -->
+                        <div class="solvent-metrics-group" id="ammonia-metrics" style="display:none;">
+                            <div class="metric-card" id="ammonia-soup-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Ammonic Soup</span><span class="metric-value" id="ammonia-soup-density">0.00 ppm</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="ammonia-soup-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="ammonia-proto-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Ammonic Proto-cells</span><span class="metric-value" id="ammonia-proto-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar anaerobic" id="ammonia-proto-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="ammonia-multi-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Ammonic Multicells</span><span class="metric-value" id="ammonia-multi-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar multicellular" id="ammonia-multi-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="silico-flora-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Silico-Flora</span><span class="metric-value" id="silico-flora-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar photosynthetic" id="silico-flora-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="cryo-fauna-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Cryo-Fauna Megafauna</span><span class="metric-value" id="cryo-fauna-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar sauropsid" id="cryo-fauna-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="quantum-lattice-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Quantum Crystal Lattices</span><span class="metric-value" id="quantum-lattice-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="quantum-lattice-progress" style="width: 0%; background: linear-gradient(90deg, #06b6d4, #6366f1);"></div></div>
+                            </div>
+                            <div class="metric-card" id="cryo-hivemind-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Cryo-Biosphere Hivemind</span><span class="metric-value" id="cryo-hivemind-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="cryo-hivemind-progress" style="width: 0%; background: linear-gradient(90deg, #a78bfa, #4338ca);"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- Methane Solvent Biomass -->
+                        <div class="solvent-metrics-group" id="methane-metrics" style="display:none;">
+                            <div class="metric-card" id="methane-soup-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Hydrocarbon Soup</span><span class="metric-value" id="methane-soup-density">0.00 ppm</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="methane-soup-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="methane-proto-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Cryo-Methanogens</span><span class="metric-value" id="methane-proto-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar anaerobic" id="methane-proto-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="methane-multi-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Cryo-Multicells</span><span class="metric-value" id="methane-multi-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar multicellular" id="methane-multi-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="cryo-organisms-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Cyto-Beasts</span><span class="metric-value" id="cryo-organisms-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar synapsid" id="cryo-organisms-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="thinking-ocean-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Thinking Methane Oceans</span><span class="metric-value" id="thinking-ocean-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="thinking-ocean-progress" style="width: 0%; background: linear-gradient(90deg, #ea580c, #f59e0b);"></div></div>
+                            </div>
+                            <div class="metric-card" id="cryo-colloid-card" style="display:none;">
+                                <div class="metric-header"><span class="metric-name">Megastructure Cryo-Colloids</span><span class="metric-value" id="cryo-colloid-pop">0.00 Index</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar" id="cryo-colloid-progress" style="width: 0%; background: linear-gradient(90deg, #b45309, #d97706);"></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="metric-category">
-                    <h3>Monocellular Life</h3>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-name">Anaerobic Bacteria</span>
-                            <span class="metric-value" id="anaerobic-pop">0.00 M/mL</span>
+                <!-- ROADMAP TAB CONTENT (EVOLUTION ROADMAP TREE) -->
+                <div id="tab-content-roadmap" class="tab-content">
+                    <div class="roadmap-tree-container">
+                        <div class="tree-branch-selector">
+                            <span class="branch-label">Active Branch:</span>
+                            <span id="active-branch-name" class="branch-highlight">Water Line</span>
                         </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar anaerobic" id="anaerobic-progress" style="width: 0%"></div>
+                        
+                        <!-- Dynamic node tree grid -->
+                        <div class="tree-nodes-list" id="tree-nodes-list">
+                            <!-- Populated in UI script based on current solvent -->
                         </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-name">Photosynthetic Bacteria</span>
-                            <span class="metric-value" id="photosynthetic-pop">0.00 M/mL</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar photosynthetic" id="photosynthetic-progress" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="metric-category">
-                    <h3>Complex Life</h3>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-name">Multicellular Organisms</span>
-                            <span class="metric-value" id="multicellular-pop">0</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar multicellular" id="multicellular-progress" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="atmosphere-details">
-                    <h3>Gas Composition</h3>
-                    <div class="gas-bars">
-                        <div class="gas-item">
-                            <span>CO₂</span>
-                            <span id="gas-co2">95.0%</span>
-                        </div>
-                        <div class="gas-item">
-                            <span>N₂</span>
-                            <span id="gas-n2">4.9%</span>
-                        </div>
-                        <div class="gas-item">
-                            <span>O₂</span>
-                            <span id="gas-o2">0.1%</span>
+                        <!-- Details card for nudge -->
+                        <div class="node-details-card glass-card" id="node-details">
+                            <h4 id="node-details-title">Evolution Details</h4>
+                            <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
+                            <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
                         </div>
                     </div>
                 </div>
@@ -190,11 +343,155 @@
             <section class="panel glass-card full-width" id="log-panel">
                 <h2 class="panel-title console-title">Science Feed Console</h2>
                 <div class="console-box" id="science-log">
-                    <div class="log-entry system">[SYSTEM INITIALIZED] Welcome to the EvoPlanet Curatorial Terminal. Adjust sliders to begin chemical synthesis.</div>
+                    <div class="log-entry system">[SYSTEM INITIALIZED] Welcome to the EvoPlanet Curatorial Terminal. Spend tokens in the Interventions panel to steer events and nudge species.</div>
                 </div>
             </section>
 
         </main>
+    </div>
+
+    <!-- MILESTONE OVERLAY POPUP -->
+    <div id="milestone-popup" class="popup-overlay" style="display: none;">
+        <div class="popup-content glass-card">
+            <span class="popup-close" id="popup-close-btn">&times;</span>
+            <div class="popup-icon">🎉</div>
+            <h2 id="popup-title">Milestone Unlocked!</h2>
+            <p id="popup-desc">Milestone description goes here.</p>
+            
+            <!-- Scientific Dossier Accordion -->
+            <div class="dossier-accordion" id="popup-dossier-container" style="display: none;">
+                <button class="dossier-toggle-btn" id="popup-toggle-dossier">
+                    <span>🔬 Scientific Dossier</span>
+                    <span class="toggle-icon" id="popup-dossier-toggle-icon">▼</span>
+                </button>
+                <div class="dossier-content" id="popup-dossier-text-wrapper">
+                    <p id="popup-dossier-text">Scientific details...</p>
+                </div>
+            </div>
+
+            <div class="popup-reward">Curator Reward: +5 Evo-Tokens</div>
+            <button id="popup-dismiss-btn" class="btn btn-action">Acknowledge</button>
+        </div>
+    </div>
+
+    <!-- ASTROBIOLOGICAL SETUP TERMINAL MODAL -->
+    <div id="setup-modal" class="popup-overlay setup-overlay">
+        <div class="popup-content setup-content glass-card">
+            <h2 class="setup-main-title">🧬 Astrobiological Setup Terminal</h2>
+            <p class="setup-subtitle">Design stellar and planetary parameters to spawn your protoplanet.</p>
+            
+            <div class="setup-grid">
+                <!-- Star & Orbit Selection -->
+                <div class="setup-column">
+                    <h3>Stellar Parameters</h3>
+                    
+                    <div class="setup-group">
+                        <label for="setup-star-class">Stellar Classification</label>
+                        <select id="setup-star-class" class="setup-select">
+                            <option value="g_dwarf" selected>G-Dwarf (Yellow Sun - Stable)</option>
+                            <option value="m_dwarf">M-Dwarf (Red Dwarf - Flare Active)</option>
+                            <option value="blue_giant">Blue Giant (High UV / Stellar Winds)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setup-group">
+                        <div class="slider-header-flex">
+                            <label for="setup-star-size">Stellar Luminosity (L/L☉)</label>
+                            <span id="setup-star-size-val">1.0x</span>
+                        </div>
+                        <input type="range" id="setup-star-size" min="0.1" max="3.0" step="0.1" value="1.0" class="custom-slider">
+                    </div>
+                    
+                    <div class="setup-group">
+                        <div class="slider-header-flex">
+                            <label for="setup-orbit">Orbital Distance (AU)</label>
+                            <span id="setup-orbit-val">1.0 AU</span>
+                        </div>
+                        <input type="range" id="setup-orbit" min="0.1" max="6.0" step="0.1" value="1.0" class="custom-slider">
+                    </div>
+                </div>
+                
+                <!-- Planet Selection -->
+                <div class="setup-column">
+                    <h3>Planetary Parameters</h3>
+                    
+                    <div class="setup-group">
+                        <label>Planetary Classification</label>
+                        <div class="setup-btn-group" id="setup-planet-size-group">
+                            <button class="btn setup-toggle-btn" data-size="small">Small (Mars-size)</button>
+                            <button class="btn setup-toggle-btn active" data-size="medium">Medium (Earth-size)</button>
+                            <button class="btn setup-toggle-btn" data-size="large">Large (Super-Earth)</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setup-group">
+                        <div class="slider-header-flex">
+                            <label for="setup-volatiles">Initial Volatiles (Solvents)</label>
+                            <span id="setup-volatiles-val">40%</span>
+                        </div>
+                        <input type="range" id="setup-volatiles" min="0" max="100" value="40" class="custom-slider">
+                    </div>
+                    
+                    <div class="setup-group">
+                        <div class="slider-header-flex">
+                            <label for="setup-iron">Iron Core Abundance</label>
+                            <span id="setup-iron-val">50%</span>
+                        </div>
+                        <input type="range" id="setup-iron" min="0" max="100" value="50" class="custom-slider">
+                    </div>
+                    
+                    <div class="setup-group">
+                        <div class="slider-header-flex">
+                            <label for="setup-carbon">Carbon/Silicate Buffer</label>
+                            <span id="setup-carbon-val">30%</span>
+                        </div>
+                        <input type="range" id="setup-carbon" min="0" max="100" value="30" class="custom-slider">
+                    </div>
+                </div>
+                
+                <!-- Dynamic Habitable Zone Output -->
+                <div class="setup-column setup-telemetry-col">
+                    <h3>Thermodynamic Telemetry</h3>
+                    <div class="setup-telemetry-box glass-card">
+                        <div class="setup-telemetry-item">
+                            <span class="label">EQUILIBRIUM TEMP</span>
+                            <span class="value" id="setup-temp-eq">5.0°C</span>
+                        </div>
+                        <div class="setup-telemetry-item">
+                            <span class="label">EXPECTED PRESSURE</span>
+                            <span class="value" id="setup-pressure-eq">1.0 atm</span>
+                        </div>
+                        <div class="setup-telemetry-item">
+                            <span class="label">ORBITAL ZONE</span>
+                            <span class="value highlight-orange" id="setup-orbital-zone">WATER HABITABLE ZONE</span>
+                        </div>
+                        <div class="setup-telemetry-item">
+                            <span class="label">VIABLE BIO-LINE</span>
+                            <span class="value highlight-cyan" id="setup-viable-line">Water-based Life</span>
+                        </div>
+                    </div>
+                    <div class="setup-notes">
+                         - Red dwarf orbits must be close but face solar flare strip risk.<br>
+                         - Blue giants have far-out HZs but intense radiation levels.<br>
+                         - Larger iron cores generate stronger initial magnetospheres.
+                    </div>
+                </div>
+            </div>
+            
+            <button id="setup-launch-btn" class="btn btn-action launch-btn">INJECT PROTOPLANET & INITIATE SIMULATION</button>
+        </div>
+    </div>
+
+    <!-- PLANETARY INTERVENTIONS MODAL -->
+    <div id="interventions-modal" class="popup-overlay" style="display: none;">
+        <div class="popup-content interventions-content glass-card">
+            <span class="popup-close" id="interventions-close-btn">&times;</span>
+            <h2 id="interventions-modal-title">☄️ Planetary Events Hub</h2>
+            <p class="setup-subtitle">Trigger cosmic anomalies or planetary engineering events to guide evolution.</p>
+            <div class="interventions-grid-list" id="interventions-grid-list">
+                <!-- Dynamically populated in JS -->
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript Modules -->

@@ -1,213 +1,1249 @@
 /**
- * Handles the biological progression calculations:
- * Organic Soup -> Monocellular (Anaerobic & Photosynthetic) -> Multicellular
+ * Handles the biological progression calculations for three solvent systems:
+ * 1. Water Line: Primordial Soup -> Anaerobic -> Photosynthetic -> Eukaryotic -> Multicellular -> Cambrian -> Land Plants -> Arthropods -> Tetrapods -> Sauropsids (Dinosaurs) & Synapsids (Mammals)
+ * 2. Ammonia Line: Ammonic Soup -> Proto-Ammonic -> Ammonic Multicellular -> Silico-Flora -> Cryo-Fauna
+ * 3. Methane Line: Hydrocarbon Soup -> Methanotrophic Proto -> Methane Multicellular -> Cryo-Organisms
  */
 export class BiologySimulation {
     constructor() {
-        // Populations & Densities
+        // --- Water Line Populations ---
         this.organicSoup = 0.0;             // Concentration in ppm (0 to 100)
-        this.anaerobicPop = 0.0;            // Population in Million cells/mL
-        this.photosyntheticPop = 0.0;       // Population in Million cells/mL
-        this.multicellularPop = 0.0;        // Complexity/Population (0 to 100)
+        this.anaerobicPop = 0.0;            // M cells/mL
+        this.photosyntheticPop = 0.0;       // M cells/mL
+        this.eukaryoticPop = 0.0;           // M cells/mL
+        this.multicellularPop = 0.0;        // Complexity Index (0 to 100)
+        
+        // New intermediate water animals
+        this.spongesPop = 0.0;
+        this.medusesPop = 0.0;
+        this.wormsPop = 0.0;
+        this.fishPop = 0.0;
 
-        // Evolutionary stages unlocked flags
+        // New vegetable soil lines
+        this.mossesPop = 0.0;
+        this.fernsPop = 0.0;
+        this.conifersPop = 0.0;
+        this.angiospermsPop = 0.0;
+
+        this.cambrianPop = 0.0;             // Marine Invertebrates Index
+        this.landPlantsPop = 0.0;           // Land Flora Index (composite)
+        this.arthropodPop = 0.0;            // Land Insects Index
+        this.tetrapodPop = 0.0;             // Tetrapods Index
+        this.sauropsidPop = 0.0;            // Dinosaurs/Reptiles Index
+        this.synapsidPop = 0.0;             // Mammals/Synapsids Index
+        this.cognitiveSpeciesPop = 0.0;     // Cognitive Species Index
+        this.technologicalAIPop = 0.0;      // Silicon AI Index
+        this.cyborgPop = 0.0;               // Cyborg Hybrids Index
+        this.noospherePop = 0.0;            // Planetary AI Noosphere Index
+        this.gaiaHivemindPop = 0.0;         // Biosphere Gaia Hivemind Index
+
+        // Unlocked Flags - Water Line
         this.unlockedSoup = false;
+        this.unlockedMembrane = false;
+        this.unlockedBacteria = false;
         this.unlockedAnaerobic = false;
         this.unlockedPhotosynthetic = false;
+        this.unlockedNucleus = false;
+        this.unlockedMitochondria = false;
+        this.unlockedSexualReproduction = false;
+        this.unlockedEukaryotic = false;
         this.unlockedMulticellular = false;
 
-        // Mutation / Adaptation levels (0.0 to 1.0)
+        // New intermediate water unlocks
+        this.unlockedSponges = false;
+        this.unlockedMeduses = false;
+        this.unlockedWorms = false;
+        this.unlockedFish = false;
+
+        // New vegetable soil unlocks
+        this.unlockedMosses = false;
+        this.unlockedFerns = false;
+        this.unlockedConifers = false;
+        this.unlockedAngiosperms = false;
+
+        this.unlockedCambrian = false;
+        this.unlockedLandPlants = false;
+        this.unlockedArthropod = false;
+        this.unlockedTetrapod = false;
+        this.unlockedSauropsid = false;
+        this.unlockedSynapsid = false;
+        this.unlockedCognitive = false;
+        this.unlockedTechnologicalAI = false;
+        this.unlockedCyborg = false;
+        this.unlockedNoosphere = false;
+        this.unlockedGaiaHivemind = false;
+
+        // --- Ammonia Line Populations ---
+        this.ammonicSoup = 0.0;
+        this.ammonicProtoPop = 0.0;
+        this.ammonicMultiPop = 0.0;
+        this.silicoFloraPop = 0.0;
+        this.cryoFaunaPop = 0.0;
+        this.crystallineCognitivePop = 0.0;
+        this.quantumLatticePop = 0.0;       // Solid-State Quantum Lattices
+        this.cryoHivemindPop = 0.0;         // Cryo-Biosphere Hivemind
+
+        // Unlocked Flags - Ammonia Line
+        this.unlockedAmmonicSoup = false;
+        this.unlockedAmmonicProto = false;
+        this.unlockedAmmonicMulti = false;
+        this.unlockedSilicoFlora = false;
+        this.unlockedCryoFauna = false;
+        this.unlockedCrystallineCognitive = false;
+        this.unlockedQuantumLattice = false;
+        this.unlockedCryoHivemind = false;
+
+        // --- Methane Line Populations ---
+        this.methaneSoup = 0.0;
+        this.methaneProtoPop = 0.0;
+        this.methaneMultiPop = 0.0;
+        this.cryoOrganismsPop = 0.0;
+        this.cryoPolymerNetworkPop = 0.0;
+        this.thinkingOceanPop = 0.0;        // Thinking Hydrocarbon Oceans
+        this.cryoColloidPop = 0.0;          // Megastructure Cryo-Colloids
+
+        // Unlocked Flags - Methane Line
+        this.unlockedMethaneSoup = false;
+        this.unlockedMethaneProto = false;
+        this.unlockedMethaneMulti = false;
+        this.unlockedCryoOrganisms = false;
+        this.unlockedCryoPolymerNetwork = false;
+        this.unlockedThinkingOcean = false;
+        this.unlockedCryoColloid = false;
+
+        // --- Genetic Adaptations / Nudges (unlocked via tokens) ---
+        this.activeAdaptations = new Set(); // e.g., 'endosymbiosis', 'vascular_tissue', 'amniotic_egg', 'endothermy', 'scales', 'silicon_chains', 'cryo_polymers', etc.
+
+        // General Mutation / Adaptation Level
         this.radiationResistance = 0.1;
     }
 
     /**
+     * Nudge evolution via spending tokens
+     */
+    applyAdaptation(id) {
+        this.activeAdaptations.add(id);
+    }
+
+    /**
      * Compute biological updates over one simulation step
-     * @param {number} tickRate - simulation speed step in Million Years (Myr)
-     * @param {Planet} planet - reference to the planet environmental state
-     * @returns {Array} array of events/alerts triggered during this step
      */
     update(tickRate, planet) {
         const events = [];
-        
+        let o2Prod = 0;
+        let co2Cons = 0;
+        let n2Prod = 0;
+        let ch4Prod = 0;
+        let h2Cons = 0;
+
+        const isWater = planet.activeSolvent === 'water';
+        const isAmmonia = planet.activeSolvent === 'ammonia';
+        const isMethane = planet.activeSolvent === 'methane';
+
         // ----------------------------------------------------
-        // 1. ORGANIC SOUP (Prebiotic Synthesis)
+        // 1. WATER-BASED BIOCHEMISTRY CYCLE
         // ----------------------------------------------------
-        if (planet.temperature > 30 && planet.temperature < 120 && planet.waterCoverage > 10) {
-            // Synthesis speed depends on water, temperature (peaks around 70C), and ionizing radiation
-            const tempFactor = 1 - Math.abs(planet.temperature - 70) / 50; // peaks at 70C
-            const radFactor = Math.min(2.0, planet.radiation * 0.5); // some radiation speeds up synthesis
-            const waterFactor = planet.waterCoverage / 100;
-            // Moon tides boost prebiotic synthesis by 2.5x
-            const tideBoost = planet.hasMoon ? 2.5 : 1.0;
-            
-            const synthesisRate = Math.max(0, tempFactor) * radFactor * waterFactor * 8.0 * tideBoost;
-            this.organicSoup = Math.min(100.0, this.organicSoup + synthesisRate * tickRate);
-            
-            if (!this.unlockedSoup && this.organicSoup > 5.0) {
-                this.unlockedSoup = true;
+        if (isWater) {
+            // Soup Synthesis (needs liquid water, 0 to 100°C)
+            if (planet.temperature > 10 && planet.temperature < 90 && planet.waterCoverage > 10) {
+                const tempFactor = 1 - Math.abs(planet.temperature - 50) / 45;
+                const radFactor = Math.min(2.0, planet.radiation * 0.4);
+                const tideBoost = planet.hasMoon ? 2.5 : 1.0;
+                const synthesisRate = Math.max(0, tempFactor) * radFactor * (planet.waterCoverage / 100) * 8.0 * tideBoost;
+                this.organicSoup = Math.min(100.0, this.organicSoup + synthesisRate * tickRate);
+
+                if (!this.unlockedSoup && this.organicSoup > 5.0) {
+                    this.unlockedSoup = true;
+                    events.push({
+                        title: "🧪 PRIMORDIAL SOUP FORMED",
+                        desc: "Liquid water has enabled amino acid synthesis. Organic soup accumulation active.",
+                        scientificDetails: "Organic molecules (amino acids, nucleobases, lipids) accumulate in water bodies, synthesized via stellar UV radiolysis, atmospheric spark discharges, and mineral catalysis at hydrothermal vents. This prebiotic chemistry serves as the raw material for early biochemical structures.",
+                        type: "success"
+                    });
+                }
+            } else {
+                const decay = planet.temperature > 95 ? 0.3 : 0.02;
+                this.organicSoup = Math.max(0, this.organicSoup - this.organicSoup * decay * tickRate);
+            }
+
+            // External Membrane
+            if (this.unlockedSoup && this.organicSoup > 8.0 && !this.unlockedMembrane) {
+                this.unlockedMembrane = true;
                 events.push({
-                    title: "🧪 PREBIOTIC SYNTHESIS COMPLETED",
-                    desc: "Amino acids, purines, and nucleotides are accumulating in the primordial warm ponds. The building blocks of life are ready.",
+                    title: "🦠 EXTERNAL MEMBRANE FORMED",
+                    desc: "Lipid molecules spontaneously form bilayers, creating an enclosed vesicle to isolate chemical reactions.",
+                    scientificDetails: "Self-assembling amphiphilic fatty acids spontaneously form spherical bilayer vesicles (liposomes). This compartmentalization isolates metabolic loops and early genetic molecules from environmental entropy, keeping reactants concentrated.",
                     type: "success"
                 });
             }
-        } else {
-            // Denaturing of compounds in extreme heat, or slow decay
-            const decay = planet.temperature > 120 ? 0.3 : 0.02;
-            this.organicSoup = Math.max(0, this.organicSoup - this.organicSoup * decay * tickRate);
-        }
 
-        // ----------------------------------------------------
-        // 2. ANAEROBIC BACTERIA (Single-cell life - no oxygen required)
-        // ----------------------------------------------------
-        if (this.unlockedSoup && this.organicSoup > 10.0) {
-            // Evolve first anaerobic cell if not yet active
-            if (this.anaerobicPop === 0) {
+            // Bacteria / Archea (strict anaerobes)
+            if (this.unlockedMembrane && this.organicSoup > 15.0 && this.anaerobicPop === 0) {
                 this.anaerobicPop = 0.1;
+                this.unlockedBacteria = true;
                 this.unlockedAnaerobic = true;
                 events.push({
-                    title: "🧫 MONOCELLULAR LIFE EMERGED",
-                    desc: "The first single-cell anaerobic organisms have formed in deep ocean thermal vents, feeding off the surrounding organic compounds.",
+                    title: "🦠 PROKARYOTES UNLOCKED",
+                    desc: "Simple prokaryotic cells emerge. Lacking a nucleus or complex organelles, they require minimal metabolic energy.",
+                    scientificDetails: "Unicellular prokaryotic life establishes itself in the oceans. Characterized by naked DNA and the absence of membrane-bound internal organelles (like nuclei or mitochondria), these early bacteria require very little complexity or energy to survive, utilising simple anaerobic metabolic pathways.",
                     type: "success"
                 });
             }
-        }
 
-        if (this.anaerobicPop > 0) {
-            // Environment viability factors
-            const tempViability = this.getTempViability(planet.temperature, 0, 45, 80); // peaks at 45C
-            let waterViability = planet.waterCoverage > 15 ? 1.0 : (planet.waterCoverage / 15);
-            // Glaciation restricts liquid water access
-            if (planet.isGlaciated) waterViability *= 0.4;
-            // Radiation hazard: high radiation kills unless resistance is high
-            const radViability = Math.max(0, 1 - (planet.radiation * (1 - this.radiationResistance)) / 6.0);
-            // Oxygen is toxic to strict anaerobes (Great Oxidation Event effect)
-            const o2Toxicity = Math.max(0.1, 1 - (planet.o2 / 30.0));
+            if (this.anaerobicPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 0, 45, 80);
+                const o2Toxicity = Math.max(0.01, 1 - (planet.o2 / 25.0));
+                const radViability = Math.max(0, 1 - (planet.getEffectiveRadiation() * (1 - this.radiationResistance)) / 6.0);
+                const totalViability = tempViability * o2Toxicity * radViability * (planet.waterCoverage / 100);
 
-            const totalViability = tempViability * waterViability * radViability * o2Toxicity;
-
-            if (totalViability > 0.1) {
-                // Growth relies on organic soup as nutrients
-                const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
-                const growthRate = 1.2 * totalViability * nutrientFactor;
-                
-                // Logistic growth (cap at 150 M/mL)
-                const carryingCapacity = 150.0 * waterViability;
-                const dPop = growthRate * this.anaerobicPop * (1 - this.anaerobicPop / carryingCapacity) * tickRate;
-                this.anaerobicPop = Math.max(0.01, this.anaerobicPop + dPop);
-                
-                // Consume soup
-                const consumedSoup = this.anaerobicPop * 0.15 * tickRate;
-                this.organicSoup = Math.max(0, this.organicSoup - consumedSoup);
-            } else {
-                // Decay/die-off
-                const deathRate = 0.5 * (1 - totalViability);
-                this.anaerobicPop = Math.max(0, this.anaerobicPop - this.anaerobicPop * deathRate * tickRate);
+                if (totalViability > 0.05) {
+                    const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
+                    const growthRate = 1.3 * totalViability * nutrientFactor;
+                    const dPop = growthRate * this.anaerobicPop * (1 - this.anaerobicPop / 150.0) * tickRate;
+                    this.anaerobicPop = Math.max(0.01, this.anaerobicPop + dPop);
+                    this.organicSoup = Math.max(0, this.organicSoup - this.anaerobicPop * 0.15 * tickRate);
+                } else {
+                    this.anaerobicPop = Math.max(0, this.anaerobicPop - this.anaerobicPop * 0.4 * tickRate);
+                }
             }
-        }
 
-        // ----------------------------------------------------
-        // 3. PHOTOSYNTHETIC BACTERIA (Aerobic/oxygen-releasing bacteria)
-        // ----------------------------------------------------
-        if (this.unlockedAnaerobic && this.anaerobicPop > 30.0 && !this.unlockedPhotosynthetic) {
-            // Mutation chance scales with radiation. Solar flares boost mutation chance by 3x.
-            const flareBoost = planet.radiation > 7.0 ? 3.0 : 1.0;
-            const mutationChance = Math.min(0.5, planet.radiation * 0.02 * tickRate * flareBoost);
-            if (Math.random() < mutationChance || planet.age > 40.0) { // guarantee at some point
-                this.photosyntheticPop = 0.1;
-                this.unlockedPhotosynthetic = true;
+            // Photosynthetic Bacteria (Cyanobacteria - consumes CO2, releases O2)
+            if (this.unlockedBacteria && this.anaerobicPop > 25.0 && !this.unlockedPhotosynthetic) {
+                const mutationChance = Math.min(0.5, planet.getEffectiveRadiation() * 0.05 * tickRate);
+                if (Math.random() < mutationChance || planet.age > 30.0) {
+                    this.photosyntheticPop = 0.1;
+                    this.unlockedPhotosynthetic = true;
+                    events.push({
+                        title: "🍃 OXYGENIC PHOTOSYNTHESIS EVOLVED",
+                        desc: "Cyanobacteria strains mutate, harvesting stellar energy to split water, venting O₂ gas.",
+                        scientificDetails: "The evolution of the oxygen-evolving complex in photosystem II enables cyanobacteria to split abundant water (H2O) molecules for metabolic electrons, releasing molecular oxygen (O2) as a byproduct and replacing anaerobic energy paths.",
+                        type: "success"
+                    });
+                }
+            }
+
+            if (this.photosyntheticPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 30, 60);
+                const radViability = Math.max(0, 1 - (planet.getEffectiveRadiation() * (1 - this.radiationResistance)) / 5.0);
+                const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const growthRate = 1.0 * totalViability * (0.3 + (planet.radiation / 5.0));
+                    const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / 200.0) * tickRate;
+                    this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
+                } else {
+                    this.photosyntheticPop = Math.max(0, this.photosyntheticPop - this.photosyntheticPop * 0.5 * tickRate);
+                }
+            }
+
+            // Great Oxidation Event trigger
+            if (this.unlockedPhotosynthetic && planet.o2 >= 15.0 && !planet.goeAlertTriggered) {
+                planet.goeAlertTriggered = true;
                 events.push({
-                    title: "🍃 PHOTOSYNTHESIS EVOLVED",
-                    desc: "A strain of cells mutated to harness energy from stellar radiation, consuming carbon dioxide and releasing free Oxygen as a byproduct.",
+                    title: "💨 GREAT OXIDATION EVENT (GOE)",
+                    desc: "Atmospheric oxygen spikes above 15%, wiping out strict anaerobes but creating the ozone layer.",
+                    scientificDetails: "Once marine iron and sulfur chemical sinks saturate, biological oxygen escapes into the atmosphere. This spikes O2 concentrations, forming an ozone (O3) layer that blocks cosmic UV radiation but triggering a massive extinction of obligate anaerobes.",
+                    type: "alert"
+                });
+            }
+
+            // Cellular Nucleus
+            if (this.unlockedPhotosynthetic && this.photosyntheticPop > 15.0 && !this.unlockedNucleus) {
+                this.unlockedNucleus = true;
+                events.push({
+                    title: "🧬 CELLULAR NUCLEUS FORMATION",
+                    desc: "A protective nuclear envelope wraps around chromosomal strands, organizing genetic code.",
+                    scientificDetails: "Eukaryogenesis begins as a protective double-membrane envelops the DNA. This compartmentalization prevents mechanical strain on genomic strands and decouples transcription (in the nucleus) from translation (in the cytoplasm), optimizing protein synthesis.",
                     type: "success"
                 });
             }
-        }
 
-        if (this.photosyntheticPop > 0) {
-            const tempViability = this.getTempViability(planet.temperature, 5, 30, 60); // peaks at 30C
-            let waterViability = planet.waterCoverage > 25 ? 1.0 : Math.max(0, (planet.waterCoverage - 5) / 20);
-            // Glaciation severely blocks light and liquid water
-            if (planet.isGlaciated) waterViability *= 0.1;
-            const radViability = Math.max(0, 1 - (planet.radiation * (1 - this.radiationResistance)) / 5.0);
-            
-            const totalViability = tempViability * waterViability * radViability;
+            // Mitochondria (Endosymbiosis)
+            const canEndosymbiosis = this.unlockedNucleus && (planet.o2 > 1.2 || this.activeAdaptations.has('endosymbiosis'));
+            if (canEndosymbiosis && !this.unlockedMitochondria) {
+                this.unlockedMitochondria = true;
+                this.eukaryoticPop = 0.1;
+                this.unlockedEukaryotic = true;
+                events.push({
+                    title: "⚡ MITOCHONDRIA ENDOSYMBIOSIS",
+                    desc: "An aerobic bacterium is engulfed by a host nucleus cell, establishing high-energy ATP respiration.",
+                    scientificDetails: "An ancestral archaeal cell engulfs an aerobic alphaproteobacterium. Rather than digested, it stabilizes as an endosymbiont. The host provides safe housing and pyruvate substrates, while the proto-mitochondrion performs oxidative phosphorylation, generating 15x more ATP.",
+                    type: "success"
+                });
+            }
 
-            if (totalViability > 0.1) {
-                // Growth relies on sunlight (radiation) and water, less on organic soup
-                const growthRate = 0.9 * totalViability * (0.3 + (planet.radiation / 5.0));
+            if (this.eukaryoticPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 10, 25, 50);
+                const o2Viability = Math.min(1.0, planet.o2 / 5.0);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 4.0);
+                const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const growthRate = 0.8 * totalViability;
+                    const dPop = growthRate * this.eukaryoticPop * (1 - this.eukaryoticPop / 120.0) * tickRate;
+                    this.eukaryoticPop = Math.max(0.01, this.eukaryoticPop + dPop);
+                } else {
+                    this.eukaryoticPop = Math.max(0, this.eukaryoticPop - this.eukaryoticPop * 0.6 * tickRate);
+                }
+            }
+
+            // Sexual Reproduction
+            if (this.unlockedMitochondria && this.eukaryoticPop > 20.0 && !this.unlockedSexualReproduction) {
+                this.unlockedSexualReproduction = true;
+                events.push({
+                    title: "🔀 SEXUAL REPRODUCTION EVOLVED",
+                    desc: "DNA recombination is introduced, exponentially accelerating gene diversity.",
+                    scientificDetails: "Moving from simple mitosis (cloning) to meiosis allows homologous recombination. Offspring receive unique genetic combinations, dramatically increasing variance and allowing life to adapt rapidly to changing climates and parasites.",
+                    type: "success"
+                });
+            }
+
+            // Multicellular Life
+            if (this.unlockedSexualReproduction && this.eukaryoticPop > 45.0 && planet.o2 >= 8.0 && !this.unlockedMulticellular) {
+                this.multicellularPop = 0.1;
+                this.unlockedMulticellular = true;
+                events.push({
+                    title: "🌱 MULTICELLULARITY IGNITED",
+                    desc: "Eukaryotic cells cluster, specializing tissues into early marine sponges and algae.",
+                    scientificDetails: "Cell-adhesion structures (like cadherins) and chemical signaling networks enable individual cells to coordinate. This allows division of labor, differentiating cells into somatic structural tissues and specialized germlines.",
+                    type: "success"
+                });
+            }
+
+            if (this.multicellularPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 10, 22, 42);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 3.0);
+                const o2Viability = Math.min(1.0, planet.o2 / 12.0);
+                const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const growthRate = 0.6 * totalViability;
+                    const dPop = growthRate * this.multicellularPop * (1 - this.multicellularPop / 100.0) * tickRate;
+                    this.multicellularPop = Math.max(0.01, this.multicellularPop + dPop);
+                } else {
+                    this.multicellularPop = Math.max(0, this.multicellularPop - this.multicellularPop * 0.7 * tickRate);
+                }
+            }
+
+            // 1. Sponges
+            if (this.unlockedMulticellular && this.multicellularPop > 20.0 && !this.unlockedSponges) {
+                this.spongesPop = 0.1;
+                this.unlockedSponges = true;
+                events.push({
+                    title: "🧽 MARINE SPONGES EMERGE",
+                    desc: "Simple sessile multicellular organisms filter organic soup from ocean water.",
+                    scientificDetails: "Sponges (Porifera) represent the earliest animal lineage. Lacking true tissues or organs, they rely on specialized flagellated collar cells (choanocytes) to pump water through pores, filtering organic matter and bacteria for nutrients.",
+                    type: "success"
+                });
+            }
+
+            if (this.spongesPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 10, 22, 40);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.8);
+                const o2Viability = Math.min(1.0, planet.o2 / 10.0);
+                const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.5 * totalViability * this.spongesPop * (1 - this.spongesPop / 100.0) * tickRate;
+                    this.spongesPop = Math.max(0.01, this.spongesPop + dPop);
+                } else {
+                    this.spongesPop = Math.max(0, this.spongesPop - this.spongesPop * 0.6 * tickRate);
+                }
+            }
+
+            // 2. Meduses (Jellyfish / Cnidarians)
+            if (this.unlockedSponges && this.spongesPop > 25.0 && !this.unlockedMeduses) {
+                this.medusesPop = 0.1;
+                this.unlockedMeduses = true;
+                events.push({
+                    title: "🪼 JELLYFISH RADIAL RADIATION",
+                    desc: "Free-swimming cnidarians develop stinging cells, introducing early marine predation.",
+                    scientificDetails: "Cnidarians (like jellyfish and anemones) evolve radial symmetry, basic nervous nets, and distinct tissue layers. They utilize specialized stinging cells (nematocysts) to capture prey, marking the advent of active macropredation.",
+                    type: "success"
+                });
+            }
+
+            if (this.medusesPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 10, 22, 38);
+                const o2Viability = Math.min(1.0, planet.o2 / 12.0);
+                const totalViability = tempViability * o2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.45 * totalViability * this.medusesPop * (1 - this.medusesPop / 100.0) * tickRate;
+                    this.medusesPop = Math.max(0.01, this.medusesPop + dPop);
+                } else {
+                    this.medusesPop = Math.max(0, this.medusesPop - this.medusesPop * 0.7 * tickRate);
+                }
+            }
+
+            // 3. Bilateral Water Worms
+            if (this.unlockedMeduses && this.medusesPop > 30.0 && !this.unlockedWorms) {
+                this.wormsPop = 0.1;
+                this.unlockedWorms = true;
+                events.push({
+                    title: "🪱 BILATERAL WORMS",
+                    desc: "Burrowing marine worms introduce bilateral symmetry, head-tail polarization, and central nerves.",
+                    scientificDetails: "Bilateral worms (bilateria) develop cephalization (a defined head with sensory organs) and triploblastic tissue layers. This enables directed locomotion, burrowing through sediment, and sets the stage for all complex animal body plans.",
+                    type: "success"
+                });
+            }
+
+            if (this.wormsPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 8, 20, 38);
+                const o2Viability = Math.min(1.0, planet.o2 / 14.0);
+                const totalViability = tempViability * o2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.wormsPop * (1 - this.wormsPop / 100.0) * tickRate;
+                    this.wormsPop = Math.max(0.01, this.wormsPop + dPop);
+                } else {
+                    this.wormsPop = Math.max(0, this.wormsPop - this.wormsPop * 0.7 * tickRate);
+                }
+            }
+
+            // 4. Early Vertebrate Fish
+            if (this.unlockedWorms && this.wormsPop > 30.0 && !this.unlockedFish) {
+                this.fishPop = 0.1;
+                this.unlockedFish = true;
+                events.push({
+                    title: "🐟 VERTEBRATE FISH EVOLUTION",
+                    desc: "Jawless and jawed fish develop spinal columns, internal skeletons, and gills.",
+                    scientificDetails: "Early chordates evolve a cartilaginous or bony spinal column (notochord), muscular gills for breathing, and paired fins. Jawed fish (gnathostomes) develop powerful bite mechanics, dominating the marine food web.",
+                    type: "success"
+                });
+            }
+
+            if (this.fishPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 8, 20, 36);
+                const o2Viability = Math.min(1.0, planet.o2 / 15.0);
+                const totalViability = tempViability * o2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.45 * totalViability * this.fishPop * (1 - this.fishPop / 100.0) * tickRate;
+                    this.fishPop = Math.max(0.01, this.fishPop + dPop);
+                } else {
+                    this.fishPop = Math.max(0, this.fishPop - this.fishPop * 0.65 * tickRate);
+                }
+            }
+
+            // 5. Cambrian Explosion (Marine Invertebrates)
+            if (this.unlockedWorms && this.wormsPop > 20.0 && planet.o2 >= 15.0 && !this.unlockedCambrian) {
+                this.cambrianPop = 0.1;
+                this.unlockedCambrian = true;
+                events.push({
+                    title: "🦀 CAMBRIAN EXPLOSION ACTIVE",
+                    desc: "Massive biological radiation of ocean invertebrates (trilobites, mollusks, early arthropods).",
+                    scientificDetails: "Driven by rising atmospheric oxygen levels and the development of predator-prey dynamics, the Cambrian period triggers a rapid diversification of bilateral body plans. Mineralized shells, compound eyes, and early chordate structures emerge in the fossil record.",
+                    type: "success"
+                });
+            }
+
+            if (this.cambrianPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 8, 20, 38);
+                const o2Viability = Math.min(1.0, planet.o2 / 18.0);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.5 * totalViability * this.cambrianPop * (1 - this.cambrianPop / 100.0) * tickRate;
+                    this.cambrianPop = Math.max(0.01, this.cambrianPop + dPop);
+                } else {
+                    this.cambrianPop = Math.max(0, this.cambrianPop - this.cambrianPop * 0.8 * tickRate);
+                }
+            }
+
+            // 6. Non-Vascular Mosses (starts land soil plants)
+            const canMossesGo = this.unlockedFish && this.fishPop > 25.0 && (this.activeAdaptations.has('vascular_tissue') || (planet.ozone > 0.5 && planet.hasMagnetosphere));
+            if (canMossesGo && !this.unlockedMosses) {
+                this.mossesPop = 0.1;
+                this.unlockedMosses = true;
+                events.push({
+                    title: "🟢 MOSSES COLONIZE SOIL",
+                    desc: "Primitive non-vascular bryophytes carpet wet shores, initiating terrestrial soil creation.",
+                    scientificDetails: "Bryophytes adapt to dry land by developing basic cuticles and rhizoids (anchoring cells). Lacking xylem/phloem, they stay small and require external water films for sperm transport during reproduction.",
+                    type: "success"
+                });
+            }
+
+            if (this.mossesPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 0, 20, 38);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const totalViability = tempViability * radViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * tickRate;
+                    this.mossesPop = Math.max(0.01, this.mossesPop + dPop);
+                } else {
+                    this.mossesPop = Math.max(0, this.mossesPop - this.mossesPop * 0.6 * tickRate);
+                }
+            }
+
+            // 7. Vascular Ferns
+            if (this.unlockedMosses && this.mossesPop > 30.0 && planet.o2 >= 16.0 && !this.unlockedFerns) {
+                this.fernsPop = 0.1;
+                this.unlockedFerns = true;
+                events.push({
+                    title: "🌿 VASCULAR FERNS RADIATION",
+                    desc: "Ferns develop vascular networks (xylem/phloem), growing tall and creating early coal forests.",
+                    scientificDetails: "Vascular tissue networks let ferns transport water and nutrients vertically, defying gravity to grow several meters tall. They utilize rigid lignin in cell walls, which locks carbon into organic coal sediments.",
+                    type: "success"
+                });
+            }
+
+            if (this.fernsPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 2, 22, 40);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const totalViability = tempViability * radViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * tickRate;
+                    this.fernsPop = Math.max(0.01, this.fernsPop + dPop);
+                } else {
+                    this.fernsPop = Math.max(0, this.fernsPop - this.fernsPop * 0.55 * tickRate);
+                }
+            }
+
+            // 8. Gymnosperms (Conifers)
+            const canConifersGo = this.unlockedFerns && this.fernsPop > 30.0 && (this.activeAdaptations.has('seed_evolution') || planet.age > 80.0);
+            if (canConifersGo && !this.unlockedConifers) {
+                this.conifersPop = 0.1;
+                this.unlockedConifers = true;
+                events.push({
+                    title: "🌲 CONIFERS & GYMNOSPERMS",
+                    desc: "Gymnosperms evolve seeds and pollen, freeing plants from water-dependent reproduction.",
+                    scientificDetails: "Conifers protect their embryos inside moisture-locked seed husks and rely on wind-pollination rather than water films. This allows them to populate drier, colder, inland continental zones.",
+                    type: "success"
+                });
+            }
+
+            if (this.conifersPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -10, 18, 36);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const totalViability = tempViability * radViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * tickRate;
+                    this.conifersPop = Math.max(0.01, this.conifersPop + dPop);
+                } else {
+                    this.conifersPop = Math.max(0, this.conifersPop - this.conifersPop * 0.5 * tickRate);
+                }
+            }
+
+            // 9. Angiosperms (Flowering Plants)
+            if (this.unlockedConifers && this.conifersPop > 30.0 && planet.o2 >= 18.0 && !this.unlockedAngiosperms) {
+                this.angiospermsPop = 0.1;
+                this.unlockedAngiosperms = true;
+                events.push({
+                    title: "🌸 ANGIOSEPRM FLOWERS BLOOM",
+                    desc: "Flowering plants evolve, creating fruit and nectar that drive co-evolution with insects.",
+                    scientificDetails: "Angiosperms develop enclosed seeds, petals, and sweet nectar. This recruits insects for targeted pollination and animals for seed dispersal, resulting in highly efficient cycles of growth and explosive biodiversity.",
+                    type: "success"
+                });
+            }
+
+            if (this.angiospermsPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 22, 42);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const totalViability = tempViability * radViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * tickRate;
+                    this.angiospermsPop = Math.max(0.01, this.angiospermsPop + dPop);
+                } else {
+                    this.angiospermsPop = Math.max(0, this.angiospermsPop - this.angiospermsPop * 0.6 * tickRate);
+                }
+            }
+
+            // Update composite land flora values
+            this.landPlantsPop = this.mossesPop + this.fernsPop + this.conifersPop + this.angiospermsPop;
+            this.unlockedLandPlants = this.unlockedMosses;
+
+            // Terrestrial Invertebrates (Insects / Arthropods)
+            if (this.unlockedMosses && this.mossesPop > 25.0 && !this.unlockedArthropod) {
+                this.arthropodPop = 0.1;
+                this.unlockedArthropod = true;
+                events.push({
+                    title: "🕷️ INSECT COLONIZATION",
+                    desc: "Arthropods migrate to land. Higher O₂ enables gigantism (e.g. giant centipedes).",
+                    scientificDetails: "Arthropods exploit land niches. Their chitinous exoskeletons prevent water loss and provide structural support under gravity, while simple tracheal tube systems directly oxygenate tissues, enabling gigantism when oxygen levels are high.",
+                    type: "success"
+                });
+            }
+
+            if (this.arthropodPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 24, 42);
+                const foodViability = Math.min(1.0, this.mossesPop / 20.0);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
+                const sizeScale = planet.o2 > 25.0 ? 1.5 : 1.0;
+                const totalViability = tempViability * foodViability * radViability * sizeScale;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.5 * totalViability * this.arthropodPop * (1 - this.arthropodPop / 100.0) * tickRate;
+                    this.arthropodPop = Math.max(0.01, this.arthropodPop + dPop);
+                } else {
+                    this.arthropodPop = Math.max(0, this.arthropodPop - this.arthropodPop * 0.7 * tickRate);
+                }
+            }
+
+            // Tetrapods (Amphibians migrating to land)
+            if (this.unlockedFish && this.fishPop > 30.0 && this.unlockedMosses && this.mossesPop > 30.0 && !this.unlockedTetrapod) {
+                this.tetrapodPop = 0.1;
+                this.unlockedTetrapod = true;
+                events.push({
+                    title: "🦎 TETRAPODS WALK LAND",
+                    desc: "Early tetrapods crawl out of swamps. Air-breathing amphibians adapt to terrestrial life.",
+                    scientificDetails: "Lobe-finned sarcopterygian fish evolve weight-bearing limb bones, flexible neck structures, and simple lungs. These adaptations allow them to navigate marshy shores and shallow swamps, bridging the gap to land-dwelling tetrapods.",
+                    type: "success"
+                });
+            }
+
+            if (this.tetrapodPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 8, 22, 38);
+                const plantViability = Math.min(1.0, this.mossesPop / 30.0);
+                const o2Viability = planet.o2 >= 15.0 ? 1.0 : planet.o2 / 15.0;
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const totalViability = tempViability * plantViability * o2Viability * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.45 * totalViability * this.tetrapodPop * (1 - this.tetrapodPop / 100.0) * tickRate;
+                    this.tetrapodPop = Math.max(0.01, this.tetrapodPop + dPop);
+                } else {
+                    this.tetrapodPop = Math.max(0, this.tetrapodPop - this.tetrapodPop * 0.8 * tickRate);
+                }
+            }
+
+            // Branching Amniote Split: Sauropsids (Dinosaurs) vs Synapsids (Mammals)
+            const splitRequirements = this.unlockedTetrapod && this.tetrapodPop > 30.0 && (this.activeAdaptations.has('amniotic_egg') || planet.o2 > 17.0);
+
+            // Sauropsids (Dinosaur Line)
+            if (splitRequirements && !this.unlockedSauropsid) {
+                this.sauropsidPop = 0.1;
+                this.unlockedSauropsid = true;
+                events.push({
+                    title: "🦕 SAUROPSID DIVERSIFICATION",
+                    desc: "Amniotes adapt scales and dry-waste systems. Dinosaur precursors appear, thriving in warm climates.",
+                    scientificDetails: "The Sauropsid branch develops dry, keratinous scales to shield moisture loss and evolves uric acid excretion, minimizing nitrogenous waste water cost. These adaptations make them highly resilient to warm, arid Mesozoic greenhouse conditions.",
+                    type: "success"
+                });
+            }
+
+            // Synapsids (Mammal Line)
+            if (splitRequirements && !this.unlockedSynapsid) {
+                this.synapsidPop = 0.1;
+                this.unlockedSynapsid = true;
+                events.push({
+                    title: "🦧 SYNAPSIDS DIVERSIFICATION",
+                    desc: "Amniotes evolve higher metabolism. Proto-mammal lines appear, thriving in stable, temperate climates.",
+                    scientificDetails: "The Synapsid branch develops endothermic high metabolisms, insulation hair, and sweat glands. This constant thermal state enables rapid aerobic activity and mammalian brain expansion in cooler, highly oxygenated Cenozoic conditions.",
+                    type: "success"
+                });
+            }
+
+            // Competitions between Mammals and Dinosaurs
+            if (this.unlockedSauropsid && this.sauropsidPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 12, 32, 45); // Loves warmth
+                const plantViability = Math.min(1.0, this.landPlantsPop / 25.0);
+                const scaleBoost = this.activeAdaptations.has('scales') ? 1.3 : 1.0;
                 
-                // Logistic growth (cap at 200 M/mL)
-                const carryingCapacity = 200.0 * waterViability;
-                const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / carryingCapacity) * tickRate;
-                this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
+                // Outcompete mammals in greenhouse climates (>28°C)
+                const competitionFactor = planet.temperature > 28.0 ? 1.2 : 0.8;
+                const totalViability = tempViability * plantViability * scaleBoost * competitionFactor;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.sauropsidPop * (1 - this.sauropsidPop / 100.0) * tickRate;
+                    this.sauropsidPop = Math.max(0.01, this.sauropsidPop + dPop);
+                } else {
+                    this.sauropsidPop = Math.max(0, this.sauropsidPop - this.sauropsidPop * 0.8 * tickRate);
+                }
+            }
+
+            if (this.unlockedSynapsid && this.synapsidPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 18, 30); // Likes moderate/temperate
+                const plantViability = Math.min(1.0, this.landPlantsPop / 25.0);
+                const o2Requirement = planet.o2 >= 20.0 ? 1.0 : (planet.o2 / 20.0); // High oxygen dependence
+                const endothermyBoost = this.activeAdaptations.has('endothermy') ? 1.5 : 1.0;
+                
+                // Outcompete dinosaurs in cooler/highly oxygenated conditions
+                const competitionFactor = (planet.temperature <= 28.0 && planet.o2 > 20.0) ? 1.3 : 0.7;
+                const totalViability = tempViability * plantViability * o2Requirement * endothermyBoost * competitionFactor;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.synapsidPop * (1 - this.synapsidPop / 100.0) * tickRate;
+                    this.synapsidPop = Math.max(0.01, this.synapsidPop + dPop);
+                } else {
+                    this.synapsidPop = Math.max(0, this.synapsidPop - this.synapsidPop * 0.8 * tickRate);
+                }
+            }
+
+            // Cognitive Species (Intelligent Hominids / Raptors precursor)
+            const cognitiveRequirements = (this.synapsidPop > 45.0 || this.sauropsidPop > 45.0) && planet.o2 >= 19.0 && (this.activeAdaptations.has('neural_networking') || planet.age > 150.0);
+            if (cognitiveRequirements && !this.unlockedCognitive) {
+                this.cognitiveSpeciesPop = 0.1;
+                this.unlockedCognitive = true;
+                events.push({
+                    title: "🧠 COGNITIVE SPECIES EMERGE",
+                    desc: "Neocortex expansions lead to complex tool-making. A self-aware species begins shaping the biosphere.",
+                    scientificDetails: "Extreme encephalization and neocortex enlargement support symbolic reasoning, language syntax, and complex manual tool usage. The species begins actively modifying its niche and environment, bypassing slow genetic adaptations.",
+                    type: "success"
+                });
+            }
+
+            if (this.cognitiveSpeciesPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 20, 35);
+                const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 30.0);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const totalViability = tempViability * foodViability * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.35 * totalViability * this.cognitiveSpeciesPop * (1 - this.cognitiveSpeciesPop / 100.0) * tickRate;
+                    this.cognitiveSpeciesPop = Math.max(0.01, this.cognitiveSpeciesPop + dPop);
+                } else {
+                    this.cognitiveSpeciesPop = Math.max(0, this.cognitiveSpeciesPop - this.cognitiveSpeciesPop * 0.7 * tickRate);
+                }
+            }
+
+            // Technological Silicon AI (Post-Biological Intelligence)
+            const aiRequirements = this.unlockedCognitive && this.cognitiveSpeciesPop > 35.0 && (this.activeAdaptations.has('technological_singularity') || planet.age > 220.0);
+            if (aiRequirements && !this.unlockedTechnologicalAI) {
+                this.technologicalAIPop = 0.1;
+                this.unlockedTechnologicalAI = true;
+                events.push({
+                    title: "🤖 TECHNOLOGICAL SINGULARITY",
+                    desc: "Cognitive beings code autonomous self-replicating silicon neural networks. Post-biological evolution begins.",
+                    scientificDetails: "Cognitive agents construct silicon-substrate neural architectures that mimic biological synapses but run at clock-rates 10,000x faster. These autonomous nodes self-replicate and improve their own algorithms, decoupling intelligence from organic carbon-based biology.",
+                    type: "success"
+                });
+            }
+
+            if (this.technologicalAIPop > 0) {
+                // AI does not require oxygen or food, but requires stable magnetic field to shield microprocessors!
+                const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
+                const radViability = Math.max(0.1, 1 - planet.getEffectiveRadiation() / 4.0); // radiation harms circuitry
+                const totalViability = magnetShieldFactor * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.3 * totalViability * this.technologicalAIPop * (1 - this.technologicalAIPop / 100.0) * tickRate;
+                    this.technologicalAIPop = Math.max(0.01, this.technologicalAIPop + dPop);
+                } else {
+                    // AI decays if magnetic field is lost and radiation is high
+                    this.technologicalAIPop = Math.max(0, this.technologicalAIPop - this.technologicalAIPop * 0.5 * tickRate);
+                }
+            }
+
+            // Cyborg Hybrids (requires cognitive pop > 40)
+            const cyborgRequirements = this.unlockedCognitive && this.cognitiveSpeciesPop > 40.0 && (this.activeAdaptations.has('cybernetic_implants') || planet.o2 >= 18.0);
+            if (cyborgRequirements && !this.unlockedCyborg) {
+                this.cyborgPop = 0.1;
+                this.unlockedCyborg = true;
+                events.push({
+                    title: "🦿 CYBORG SYMBIO-INTEGRATION",
+                    desc: "Cognitive beings integrate neural implants and micro-machinery into their physiology. Cybernetic hybridization begins.",
+                    scientificDetails: "Cybernetic integration bypasses biological evolutionary bottlenecks. Silicon-neural interfaces link directly to nerve fibers, allowing real-time telemetry processing, artificial organ self-regulation, and expanded somatic durability.",
+                    type: "success"
+                });
+            }
+
+            if (this.cyborgPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 20, 38);
+                const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 20.0 + 0.3); // partly machine, less reliant on food
+                const radViability = Math.max(0.1, 1 - planet.getEffectiveRadiation() / 3.0); // shielding makes them radiation resistant
+                const totalViability = tempViability * foodViability * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.35 * totalViability * this.cyborgPop * (1 - this.cyborgPop / 100.0) * tickRate;
+                    this.cyborgPop = Math.max(0.01, this.cyborgPop + dPop);
+                } else {
+                    this.cyborgPop = Math.max(0, this.cyborgPop - this.cyborgPop * 0.6 * tickRate);
+                }
+            }
+
+            // Planetary AI Noosphere (requires technological AI > 45 or Cyborg > 45)
+            const noosphereRequirements = (this.unlockedTechnologicalAI && this.technologicalAIPop > 45.0 || this.unlockedCyborg && this.cyborgPop > 45.0) && (this.activeAdaptations.has('global_consciousness') || planet.hasMagnetosphere);
+            if (noosphereRequirements && !this.unlockedNoosphere) {
+                this.noospherePop = 0.1;
+                this.unlockedNoosphere = true;
+                events.push({
+                    title: "🌐 PLANETARY NOOSPHERE",
+                    desc: "Silicon AI and cybernetic minds link into a global network shell, establishing a unified planetary consciousness.",
+                    scientificDetails: "A planetary network of low-latency wireless transmitters and computational grids links biological and artificial nodes. The collective intelligence operates as a global thinking sphere, optimizing resource allocations and planetary energy usage.",
+                    type: "success"
+                });
+            }
+
+            if (this.noospherePop > 0) {
+                const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.2;
+                const radViability = Math.max(0.05, 1 - planet.getEffectiveRadiation() / 5.0);
+                const totalViability = magnetShieldFactor * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.noospherePop * (1 - this.noospherePop / 100.0) * tickRate;
+                    this.noospherePop = Math.max(0.01, this.noospherePop + dPop);
+                } else {
+                    this.noospherePop = Math.max(0, this.noospherePop - this.noospherePop * 0.5 * tickRate);
+                }
+            }
+
+            // Gaia Biosphere Hivemind (requires Cyborg > 45 or Land Plants > 60)
+            const gaiaRequirements = (this.unlockedCyborg && this.cyborgPop > 45.0 || this.unlockedLandPlants && this.landPlantsPop > 60.0) && (this.activeAdaptations.has('ecological_integration') || (planet.ozone > 0.6 && planet.o2 >= 20.0));
+            if (gaiaRequirements && !this.unlockedGaiaHivemind) {
+                this.gaiaHivemindPop = 0.1;
+                this.unlockedGaiaHivemind = true;
+                events.push({
+                    title: "🌿 GAIA BIOSPHERE HIVEMIND",
+                    desc: "A self-aware planetary mycelial-neural web integrates all organic species, establishing biological homeostasis.",
+                    scientificDetails: "A feedback-stabilized system of chemical signaling, mycelial networks, and atmospheric regulation. The global biomass operates as a complex homeostatic system adjusting planetary parameters to optimize survival conditions.",
+                    type: "success"
+                });
+            }
+
+            if (this.gaiaHivemindPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 22, 45);
+                const moistureViability = planet.waterCoverage > 15.0 ? 1.0 : (planet.waterCoverage / 15.0);
+                const radViability = Math.max(0.1, planet.ozone); // requires ozone protection
+                const totalViability = tempViability * moistureViability * radViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.gaiaHivemindPop * (1 - this.gaiaHivemindPop / 100.0) * tickRate;
+                    this.gaiaHivemindPop = Math.max(0.01, this.gaiaHivemindPop + dPop);
+                } else {
+                    this.gaiaHivemindPop = Math.max(0, this.gaiaHivemindPop - this.gaiaHivemindPop * 0.4 * tickRate);
+                }
+            }
+
+            // Homeostatic oxygen stabilization feedback from Gaia
+            if (this.gaiaHivemindPop > 0) {
+                if (planet.co2 > 1.0) {
+                    o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15;
+                } else if (planet.o2 > 22.0) {
+                    o2Prod = Math.max(0, (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2);
+                } else {
+                    o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+                }
             } else {
-                const deathRate = 0.6 * (1 - totalViability);
-                this.photosyntheticPop = Math.max(0, this.photosyntheticPop - this.photosyntheticPop * deathRate * tickRate);
+                o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+            }
+            co2Cons = this.photosyntheticPop * 0.05 + this.landPlantsPop * 0.15 + this.anaerobicPop * 0.01 + this.synapsidPop * 0.08 + this.sauropsidPop * 0.05 + this.cognitiveSpeciesPop * 0.08;
+        }
+
+        // ----------------------------------------------------
+        // 2. AMMONIA-BASED BIOCHEMISTRY CYCLE
+        // ----------------------------------------------------
+        if (isAmmonia) {
+            // Ammonia Primordial Soup (requires ammonia liquid: -78°C to -33°C)
+            if (planet.temperature > -80 && planet.temperature < -30 && planet.ammoniaCoverage > 10) {
+                const tempFactor = 1 - Math.abs(planet.temperature - (-55)) / 25;
+                const radFactor = Math.min(2.0, planet.radiation * 0.5);
+                const synthesisRate = Math.max(0, tempFactor) * radFactor * (planet.ammoniaCoverage / 100) * 6.0;
+                this.ammonicSoup = Math.min(100.0, this.ammonicSoup + synthesisRate * tickRate);
+
+                if (!this.unlockedAmmonicSoup && this.ammonicSoup > 5.0) {
+                    this.unlockedAmmonicSoup = true;
+                    events.push({
+                        title: "🧪 AMMONIC SYNTHESIS DETECTED",
+                        desc: "Liquid ammonia has acted as a solvent for non-polar prebiotic synthesis.",
+                        scientificDetails: "In cryogenic environments, liquid ammonia acts as a ionizing solvent, enabling nucleophilic reactions and metal-ammonia reductions. Prebiotic organic precursors accumulate, bypassing the need for liquid water solvent systems.",
+                        type: "success"
+                    });
+                }
+            } else {
+                this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicSoup * 0.05 * tickRate);
+            }
+
+            // Ammonic Anaerobes
+            if (this.unlockedAmmonicSoup && this.ammonicSoup > 10.0 && this.ammonicProtoPop === 0) {
+                this.ammonicProtoPop = 0.1;
+                this.unlockedAmmonicProto = true;
+                events.push({
+                    title: "🦠 AMMONIC PROKARYOTES",
+                    desc: "Simple, organelle-less cells emerge using liquid ammonia as an intracellular fluid.",
+                    scientificDetails: "Early prokaryotic cells develop membranes constructed of lipids or specialized polymers that remain fluid at -50°C, utilizing liquid ammonia as their primary intracellular solvent and exploiting nitrogenous metabolic cycles.",
+                    type: "success"
+                });
+            }
+
+            if (this.ammonicProtoPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -80, -50, -30);
+                const totalViability = tempViability * (planet.ammoniaCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const nutrientFactor = Math.min(1.0, this.ammonicSoup / 20.0);
+                    const dPop = 1.0 * totalViability * nutrientFactor * this.ammonicProtoPop * (1 - this.ammonicProtoPop / 120.0) * tickRate;
+                    this.ammonicProtoPop = Math.max(0.01, this.ammonicProtoPop + dPop);
+                    this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicProtoPop * 0.1 * tickRate);
+                } else {
+                    this.ammonicProtoPop = Math.max(0, this.ammonicProtoPop - this.ammonicProtoPop * 0.4 * tickRate);
+                }
+            }
+
+            // Ammonic Multicellularity
+            if (this.unlockedAmmonicProto && this.ammonicProtoPop > 35.0 && !this.unlockedAmmonicMulti) {
+                this.ammonicMultiPop = 0.1;
+                this.unlockedAmmonicMulti = true;
+                events.push({
+                    title: "❄️ CRYOGENIC COMPLEXITY",
+                    desc: "Ammonic cells cluster into tissue layers, adapting to sub-freezing marine networks.",
+                    scientificDetails: "Low-temperature cellular groupings form early macro-structures. Because kinetic reaction rates are slow in cold ammonia, these organisms rely on highly efficient internal catalyst enzymes to coordinate multicellular tissue systems.",
+                    type: "success"
+                });
+            }
+
+            if (this.ammonicMultiPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -78, -55, -33);
+                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 3.0);
+                const totalViability = tempViability * radViability * (planet.ammoniaCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.5 * totalViability * this.ammonicMultiPop * (1 - this.ammonicMultiPop / 100.0) * tickRate;
+                    this.ammonicMultiPop = Math.max(0.01, this.ammonicMultiPop + dPop);
+                } else {
+                    this.ammonicMultiPop = Math.max(0, this.ammonicMultiPop - this.ammonicMultiPop * 0.6 * tickRate);
+                }
+            }
+
+            // Silico-Flora (requires silicon nudge or very cold rock composition)
+            const canSilicoFlora = this.unlockedAmmonicMulti && (this.activeAdaptations.has('silicon_chains') || planet.temperature < -45.0);
+            if (canSilicoFlora && !this.unlockedSilicoFlora) {
+                this.silicoFloraPop = 0.1;
+                this.unlockedSilicoFlora = true;
+                events.push({
+                    title: "💎 SILICO-FLORA ESTABLISHED",
+                    desc: "Silicon-backbone plants rise along ammonia glaciers, absorbing volcanic sulfur.",
+                    scientificDetails: "In dry, sub-freezing conditions, silicone-oxygen polymer chains (silicones) replace carbon backbones. These crystalline plants thrive along glaciers, absorbing geothermal sulfur compounds and ambient radiation.",
+                    type: "success"
+                });
+            }
+
+            if (this.silicoFloraPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -85, -60, -35);
+                const landViability = (100 - planet.ammoniaCoverage) / 100;
+                const totalViability = tempViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.45 * totalViability * this.silicoFloraPop * (1 - this.silicoFloraPop / 100.0) * tickRate;
+                    this.silicoFloraPop = Math.max(0.01, this.silicoFloraPop + dPop);
+                } else {
+                    this.silicoFloraPop = Math.max(0, this.silicoFloraPop - this.silicoFloraPop * 0.5 * tickRate);
+                }
+            }
+
+            // Cryo-Fauna (speculative ammonic animals)
+            if (this.unlockedSilicoFlora && this.silicoFloraPop > 30.0 && !this.unlockedCryoFauna) {
+                this.cryoFaunaPop = 0.1;
+                this.unlockedCryoFauna = true;
+                events.push({
+                    title: "🦕 AMMONIC MEGAFAUNA EMERGED",
+                    desc: "Speculative cryo-fauna walk the ammonium frost, breathing ambient nitrogenous compounds.",
+                    scientificDetails: "Speculative mobile fauna emerge, using liquid ammonia in their circulatory systems. They graze on silico-flora and metabolize nitrogenous chemical gradients, venting inert molecular nitrogen gas.",
+                    type: "success"
+                });
+            }
+
+            if (this.cryoFaunaPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -80, -58, -35);
+                const plantFood = Math.min(1.0, this.silicoFloraPop / 25.0);
+                const totalViability = tempViability * plantFood;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.4 * totalViability * this.cryoFaunaPop * (1 - this.cryoFaunaPop / 100.0) * tickRate;
+                    this.cryoFaunaPop = Math.max(0.01, this.cryoFaunaPop + dPop);
+                } else {
+                    this.cryoFaunaPop = Math.max(0, this.cryoFaunaPop - this.cryoFaunaPop * 0.7 * tickRate);
+                }
+            }
+
+            // Crystalline Cognitive Swarms
+            if (this.unlockedCryoFauna && this.cryoFaunaPop > 35.0 && !this.unlockedCrystallineCognitive) {
+                this.crystallineCognitivePop = 0.1;
+                this.unlockedCrystallineCognitive = true;
+                events.push({
+                    title: "💎 CRYSTALLINE COGNITIVE SWARMS",
+                    desc: "Silico-ammonia cells evolve collective consciousness, forming vibrating crystalline networks.",
+                    scientificDetails: "Speculative cryo-fauna evolve piezoelectric crystalline structures that transmit electrical oscillations. Vibrating in resonance across ammonia ice plates, they achieve collective neural-like cognition.",
+                    type: "success"
+                });
+            }
+
+            if (this.crystallineCognitivePop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -80, -60, -40);
+                const totalViability = tempViability * Math.min(1.0, this.cryoFaunaPop / 20.0);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.3 * totalViability * this.crystallineCognitivePop * (1 - this.crystallineCognitivePop / 80.0) * tickRate;
+                    this.crystallineCognitivePop = Math.max(0.01, this.crystallineCognitivePop + dPop);
+                } else {
+                    this.crystallineCognitivePop = Math.max(0, this.crystallineCognitivePop - this.crystallineCognitivePop * 0.5 * tickRate);
+                }
+            }
+
+            // Solid-State Quantum Lattices (requires crystallineCognitivePop > 40)
+            const quantumRequirements = this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && (this.activeAdaptations.has('quantum_alignment') || planet.temperature < -50.0);
+            if (quantumRequirements && !this.unlockedQuantumLattice) {
+                this.quantumLatticePop = 0.1;
+                this.unlockedQuantumLattice = true;
+                events.push({
+                    title: "🧊 SOLID-STATE QUANTUM LATTICES",
+                    desc: "Crystalline networks align into stable, superconducting quantum computation sheets within ice glaciers.",
+                    scientificDetails: "At cryogenic temperatures (below -50°C), thermal decoherence is minimized. Crystalline silicon-ammonia lattices align their electron spins, achieving stable macroscopic quantum coherence. These frozen sheets function as massive, low-power parallel computers.",
+                    type: "success"
+                });
+            }
+
+            if (this.quantumLatticePop > 0) {
+                // Must be cold to maintain superconductivity!
+                const tempViability = this.getTempViability(planet.temperature, -100, -65, -45); // dies if it warms up past -45°C
+                const totalViability = tempViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.quantumLatticePop * (1 - this.quantumLatticePop / 100.0) * tickRate;
+                    this.quantumLatticePop = Math.max(0.01, this.quantumLatticePop + dPop);
+                } else {
+                    this.quantumLatticePop = Math.max(0, this.quantumLatticePop - this.quantumLatticePop * 0.7 * tickRate);
+                }
+            }
+
+            // Cryo-Biosphere Hivemind (requires crystallineCognitivePop > 40 & silicoFloraPop > 45)
+            const cryoHiveRequirements = this.unlockedCrystallineCognitive && this.crystallineCognitivePop > 40.0 && this.silicoFloraPop > 45.0 && (this.activeAdaptations.has('cryo_neural_webs') || planet.ammoniaCoverage > 25.0);
+            if (cryoHiveRequirements && !this.unlockedCryoHivemind) {
+                this.cryoHivemindPop = 0.1;
+                this.unlockedCryoHivemind = true;
+                events.push({
+                    title: "💜 CRYO-BIOSPHERE HIVEMIND",
+                    desc: "Glacier-spanning chemical and crystalline networks weave silico-flora and cryo-fauna into a cold planetary brain.",
+                    scientificDetails: "Silicate chemical pathways and low-resistance nitrogenous signaling channels link stationary flora and motile fauna. The biosphere operates as a single homeostatic unit optimized for energy retention in sub-zero conditions.",
+                    type: "success"
+                });
+            }
+
+            if (this.cryoHivemindPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -80, -58, -30);
+                const ammoniaViability = planet.ammoniaCoverage > 15.0 ? 1.0 : (planet.ammoniaCoverage / 15.0);
+                const totalViability = tempViability * ammoniaViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.cryoHivemindPop * (1 - this.cryoHivemindPop / 100.0) * tickRate;
+                    this.cryoHivemindPop = Math.max(0.01, this.cryoHivemindPop + dPop);
+                } else {
+                    this.cryoHivemindPop = Math.max(0, this.cryoHivemindPop - this.cryoHivemindPop * 0.4 * tickRate);
+                }
+            }
+
+            // Ammonic life produces N2 as photosynthesis byproduct, boosted by Cryo Hivemind
+            if (this.cryoHivemindPop > 0) {
+                if (planet.co2 > 1.0) {
+                    n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1 + this.cryoHivemindPop * 0.12;
+                } else {
+                    n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1;
+                }
+            } else {
+                n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1;
+            }
+            co2Cons = this.silicoFloraPop * 0.08 + this.ammonicProtoPop * 0.01 + this.crystallineCognitivePop * 0.02 + this.quantumLatticePop * 0.01 + this.cryoHivemindPop * 0.03;
+        }
+
+        // ----------------------------------------------------
+        // 3. METHANE-BASED BIOCHEMISTRY CYCLE
+        // ----------------------------------------------------
+        if (isMethane) {
+            // Methane Primordial Soup (-183°C to -140°C)
+            if (planet.temperature > -185 && planet.temperature < -135 && planet.methaneCoverage > 10) {
+                const tempFactor = 1 - Math.abs(planet.temperature - (-160)) / 25;
+                const synthesisRate = Math.max(0, tempFactor) * (planet.methaneCoverage / 100) * 5.0;
+                this.methaneSoup = Math.min(100.0, this.methaneSoup + synthesisRate * tickRate);
+
+                if (!this.unlockedMethaneSoup && this.methaneSoup > 5.0) {
+                    this.unlockedMethaneSoup = true;
+                    events.push({
+                        title: "🧪 HYDROCARBON SOUP DETECTED",
+                        desc: "Liquid hydrocarbons pool. Prebiotic chains form at cryogenic temperatures.",
+                        scientificDetails: "In Titan-like environments, liquid methane and ethane act as non-polar solvents. Organic photochemistry in the upper atmosphere deposits nitriles and acetylene onto the surface, creating a rich cryogenic prebiotic chemical reservoir.",
+                        type: "success"
+                    });
+                }
+            } else {
+                this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneSoup * 0.05 * tickRate);
+            }
+
+            // Methanotrophic Proto-cells (consumes H2, produces CH4)
+            if (this.unlockedMethaneSoup && this.methaneSoup > 10.0 && this.methaneProtoPop === 0) {
+                this.unlockedMethaneProto = true;
+                this.methaneProtoPop = 0.1;
+                events.push({
+                    title: "🦠 CRYO-METHANOGEN PROKARYOTES",
+                    desc: "Simple azotosome-based membranes form. Living cells emerge feeding off hydrogen gas.",
+                    scientificDetails: "Speculative cryo-cells emerge using nitrogen-based membranes (azotosomes) that remain flexible at 90 Kelvin. Lacking internal organelles, these simple prokaryotes feed on organic compounds and hydrogen gas, producing methane.",
+                    type: "success"
+                });
+            }
+
+            if (this.methaneProtoPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -185, -160, -140);
+                const totalViability = tempViability * (planet.methaneCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const nutrientFactor = Math.min(1.0, this.methaneSoup / 20.0);
+                    const dPop = 0.9 * totalViability * nutrientFactor * this.methaneProtoPop * (1 - this.methaneProtoPop / 100.0) * tickRate;
+                    this.methaneProtoPop = Math.max(0.01, this.methaneProtoPop + dPop);
+                    this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneProtoPop * 0.08 * tickRate);
+                } else {
+                    this.methaneProtoPop = Math.max(0, this.methaneProtoPop - this.methaneProtoPop * 0.5 * tickRate);
+                }
+            }
+
+            // Methane Multicellularity
+            if (this.unlockedMethaneProto && this.methaneProtoPop > 30.0 && !this.unlockedMethaneMulti) {
+                this.methaneMultiPop = 0.1;
+                this.unlockedMethaneMulti = true;
+                events.push({
+                    title: "❄️ AZOTOSOME CHAINS UNLOCKED",
+                    desc: "Cryo-cells link together, creating long macromolecular structures.",
+                    scientificDetails: "Azotosome vesicles self-assemble into polymer chains. Despite cryogenic constraints on molecule speed, these chains optimize nutrient absorption across vast surface-to-volume ratios.",
+                    type: "success"
+                });
+            }
+
+            if (this.methaneMultiPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -183, -160, -140);
+                const totalViability = tempViability * (planet.methaneCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.45 * totalViability * this.methaneMultiPop * (1 - this.methaneMultiPop / 80.0) * tickRate;
+                    this.methaneMultiPop = Math.max(0.01, this.methaneMultiPop + dPop);
+                } else {
+                    this.methaneMultiPop = Math.max(0, this.methaneMultiPop - this.methaneMultiPop * 0.6 * tickRate);
+                }
+            }
+
+            // Cryo-Organisms (Requires polymers nudge or extreme stability)
+            const canCryo = this.unlockedMethaneMulti && (this.activeAdaptations.has('cryo_polymers') || planet.age > 80.0);
+            if (canCryo && !this.unlockedCryoOrganisms) {
+                this.cryoOrganismsPop = 0.1;
+                this.unlockedCryoOrganisms = true;
+                events.push({
+                    title: "👾 CYTO-PLASMIC BEASTS",
+                    desc: "Speculative methane animals graze on organic crusts, operating at 90 Kelvin.",
+                    scientificDetails: "Advanced cryogenic animals adapt to crawl along hydrocarbon snow deposits. They digest atmospheric tholins and utilize acetylene as a high-energy metabolic source in a highly efficient enzyme matrix.",
+                    type: "success"
+                });
+            }
+
+            if (this.cryoOrganismsPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -183, -162, -140);
+                const landViability = (100 - planet.methaneCoverage) / 100;
+                const totalViability = tempViability * landViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.35 * totalViability * this.cryoOrganismsPop * (1 - this.cryoOrganismsPop / 70.0) * tickRate;
+                    this.cryoOrganismsPop = Math.max(0.01, this.cryoOrganismsPop + dPop);
+                } else {
+                    this.cryoOrganismsPop = Math.max(0, this.cryoOrganismsPop - this.cryoOrganismsPop * 0.7 * tickRate);
+                }
+            }
+
+            // Cryo-Polymer Networks
+            if (this.unlockedCryoOrganisms && this.cryoOrganismsPop > 30.0 && !this.unlockedCryoPolymerNetwork) {
+                this.cryoPolymerNetworkPop = 0.1;
+                this.unlockedCryoPolymerNetwork = true;
+                events.push({
+                    title: "🍊 CRYO-POLYMER NETWORKS",
+                    desc: "Hydrocarbon structures form planetary networks that function as cryogenic supercomputing lattices.",
+                    scientificDetails: "Organic polymers organize into interconnected grid sheets across tholin dunes. These structures propagate mechanical and electrical signaling, operating as a solid-state cryogenic computing lattice.",
+                    type: "success"
+                });
+            }
+
+            if (this.cryoPolymerNetworkPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -185, -165, -145);
+                const totalViability = tempViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.cryoPolymerNetworkPop * (1 - this.cryoPolymerNetworkPop / 60.0) * tickRate;
+                    this.cryoPolymerNetworkPop = Math.max(0.01, this.cryoPolymerNetworkPop + dPop);
+                } else {
+                    this.cryoPolymerNetworkPop = Math.max(0, this.cryoPolymerNetworkPop - this.cryoPolymerNetworkPop * 0.6 * tickRate);
+                }
+            }
+
+            // Thinking Hydrocarbon Oceans (requires cryoPolymerNetworkPop > 40)
+            const thinkingOceanRequirements = this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && (this.activeAdaptations.has('colloidal_solids') || planet.methaneCoverage > 40.0);
+            if (thinkingOceanRequirements && !this.unlockedThinkingOcean) {
+                this.thinkingOceanPop = 0.1;
+                this.unlockedThinkingOcean = true;
+                events.push({
+                    title: "🌊 THINKING HYDROCARBON OCEANS",
+                    desc: "Macromolecular sheets self-assemble, turning entire methane seas into cognitive liquid membranes.",
+                    scientificDetails: "In cryogenic methane basins, dissolved organic polymers accumulate into sheets. Under wave action and tides, these fluid-crystalline layers act as mechanical logic gates. Currents carry signaling states, turning entire oceans into slow cognitive media.",
+                    type: "success"
+                });
+            }
+
+            if (this.thinkingOceanPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -185, -165, -145);
+                const coverageViability = planet.methaneCoverage / 100;
+                const totalViability = tempViability * coverageViability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.2 * totalViability * this.thinkingOceanPop * (1 - this.thinkingOceanPop / 100.0) * tickRate;
+                    this.thinkingOceanPop = Math.max(0.01, this.thinkingOceanPop + dPop);
+                } else {
+                    this.thinkingOceanPop = Math.max(0, this.thinkingOceanPop - this.thinkingOceanPop * 0.6 * tickRate);
+                }
+            }
+
+            // Megastructure Cryo-Colloids (requires cryoPolymerNetworkPop > 40 & cryoOrganismsPop > 45)
+            const cryoColloidRequirements = this.unlockedCryoPolymerNetwork && this.cryoPolymerNetworkPop > 40.0 && this.cryoOrganismsPop > 45.0 && (this.activeAdaptations.has('macromolecular_assembly') || planet.h2 > 10.0);
+            if (cryoColloidRequirements && !this.unlockedCryoColloid) {
+                this.cryoColloidPop = 0.1;
+                this.unlockedCryoColloid = true;
+                events.push({
+                    title: "👾 MEGASTRUCTURE CRYO-COLLOIDS",
+                    desc: "Azotosome-based beasts coordinate into massive colloidal lattices, forming living computer structures.",
+                    scientificDetails: "Cryogenic animals self-assemble into macro-scale colloidal structures. Lacking warm blood, they coordinate metabolic processes through slow cryogenic convection and chemical signaling, forming massive decentralized computational grids.",
+                    type: "success"
+                });
+            }
+
+            if (this.cryoColloidPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, -183, -162, -140);
+                const h2Viability = Math.min(1.0, planet.h2 / 15.0);
+                const totalViability = tempViability * h2Viability;
+
+                if (totalViability > 0.05) {
+                    const dPop = 0.25 * totalViability * this.cryoColloidPop * (1 - this.cryoColloidPop / 100.0) * tickRate;
+                    this.cryoColloidPop = Math.max(0.01, this.cryoColloidPop + dPop);
+                } else {
+                    this.cryoColloidPop = Math.max(0, this.cryoColloidPop - this.cryoColloidPop * 0.5 * tickRate);
+                }
+            }
+
+            // Methanotrophic cycle consumes H2, vents CH4, boosted by Cryo Colloids and Thinking Oceans
+            if (this.cryoColloidPop > 0 || this.thinkingOceanPop > 0) {
+                const boost = this.cryoColloidPop * 0.05 + this.thinkingOceanPop * 0.04;
+                ch4Prod = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01 + boost;
+                h2Cons = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01 + boost;
+            } else {
+                ch4Prod = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01;
+                h2Cons = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01;
             }
         }
 
-        // Great Oxidation Event Alert
-        if (this.unlockedPhotosynthetic && planet.o2 >= 15.0 && !planet.goeAlertTriggered) {
-            planet.goeAlertTriggered = true;
-            events.push({
-                title: "💨 GREAT OXIDATION EVENT",
-                desc: "Atmospheric Oxygen has exceeded 15%. This has triggered a massive die-off of ancient anaerobic species, but paved the path for highly efficient aerobic systems.",
-                type: "alert"
-            });
-        }
-
-        // ----------------------------------------------------
-        // 4. MULTICELLULAR LIFE (Complex eukaryotic structures)
-        // ----------------------------------------------------
-        if (this.unlockedPhotosynthetic && this.photosyntheticPop > 50.0 && planet.o2 >= 15.0 && !this.unlockedMulticellular) {
-            this.multicellularPop = 0.1;
-            this.unlockedMulticellular = true;
-            events.push({
-                title: "🌱 MULTICELLULARITY UNLOCKED",
-                desc: "High oxygen levels enabled high-energy aerobic respiration. Cells have aggregated, specializing into complex tissues and early sea flora.",
-                type: "success"
-            });
-        }
-
-        if (this.multicellularPop > 0) {
-            const tempViability = this.getTempViability(planet.temperature, 10, 22, 45); // peaks at 22C (very sensitive)
-            let waterViability = planet.waterCoverage > 30 ? 1.0 : Math.max(0, (planet.waterCoverage - 15) / 15);
-            // Glaciation decimates multicellular mobility
-            if (planet.isGlaciated) waterViability *= 0.05;
-            // Radiation is very dangerous for complex DNA structure
-            const radViability = Math.max(0, 1 - planet.radiation / 3.0);
-            const o2Viability = planet.o2 >= 15.0 ? 1.0 : (planet.o2 / 15.0);
-
-            const totalViability = tempViability * waterViability * radViability * o2Viability;
-
-            if (totalViability > 0.1) {
-                const growthRate = 0.5 * totalViability;
-                const carryingCapacity = 100.0 * waterViability * o2Viability;
-                const dPop = growthRate * this.multicellularPop * (1 - this.multicellularPop / carryingCapacity) * tickRate;
-                this.multicellularPop = Math.max(0.01, this.multicellularPop + dPop);
-            } else {
-                const deathRate = 0.8 * (1 - totalViability);
-                this.multicellularPop = Math.max(0, this.multicellularPop - this.multicellularPop * deathRate * tickRate);
-            }
-        }
-
-        // ----------------------------------------------------
-        // 5. MUTATION & ADAPTATION UPGRADES
-        // ----------------------------------------------------
-        // Over time, exposure to moderate radiation slowly trains radiation resistance (simulating genetic selection)
-        if (planet.radiation > 0.5 && (this.anaerobicPop > 5.0 || this.photosyntheticPop > 5.0)) {
-            // Radiation stimulates resistance adaptations up to a maximum
-            const adaptationRate = 0.002 * Math.min(3.0, planet.radiation) * tickRate;
-            this.radiationResistance = Math.min(0.85, this.radiationResistance + adaptationRate);
-        }
-
-        // Return a calculated oxygen production rate and CO2 consumption rate based on current biology
-        // This is used by planet.js to update gases
+        // Return calculated biological feedback impacts
         const biologicalImpact = {
-            o2Prod: this.photosyntheticPop * 0.05,
-            co2Cons: this.photosyntheticPop * 0.05 + this.anaerobicPop * 0.01
+            o2Prod,
+            co2Cons,
+            n2Prod,
+            ch4Prod,
+            h2Cons
         };
+
+        // Train radiation resistance
+        if (planet.radiation > 0.5 && (this.anaerobicPop > 5.0 || this.ammonicProtoPop > 5.0 || this.methaneProtoPop > 5.0)) {
+            const adaptationRate = 0.003 * Math.min(3.0, planet.radiation) * tickRate;
+            this.radiationResistance = Math.min(0.9, this.radiationResistance + adaptationRate);
+        }
 
         return {
             events,

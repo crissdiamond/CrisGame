@@ -14,7 +14,7 @@ class GameController {
         this.eventSystem = new EventSystem();
 
         // Loop / Timing State
-        this.isPlaying = true;
+        this.isPlaying = false;
         this.lastTime = 0;
         
         // Time scale: 1 real second = 0.1 Million Years (Myr)
@@ -29,22 +29,84 @@ class GameController {
         this.ui.syncSliders(this.planet);
         this.ui.setPlayState(this.isPlaying);
 
+        // Nudges definition map
+        const nudges = {
+            'mitochondria': { id: 'endosymbiosis', cost: 8 },
+            'mosses': { id: 'vascular_tissue', cost: 10 },
+            'conifers': { id: 'seed_evolution', cost: 12 },
+            'tetrapods': { id: 'amniotic_egg', cost: 12 },
+            'sauropsids': { id: 'scales', cost: 12 },
+            'synapsids': { id: 'endthermy', cost: 15 },
+            'cognitive': { id: 'cognitive', cost: 15 },
+            'ai': { id: 'technological_singularity', cost: 15 },
+            'cyborg': { id: 'cybernetic_implants', cost: 18 },
+            'noosphere': { id: 'global_consciousness', cost: 20 },
+            'gaia_hivemind': { id: 'ecological_integration', cost: 20 },
+            'silico_flora': { id: 'silicon_chains', cost: 12 },
+            'crystalline_cognitive': { id: 'crystalline_collective', cost: 15 },
+            'quantum_lattices': { id: 'quantum_alignment', cost: 18 },
+            'cryo_hivemind': { id: 'cryo_neural_webs', cost: 18 },
+            'cryo_beasts': { id: 'cryo_polymers', cost: 12 },
+            'cryo_polymer_network': { id: 'cryo_singularity', cost: 15 },
+            'thinking_ocean': { id: 'colloidal_solids', cost: 18 },
+            'cryo_colloids': { id: 'macromolecular_assembly', cost: 18 }
+        };
+
         // Bind UI triggers and controls
         this.ui.bindEvents({
-            onTemperatureChange: (val) => this.planet.setTargetTemperature(val),
-            onWaterCoverageChange: (val) => this.planet.setTargetWaterCoverage(val),
-            onRadiationChange: (val) => this.planet.setTargetRadiation(val),
-            
-            onMeteorStrike: () => {
-                const event = this.planet.triggerMeteor();
-                this.ui.logEvent(event.title, event.desc, event.type);
+            onLaunch: (config) => {
+                this.planet.initializeProtoplanet(config);
+                this.biology = new BiologySimulation();
+                this.eventSystem = new EventSystem();
+                this.isPlaying = true;
+                this.ui.setPlayState(this.isPlaying);
                 this.ui.syncSliders(this.planet);
+                
+                const sizeLabel = config.planetSize.toUpperCase();
+                const starLabel = config.starClass.replace('_', ' ').toUpperCase();
+                this.ui.logEvent("PROTOPLANET INJECTED", `Star: ${starLabel} (${config.starSize}x), Orbit: ${config.orbitDistance} AU, Size: ${sizeLabel}`, "success");
+                this.ui.logEvent("ENVIRONMENT DYNAMICS LOCKED", "Direct parameter controls disabled. Manage parameters via Interventions and Hazard deflections.", "system");
+                
+                // Force a render tick
+                this.lastTime = performance.now();
             },
             
-            onVolcanoErupt: () => {
-                const event = this.planet.triggerVolcano();
-                this.ui.logEvent(event.title, event.desc, event.type);
-                this.ui.syncSliders(this.planet);
+            // Interventions
+            onIntervention: (type) => {
+                const res = this.eventSystem.triggerIntervention(type, this.planet, this.biology);
+                if (res.success) {
+                    this.ui.logEvent(res.title, res.msg, "success");
+                    this.ui.showMilestonePopup(res.title, res.msg, res.scientificDetails);
+                    this.ui.syncSliders(this.planet);
+                } else {
+                    this.ui.logEvent("INTERVENTION FAILED", res.msg, "hazard");
+                }
+            },
+            
+            // Deflect active threat warning
+            onDeflectThreat: (threatId) => {
+                const res = this.eventSystem.deflectWarning(threatId);
+                if (res.success) {
+                    this.ui.logEvent("THREAT AVERTED", res.msg, "success");
+                    // Immediately refresh the threat panel so the card disappears now,
+                    // not on the next animation frame (important when paused).
+                    this.ui.updateThreats(this.eventSystem.warnings);
+                } else {
+                    this.ui.logEvent("DEFLECTION FAILED", res.msg, "hazard");
+                }
+            },
+
+            // Nudge evolution
+            onNudgeEvolution: (nodeId) => {
+                const nudge = nudges[nodeId];
+                if (nudge) {
+                    const res = this.eventSystem.nudgeEvolution(nudge.id, nudge.cost, this.biology);
+                    if (res.success) {
+                        this.ui.logEvent("EVOLUTION NUDGED", res.msg, "success");
+                    } else {
+                        this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");
+                    }
+                }
             },
             
             onPauseToggle: () => {
@@ -61,7 +123,7 @@ class GameController {
         });
 
         // Log opening console message
-        this.ui.logEvent("SENSOR ACTIVE", "Environmental monitors are recording. Initial temperature set to 75°C. Water at 30%. Adjust controls to optimize planetary viability.", "system");
+        this.ui.logEvent("CURATOR TERMINAL ONLINE", "Awaiting Protoplanetary Configuration injection from Setup Terminal...", "system");
 
         // Launch simulation loop
         this.lastTime = performance.now();
@@ -88,14 +150,20 @@ class GameController {
             if (bioUpdate.events && bioUpdate.events.length > 0) {
                 bioUpdate.events.forEach(evt => {
                     this.ui.logEvent(evt.title, evt.desc, evt.type);
+                    if (evt.type === 'success') {
+                        this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
+                    }
                 });
             }
 
-            // 2. Tick random events
+            // 2. Tick random events and warning queues
             const eventLogs = this.eventSystem.tick(this.planet, this.biology, tickRate);
             if (eventLogs && eventLogs.length > 0) {
                 eventLogs.forEach(evt => {
                     this.ui.logEvent(evt.title, evt.desc, evt.type);
+                    if (evt.type === 'success' || evt.type === 'hazard') {
+                        this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
+                    }
                 });
                 // Sync sliders back to planet values since events can alter targets
                 this.ui.syncSliders(this.planet);
@@ -110,6 +178,15 @@ class GameController {
 
         // 4. Update panel values, progress bars, and atmospheric graphs
         this.ui.updateDashboard(this.planet, this.biology);
+        
+        // Update warnings panel
+        this.ui.updateThreats(this.eventSystem.warnings);
+
+        // Update token readout directly from eventSystem
+        this.ui.tokenBalance.textContent = Math.floor(this.eventSystem.tokens);
+
+        // Update dynamic interventions modal compatibility/affordability state
+        this.ui.updateInterventions(this.planet, this.biology, this.eventSystem);
 
         // Keep loop running
         requestAnimationFrame((time) => this.loop(time));
