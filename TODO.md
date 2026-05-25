@@ -32,6 +32,11 @@
 - Make each branch depend on different atmospheric, water, radiation, and stability requirements.
 - Reflect new biodiversity in the dashboard and visualization.
 
+### 7. Expand Astrobiology Toward Sentient Life
+- Model more intermediate steps between simple organisms and sentient or high-intelligence life forms.
+- Add scientifically plausible prerequisites for advanced cognition, such as complex ecosystems, sensory systems, nervous-system analogues, social behavior, environmental stability, energy availability, and sustained evolutionary time.
+- Keep speculative high-intelligence branches consistent with current biology, physics, chemistry, and cosmology rather than treating intelligence as a single unlock jump.
+
 ## Suggested First Priorities
 
 1. Add a clear objective and progress indicator.
