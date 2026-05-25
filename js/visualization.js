@@ -103,9 +103,19 @@ export class GameVisualizer {
         const radius = Math.min(w, h) * 0.32;
 
         this.rotationAngle += 0.002;
-        this.moonAngle += 0.0008; // moon orbits slowly
+        this.moonAngle = (this.moonAngle + 0.004) % (Math.PI * 2); // moon orbits slowly
 
-        // 2. Draw Magnetosphere Field Lines
+        const moon = this.getMoonGeometry(cx, cy, radius, w, h);
+
+        // 2. Draw Moon orbit path and the far-side moon before the planet.
+        if (planet.hasMoon) {
+            this.drawMoonOrbit(ctx, cx, cy, moon);
+            if (moon.isBehind) {
+                this.drawMoonBody(ctx, moon.x, moon.y, moon.radius);
+            }
+        }
+
+        // 3. Draw Magnetosphere Field Lines
         if (planet.hasMagnetosphere) {
             ctx.strokeStyle = `rgba(0, 242, 254, ${(planet.magneticStrength / 100) * 0.15})`;
             ctx.lineWidth = 1.5;
@@ -121,7 +131,7 @@ export class GameVisualizer {
             }
         }
 
-        // 3. Draw Solar Wind Stripping (particles blowing across unshielded planet)
+        // 4. Draw Solar Wind Stripping (particles blowing across unshielded planet)
         if (!planet.hasMagnetosphere && planet.radiation > 4.0) {
             ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
             for (let i = 0; i < 15; i++) {
@@ -133,7 +143,7 @@ export class GameVisualizer {
             }
         }
 
-        // 4. Draw Ozone Layer outer shell
+        // 5. Draw Ozone Layer outer shell
         if (planet.ozone > 0.1) {
             ctx.strokeStyle = `rgba(14, 165, 233, ${planet.ozone * 0.45})`;
             ctx.lineWidth = 4 + planet.ozone * 6;
@@ -142,7 +152,7 @@ export class GameVisualizer {
             ctx.stroke();
         }
 
-        // 5. Draw Planet Atmosphere Glow Halo
+        // 6. Draw Planet Atmosphere Glow Halo
         const glowRad = radius * 1.25;
         const glowGrad = ctx.createRadialGradient(cx, cy, radius * 0.95, cx, cy, glowRad);
         
@@ -164,7 +174,7 @@ export class GameVisualizer {
         ctx.arc(cx, cy, glowRad, 0, Math.PI * 2);
         ctx.fill();
 
-        // 6. Draw Planet Body
+        // 7. Draw Planet Body
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -428,80 +438,93 @@ export class GameVisualizer {
         ctx.fill();
         ctx.restore();
 
-        // 7. Draw Moon (if planet has one from giant collision)
-        if (planet.hasMoon) {
-            const moonOrbitRadius = radius * 1.75;
-            const moonRadius = radius * 0.27;
-            const moonX = cx + Math.cos(this.moonAngle) * moonOrbitRadius;
-            const moonY = cy + Math.sin(this.moonAngle) * moonOrbitRadius * 0.45; // slightly elliptic
-
-            // Orbit path (faint dotted ellipse)
-            ctx.save();
-            ctx.setLineDash([3, 8]);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy, moonOrbitRadius, moonOrbitRadius * 0.45, 0, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.restore();
-
-            // Only draw if moon is not obscured by planet (rough z-sort)
-            const behindPlanet = Math.sin(this.moonAngle) > 0 && Math.abs(moonX - cx) < radius;
-            if (!behindPlanet) {
-                // Moon glow halo
-                const moonGlow = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.7, moonX, moonY, moonRadius * 1.6);
-                moonGlow.addColorStop(0, 'rgba(200, 210, 230, 0.12)');
-                moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = moonGlow;
-                ctx.beginPath();
-                ctx.arc(moonX, moonY, moonRadius * 1.6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Moon body
-                const moonBodyGrad = ctx.createRadialGradient(
-                    moonX - moonRadius * 0.3, moonY - moonRadius * 0.3, moonRadius * 0.05,
-                    moonX, moonY, moonRadius
-                );
-                moonBodyGrad.addColorStop(0, '#b0b8c8');
-                moonBodyGrad.addColorStop(0.55, '#7c8494');
-                moonBodyGrad.addColorStop(1, '#2a2e38');
-                ctx.fillStyle = moonBodyGrad;
-                ctx.beginPath();
-                ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Moon craters (2-3 static craters relative to moon center)
-                ctx.fillStyle = 'rgba(40, 44, 56, 0.55)';
-                const craters = [
-                    { dx: 0.25, dy: -0.2, r: 0.22 },
-                    { dx: -0.3, dy: 0.25, r: 0.16 },
-                    { dx: 0.05, dy: 0.35, r: 0.12 }
-                ];
-                craters.forEach(c => {
-                    ctx.beginPath();
-                    ctx.arc(moonX + c.dx * moonRadius, moonY + c.dy * moonRadius, c.r * moonRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-
-                // Night side shadow gradient
-                const shadowGradMoon = ctx.createRadialGradient(
-                    moonX + moonRadius * 0.4, moonY + moonRadius * 0.4, moonRadius * 0.1,
-                    moonX, moonY, moonRadius
-                );
-                shadowGradMoon.addColorStop(0, 'rgba(0,0,0,0)');
-                shadowGradMoon.addColorStop(0.6, 'rgba(0,0,0,0.3)');
-                shadowGradMoon.addColorStop(1, 'rgba(0,0,0,0.82)');
-                ctx.fillStyle = shadowGradMoon;
-                ctx.beginPath();
-                ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        // 8. Draw near-side Moon after the planet so the orbital depth is clear.
+        if (planet.hasMoon && !moon.isBehind) {
+            this.drawMoonBody(ctx, moon.x, moon.y, moon.radius);
         }
 
-        // 8. Draw Incoming Warnings (e.g. Asteroids, passing stars)
+        // 9. Draw Incoming Warnings (e.g. Asteroids, passing stars)
         // Check if there is an active warning for asteroid
         // We look at planet.age or warning lists
+    }
+
+    getMoonGeometry(cx, cy, planetRadius, w, h) {
+        const moonRadius = Math.max(8, planetRadius * 0.22);
+        const horizontalLimit = Math.max(planetRadius * 1.2, (w / 2) - moonRadius * 1.8);
+        const verticalLimit = Math.max(planetRadius * 0.55, (h / 2) - moonRadius * 1.8);
+        const orbitRadiusX = Math.min(planetRadius * 1.85, horizontalLimit);
+        const orbitRadiusY = Math.min(planetRadius * 0.72, verticalLimit);
+
+        return {
+            radius: moonRadius,
+            orbitRadiusX,
+            orbitRadiusY,
+            x: cx + Math.cos(this.moonAngle) * orbitRadiusX,
+            y: cy + Math.sin(this.moonAngle) * orbitRadiusY,
+            isBehind: Math.sin(this.moonAngle) < 0
+        };
+    }
+
+    drawMoonOrbit(ctx, cx, cy, moon) {
+        ctx.save();
+        ctx.setLineDash([3, 8]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, moon.orbitRadiusX, moon.orbitRadiusY, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
+    drawMoonBody(ctx, moonX, moonY, moonRadius) {
+        // Moon glow halo
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.7, moonX, moonY, moonRadius * 1.6);
+        moonGlow.addColorStop(0, 'rgba(200, 210, 230, 0.12)');
+        moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon body
+        const moonBodyGrad = ctx.createRadialGradient(
+            moonX - moonRadius * 0.3, moonY - moonRadius * 0.3, moonRadius * 0.05,
+            moonX, moonY, moonRadius
+        );
+        moonBodyGrad.addColorStop(0, '#b0b8c8');
+        moonBodyGrad.addColorStop(0.55, '#7c8494');
+        moonBodyGrad.addColorStop(1, '#2a2e38');
+        ctx.fillStyle = moonBodyGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon craters
+        ctx.fillStyle = 'rgba(40, 44, 56, 0.55)';
+        const craters = [
+            { dx: 0.25, dy: -0.2, r: 0.22 },
+            { dx: -0.3, dy: 0.25, r: 0.16 },
+            { dx: 0.05, dy: 0.35, r: 0.12 }
+        ];
+        craters.forEach(c => {
+            ctx.beginPath();
+            ctx.arc(moonX + c.dx * moonRadius, moonY + c.dy * moonRadius, c.r * moonRadius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Night side shadow gradient
+        const shadowGradMoon = ctx.createRadialGradient(
+            moonX + moonRadius * 0.4, moonY + moonRadius * 0.4, moonRadius * 0.1,
+            moonX, moonY, moonRadius
+        );
+        shadowGradMoon.addColorStop(0, 'rgba(0,0,0,0)');
+        shadowGradMoon.addColorStop(0.6, 'rgba(0,0,0,0.3)');
+        shadowGradMoon.addColorStop(1, 'rgba(0,0,0,0.82)');
+        ctx.fillStyle = shadowGradMoon;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     drawMicroView(planet, biology, w, h, ctx) {
@@ -556,6 +579,11 @@ export class GameVisualizer {
         }
 
         // Draw microbes
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, microRad - 3, 0, Math.PI * 2);
+        ctx.clip();
+
         this.particles.forEach(p => {
             p.vx += (Math.random() - 0.5) * 0.12;
             p.vy += (Math.random() - 0.5) * 0.12;
@@ -565,10 +593,13 @@ export class GameVisualizer {
             p.y += p.vy;
 
             // Boundary clamp
+            const particleMargin = Math.max(18, p.size * 4);
+            const innerRadius = microRad - particleMargin;
             const dist = Math.hypot(p.x - cx, p.y - cy);
-            if (dist > microRad - 15) {
+            if (dist > innerRadius) {
                 const angle = Math.atan2(p.y - cy, p.x - cx);
-                p.x = cx + Math.cos(angle) * (microRad - 15);
+                p.x = cx + Math.cos(angle) * innerRadius;
+                p.y = cy + Math.sin(angle) * innerRadius;
                 p.vx *= -0.5;
                 p.vy *= -0.5;
             }
@@ -967,5 +998,7 @@ export class GameVisualizer {
             
             ctx.restore();
         });
+
+        ctx.restore();
     }
 }
