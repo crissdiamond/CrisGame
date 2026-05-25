@@ -180,6 +180,7 @@ export class BiologySimulation {
         const events = [];
         let o2Prod = 0;
         let co2Cons = 0;
+        let co2Prod = 0;
         let n2Prod = 0;
         let ch4Prod = 0;
         let h2Cons = 0;
@@ -193,6 +194,7 @@ export class BiologySimulation {
         // ----------------------------------------------------
         if (isWater) {
             const nitrogenViability = 0.5 + 0.5 * clamp01(planet.n2 / 40.0);
+            const co2Viability = clamp01(planet.co2 / 2.0); // photosynthesis throttles below 2% CO2
 
             // Soup Synthesis (needs liquid water, 0 to 100°C)
             if (planet.temperature > 10 && planet.temperature < 90 && planet.waterCoverage > 10) {
@@ -300,7 +302,7 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const growthRate = 1.0 * totalViability * nitrogenViability * (0.3 + (planet.radiation / 5.0));
+                    const growthRate = 1.0 * totalViability * nitrogenViability * co2Viability * (0.3 + (planet.radiation / 5.0));
                     const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / 200.0) * tickRate;
                     this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
                 } else {
@@ -594,7 +596,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 0, 20, 38);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability * nitrogenViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * tickRate;
@@ -625,7 +627,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 2, 22, 40);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability * nitrogenViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * tickRate;
@@ -656,7 +658,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, -10, 18, 36);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability * nitrogenViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * tickRate;
@@ -687,7 +689,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 42);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability * nitrogenViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * tickRate;
@@ -1019,8 +1021,32 @@ export class BiologySimulation {
             const respiration = this.spongesPop * 0.008 + this.medusesPop * 0.01 + this.wormsPop * 0.012 + this.fishPop * 0.025 + 
                                 this.cambrianPop * 0.02 + this.sauropsidPop * 0.05 + this.synapsidPop * 0.06 + this.cognitiveSpeciesPop * 0.06;
 
-            o2Prod = o2ProdRaw - respiration;
-            co2Cons = o2Prod;
+            // Direct anaerobic/heterotrophic decomposition venting of CO2
+            const decayCO2Prod = this.anaerobicPop * 0.02 + (this.organicSoup > 0 ? 0.35 : 0.01);
+
+            // Spontaneous oxygen wildfires if O2 exceeds 25% (ignitions due to lightning/thunderstrike)
+            let fireO2Drawdown = 0;
+            let fireCO2Release = 0;
+            if (planet.o2 > 25.0) {
+                const excessO2 = planet.o2 - 25.0;
+                const fireBurnRate = excessO2 * 0.01 * (this.landPlantsPop > 0 ? 1.0 : 0.15);
+                
+                if (this.landPlantsPop > 0) {
+                    this.mossesPop = Math.max(0, this.mossesPop - this.mossesPop * fireBurnRate * tickRate);
+                    this.fernsPop = Math.max(0, this.fernsPop - this.fernsPop * fireBurnRate * tickRate);
+                    this.conifersPop = Math.max(0, this.conifersPop - this.conifersPop * fireBurnRate * tickRate);
+                    this.angiospermsPop = Math.max(0, this.angiospermsPop - this.angiospermsPop * fireBurnRate * tickRate);
+                }
+                this.photosyntheticPop = Math.max(0, this.photosyntheticPop - this.photosyntheticPop * fireBurnRate * 0.4 * tickRate);
+                
+                const biomassBurned = (this.landPlantsPop * 0.4 + this.photosyntheticPop * 0.1) * fireBurnRate;
+                fireO2Drawdown = biomassBurned;
+                fireCO2Release = biomassBurned;
+            }
+
+            o2Prod = o2ProdRaw - respiration - fireO2Drawdown;
+            co2Cons = o2Prod - decayCO2Prod;
+            co2Prod = decayCO2Prod + fireCO2Release;
             
             // Nitrogen Cycle: denitrifiers vent N2, fixers consume N2, radiation fixes N2
             const denitrification = this.anaerobicPop * 0.04;
@@ -1503,6 +1529,7 @@ export class BiologySimulation {
         const biologicalImpact = {
             o2Prod,
             co2Cons,
+            co2Prod,
             n2Prod,
             ch4Prod,
             h2Cons

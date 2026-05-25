@@ -386,7 +386,7 @@ export class Planet {
     /**
      * Compute state change over one simulation tick
      */
-    update(tickRate, biologicalImpact = { o2Prod: 0, co2Cons: 0, n2Prod: 0, ch4Prod: 0, h2Cons: 0 }) {
+    update(tickRate, biologicalImpact = { o2Prod: 0, co2Cons: 0, co2Prod: 0, n2Prod: 0, ch4Prod: 0, h2Cons: 0 }) {
         // Increment planetary age
         this.age += tickRate;
         this.starAge += tickRate;
@@ -433,8 +433,14 @@ export class Planet {
         // Base equilibrium temp: T_eq = 278 * (L / d^2)^0.25 - 273.15
         const eqTemp = 278.0 * Math.pow(this.starLuminosity / (this.orbitDistance * this.orbitDistance), 0.25) - 273.15;
         
-        // Greenhouse heating: CO2 (0.6x), CH4 (1.2x), H2 (0.4x) scaled by pressure
-        const greenhouse = (this.co2 * 0.6 + this.ch4 * 1.2 + this.h2 * 0.4) * (this.atmospherePressure / 1.0) * 0.45;
+        // Greenhouse heating: CO2 (0.6x), CH4 (1.2x), H2 (0.4x) scaled by pressure, plus water/ammonia vapor feedback
+        let vaporGreenhouse = 0.0;
+        if (this.activeSolvent === 'water') {
+            vaporGreenhouse = (this.waterCoverage / 100.0) * 8.0;
+        } else if (this.activeSolvent === 'ammonia') {
+            vaporGreenhouse = (this.ammoniaCoverage / 100.0) * 5.0;
+        }
+        const greenhouse = (this.co2 * 0.6 + this.ch4 * 1.2 + this.h2 * 0.4) * (this.atmospherePressure / 1.0) * 0.45 + vaporGreenhouse;
 
         // Cosmological effects
         let orbitalPerturbationHeating = this.orbitalPerturbationActive ? 8.0 : 0.0;
@@ -524,6 +530,10 @@ export class Planet {
             this.ozone = Math.max(0, this.ozone - 0.05 * tickRate);
         }
 
+        // Continuous baseline tectonic outgassing of CO2 (geological carbon cycle)
+        const tectonicCO2 = (this.magneticStrength > 10.0 ? 0.005 : 0.001) * tickRate;
+        this.co2 += tectonicCO2;
+
         // Apply biological feedback to atmosphere gases
         if (this.activeSolvent === 'water') {
             if (biologicalImpact.o2Prod > 0) {
@@ -535,6 +545,10 @@ export class Planet {
                 const converted = Math.min(this.o2, -biologicalImpact.o2Prod * tickRate * 0.1);
                 this.o2 -= converted;
                 this.co2 += converted;
+            }
+            // Direct anaerobic/decomposer/fire CO2 production
+            if (biologicalImpact.co2Prod > 0) {
+                this.co2 += biologicalImpact.co2Prod * tickRate * 0.1;
             }
             // Terrestrial Nitrogen cycle feedback:
             if (biologicalImpact.n2Prod !== 0) {

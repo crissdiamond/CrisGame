@@ -205,6 +205,41 @@ export class EventSystem {
                 }
             },
             {
+                id: "atmospheric_firestorm",
+                name: "Atmospheric Firestorm Warning",
+                description: "Atmospheric oxygen has reached extreme concentrations. A thunderstrike has ignited a planetary-scale wildfire.",
+                scientificDetails: "When atmospheric oxygen exceeds 30-35%, the combustion threshold of organic matter drops dramatically. Even damp vegetation becomes highly flammable, allowing a single lightning bolt to spark global wildfire storms that consume vast quantities of biomass and oxygen, venting carbon dioxide.",
+                type: "hazard",
+                chance: 0.25,
+                cost: 8,
+                warningDuration: 3.0,
+                condition: (p, b) => p.o2 > 35.0 && b.landPlantsPop > 10.0 && !this.isEventActive("atmospheric_firestorm"),
+                duration: 5.0,
+                apply: (p, b) => {
+                    // Burn down land flora populations by 50%
+                    b.mossesPop = Math.max(0.01, b.mossesPop * 0.5);
+                    b.fernsPop = Math.max(0.01, b.fernsPop * 0.5);
+                    b.conifersPop = Math.max(0.01, b.conifersPop * 0.5);
+                    b.angiospermsPop = Math.max(0.01, b.angiospermsPop * 0.5);
+                    b.landPlantsPop = b.mossesPop + b.fernsPop + b.conifersPop + b.angiospermsPop;
+                    
+                    // Kill some land animal fauna
+                    if (b.sauropsidPop > 0) b.sauropsidPop *= 0.6;
+                    if (b.synapsidPop > 0) b.synapsidPop *= 0.6;
+                    if (b.cognitiveSpeciesPop > 0) b.cognitiveSpeciesPop *= 0.6;
+                    
+                    // Directly consume atmospheric O2 and release CO2
+                    p.o2 = Math.max(21.0, p.o2 - 12.0);
+                    p.co2 = Math.min(100.0, p.co2 + 12.0);
+                    p.rebalanceAtmosphere();
+                    
+                    return "Firestorm ignited! Runaway wildfires scorched the continents, destroying 50% of plant biomass, drawing down oxygen, and venting carbon dioxide.";
+                },
+                onEnd: (p, b) => {
+                    return "Planet-wide fires extinguished. Ash fertilization stimulates soil nutrients.";
+                }
+            },
+            {
                 id: "gamma_ray_burst",
                 name: "Gamma-Ray Burst Warning",
                 description: "A nearby binary neutron star merger has released a high-energy beam. Gamma radiation will strip the ozone layer.",
