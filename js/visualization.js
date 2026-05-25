@@ -12,6 +12,7 @@ export class GameVisualizer {
         // Microscopic particle pool
         this.particles = [];
         this.initializedParticles = false;
+        this.lastSolvent = null;
         
         // Planet rotation angle
         this.rotationAngle = 0;
@@ -54,23 +55,127 @@ export class GameVisualizer {
 
     initMicroParticles() {
         this.particles = [];
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        
-        for (let i = 0; i < 40; i++) {
-            this.particles.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4,
-                type: 'soup',
-                size: Math.random() * 3 + 2,
-                color: 'rgba(168, 85, 247, 0.6)',
-                wobble: Math.random() * Math.PI * 2,
-                wobbleSpeed: 0.04 + Math.random() * 0.04
-            });
-        }
         this.initializedParticles = true;
+    }
+
+    syncParticles(planet, biology, cx, cy, microRad) {
+        if (planet.activeSolvent !== this.lastSolvent) {
+            this.particles = [];
+            this.lastSolvent = planet.activeSolvent;
+        }
+
+        const targetCounts = {};
+
+        if (planet.activeSolvent === 'water') {
+            if (biology.unlockedSoup) targetCounts['soup'] = Math.max(1, Math.min(8, Math.floor(biology.organicSoup / 12)));
+            if (biology.unlockedAnaerobic) targetCounts['anaerobic'] = Math.max(1, Math.min(6, Math.floor(biology.anaerobicPop / 20)));
+            if (biology.unlockedPhotosynthetic) targetCounts['photosynthetic'] = Math.max(1, Math.min(6, Math.floor(biology.photosyntheticPop / 25)));
+            if (biology.unlockedEukaryotic) targetCounts['eukaryotic'] = Math.max(1, Math.min(6, Math.floor(biology.eukaryoticPop / 20)));
+            if (biology.unlockedMulticellular) targetCounts['multicellular'] = Math.max(1, Math.min(6, Math.floor(biology.multicellularPop / 15)));
+            if (biology.unlockedSponges) targetCounts['sponges'] = Math.max(1, Math.min(5, Math.floor(biology.spongesPop / 20)));
+            if (biology.unlockedMeduses) targetCounts['meduses'] = Math.max(1, Math.min(5, Math.floor(biology.medusesPop / 20)));
+            if (biology.unlockedWorms) targetCounts['worms'] = Math.max(1, Math.min(5, Math.floor(biology.wormsPop / 20)));
+            if (biology.unlockedFish) targetCounts['fish'] = Math.max(1, Math.min(5, Math.floor(biology.fishPop / 20)));
+            if (biology.unlockedCambrian) targetCounts['cambrian'] = Math.max(1, Math.min(5, Math.floor(biology.cambrianPop / 20)));
+            if (biology.unlockedLandPlants) targetCounts['plants'] = Math.max(1, Math.min(6, Math.floor(biology.landPlantsPop / 30)));
+            if (biology.unlockedTetrapod) targetCounts['tetrapod'] = Math.max(1, Math.min(5, Math.floor(biology.tetrapodPop / 20)));
+            if (biology.unlockedSauropsid) targetCounts['sauropsid'] = Math.max(1, Math.min(5, Math.floor(biology.sauropsidPop / 20)));
+            if (biology.unlockedSynapsid) targetCounts['synapsid'] = Math.max(1, Math.min(5, Math.floor(biology.synapsidPop / 20)));
+            if (biology.unlockedCognitive) targetCounts['cognitive'] = Math.max(1, Math.min(5, Math.floor(biology.cognitiveSpeciesPop / 20)));
+            if (biology.unlockedTechnologicalAI) targetCounts['ai'] = Math.max(1, Math.min(5, Math.floor(biology.technologicalAIPop / 20)));
+            if (biology.unlockedCyborg) targetCounts['cyborg'] = Math.max(1, Math.min(5, Math.floor(biology.cyborgPop / 20)));
+            if (biology.unlockedNoosphere) targetCounts['noosphere'] = Math.max(1, Math.min(4, Math.floor(biology.noospherePop / 25)));
+            if (biology.unlockedGaiaHivemind) targetCounts['gaia_hivemind'] = Math.max(1, Math.min(4, Math.floor(biology.gaiaHivemindPop / 25)));
+        } else if (planet.activeSolvent === 'ammonia') {
+            if (biology.unlockedAmmonicSoup) targetCounts['ammonic_soup'] = Math.max(1, Math.min(8, Math.floor(biology.ammonicSoup / 12)));
+            if (biology.unlockedAmmonicProto) targetCounts['ammonic_proto'] = Math.max(1, Math.min(6, Math.floor(biology.ammonicProtoPop / 20)));
+            if (biology.unlockedAmmonicMulti) targetCounts['ammonic_multi'] = Math.max(1, Math.min(6, Math.floor(biology.ammonicMultiPop / 15)));
+            if (biology.unlockedSilicoFlora) targetCounts['silico_flora'] = Math.max(1, Math.min(6, Math.floor(biology.silicoFloraPop / 20)));
+            if (biology.unlockedCryoFauna) targetCounts['cryo_fauna'] = Math.max(1, Math.min(5, Math.floor(biology.cryoFaunaPop / 20)));
+            if (biology.unlockedCrystallineCognitive) targetCounts['crystalline_cognitive'] = Math.max(1, Math.min(5, Math.floor(biology.crystallineCognitivePop / 16)));
+            if (biology.unlockedQuantumLattice) targetCounts['quantum_lattices'] = Math.max(1, Math.min(4, Math.floor(biology.quantumLatticePop / 25)));
+            if (biology.unlockedCryoHivemind) targetCounts['cryo_hivemind'] = Math.max(1, Math.min(4, Math.floor(biology.cryoHivemindPop / 25)));
+        } else if (planet.activeSolvent === 'methane') {
+            if (biology.unlockedMethaneSoup) targetCounts['methane_soup'] = Math.max(1, Math.min(8, Math.floor(biology.methaneSoup / 12)));
+            if (biology.unlockedMethaneProto) targetCounts['methane_proto'] = Math.max(1, Math.min(6, Math.floor(biology.methaneProtoPop / 20)));
+            if (biology.unlockedMethaneMulti) targetCounts['methane_multi'] = Math.max(1, Math.min(6, Math.floor(biology.methaneMultiPop / 15)));
+            if (biology.unlockedCryoOrganisms) targetCounts['cryo_organisms'] = Math.max(1, Math.min(5, Math.floor(biology.cryoOrganismsPop / 15)));
+            if (biology.unlockedCryoPolymerNetwork) targetCounts['cryo_polymer_network'] = Math.max(1, Math.min(5, Math.floor(biology.cryoPolymerNetworkPop / 12)));
+            if (biology.unlockedThinkingOcean) targetCounts['thinking_ocean'] = Math.max(1, Math.min(4, Math.floor(biology.thinkingOceanPop / 25)));
+            if (biology.unlockedCryoColloid) targetCounts['cryo_colloids'] = Math.max(1, Math.min(4, Math.floor(biology.cryoColloidPop / 25)));
+        }
+
+        const allTypes = [
+            'soup', 'anaerobic', 'photosynthetic', 'eukaryotic', 'multicellular',
+            'sponges', 'meduses', 'worms', 'fish', 'cambrian', 'plants', 'tetrapod',
+            'sauropsid', 'synapsid', 'cognitive', 'ai', 'cyborg', 'noosphere', 'gaia_hivemind',
+            'ammonic_soup', 'ammonic_proto', 'ammonic_multi', 'silico_flora', 'cryo_fauna',
+            'crystalline_cognitive', 'quantum_lattices', 'cryo_hivemind',
+            'methane_soup', 'methane_proto', 'methane_multi', 'cryo_organisms',
+            'cryo_polymer_network', 'thinking_ocean', 'cryo_colloids'
+        ];
+
+        allTypes.forEach(type => {
+            const targetCount = targetCounts[type] || 0;
+            const currentParticles = this.particles.filter(p => p.type === type);
+            const currentCount = currentParticles.length;
+
+            if (currentCount < targetCount) {
+                const toAdd = targetCount - currentCount;
+                for (let i = 0; i < toAdd; i++) {
+                    const r = Math.random() * (microRad - 25);
+                    const angle = Math.random() * Math.PI * 2;
+                    const px = cx + Math.cos(angle) * r;
+                    const py = cy + Math.sin(angle) * r;
+
+                    let motionType = 'wander';
+                    let speed = 0.4 + Math.random() * 0.4;
+
+                    if (['soup', 'ammonic_soup', 'methane_soup'].includes(type)) {
+                        motionType = 'drift';
+                        speed = 0.12 + Math.random() * 0.08;
+                    } else if ([
+                        'sponges', 'plants', 'silico_flora', 'quantum_lattices', 
+                        'cryo_polymer_network', 'thinking_ocean', 'cryo_colloids', 
+                        'noosphere', 'gaia_hivemind', 'cryo_hivemind'
+                    ].includes(type)) {
+                        motionType = 'static';
+                        speed = 0;
+                    } else {
+                        if (['anaerobic', 'photosynthetic', 'ammonic_proto', 'methane_proto'].includes(type)) {
+                            speed = 0.2 + Math.random() * 0.15;
+                        } else if (['eukaryotic', 'multicellular', 'ammonic_multi', 'methane_multi'].includes(type)) {
+                            speed = 0.3 + Math.random() * 0.2;
+                        } else {
+                            speed = 0.5 + Math.random() * 0.4;
+                        }
+                    }
+
+                    this.particles.push({
+                        x: px,
+                        y: py,
+                        vx: motionType === 'static' ? 0 : (Math.random() - 0.5) * speed,
+                        vy: motionType === 'static' ? 0 : (Math.random() - 0.5) * speed,
+                        type: type,
+                        motionType: motionType,
+                        speed: speed,
+                        angle: Math.random() * Math.PI * 2,
+                        size: Math.random() * 3 + 2,
+                        wobble: Math.random() * Math.PI * 2,
+                        wobbleSpeed: 0.02 + Math.random() * 0.04
+                    });
+                }
+            } else if (currentCount > targetCount) {
+                let toRemove = currentCount - targetCount;
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (toRemove <= 0) break;
+                    if (this.particles[i].type === type) {
+                        this.particles.splice(i, 1);
+                        toRemove--;
+                    }
+                }
+            }
+        });
     }
 
     draw(planet, biology) {
@@ -584,63 +689,49 @@ export class GameVisualizer {
         ctx.arc(cx, cy, microRad - 3, 0, Math.PI * 2);
         ctx.clip();
 
-        this.particles.forEach(p => {
-            p.vx += (Math.random() - 0.5) * 0.12;
-            p.vy += (Math.random() - 0.5) * 0.12;
-            p.vx *= 0.94;
-            p.vy *= 0.94;
-            p.x += p.vx;
-            p.y += p.vy;
+        // Sync particles based on actual biological populations
+        this.syncParticles(planet, biology, cx, cy, microRad);
 
-            // Boundary clamp
+        this.particles.forEach(p => {
+            // Update movement based on motionType
+            if (p.motionType === 'drift') {
+                p.angle += (Math.random() - 0.5) * 0.04;
+                p.vx = Math.cos(p.angle) * p.speed;
+                p.vy = Math.sin(p.angle) * p.speed;
+                p.x += p.vx;
+                p.y += p.vy;
+            } else if (p.motionType === 'wander') {
+                p.angle += (Math.random() - 0.5) * 0.15;
+                const targetVx = Math.cos(p.angle) * p.speed;
+                const targetVy = Math.sin(p.angle) * p.speed;
+                p.vx += (targetVx - p.vx) * 0.1;
+                p.vy += (targetVy - p.vy) * 0.1;
+                p.x += p.vx;
+                p.y += p.vy;
+            } else {
+                p.vx = 0;
+                p.vy = 0;
+            }
+
+            // Boundary steering and clamping
             const particleMargin = Math.max(18, p.size * 4);
             const innerRadius = microRad - particleMargin;
             const dist = Math.hypot(p.x - cx, p.y - cy);
+            
             if (dist > innerRadius) {
-                const angle = Math.atan2(p.y - cy, p.x - cx);
-                p.x = cx + Math.cos(angle) * innerRadius;
-                p.y = cy + Math.sin(angle) * innerRadius;
-                p.vx *= -0.5;
-                p.vy *= -0.5;
+                const angleFromCenter = Math.atan2(p.y - cy, p.x - cx);
+                p.x = cx + Math.cos(angleFromCenter) * innerRadius;
+                p.y = cy + Math.sin(angleFromCenter) * innerRadius;
+                
+                const angleToCenter = Math.atan2(cy - p.y, cx - p.x);
+                p.angle = angleToCenter + (Math.random() - 0.5) * 0.5;
+                if (p.motionType !== 'static') {
+                    p.vx = Math.cos(p.angle) * p.speed;
+                    p.vy = Math.sin(p.angle) * p.speed;
+                }
             }
 
             p.wobble += p.wobbleSpeed;
-
-            // Dynamically assign types based on unlocked stages of active solvent
-            if (planet.activeSolvent === 'water') {
-                if (biology.unlockedGaiaHivemind && Math.random() < 0.005) p.type = 'gaia_hivemind';
-                else if (biology.unlockedNoosphere && Math.random() < 0.005) p.type = 'noosphere';
-                else if (biology.unlockedCyborg && Math.random() < 0.006) p.type = 'cyborg';
-                else if (biology.unlockedTechnologicalAI && Math.random() < 0.007) p.type = 'ai';
-                else if (biology.unlockedCognitive && Math.random() < 0.008) p.type = 'cognitive';
-                else if (biology.unlockedSynapsid && Math.random() < 0.008) p.type = 'synapsid';
-                else if (biology.unlockedSauropsid && Math.random() < 0.008) p.type = 'sauropsid';
-                else if (biology.unlockedTetrapod && Math.random() < 0.01) p.type = 'tetrapod';
-                else if (biology.unlockedLandPlants && Math.random() < 0.01) p.type = 'plants';
-                else if (biology.unlockedCambrian && Math.random() < 0.015) p.type = 'cambrian';
-                else if (biology.unlockedMulticellular && Math.random() < 0.02) p.type = 'multicellular';
-                else if (biology.unlockedEukaryotic && Math.random() < 0.02) p.type = 'eukaryotic';
-                else if (biology.unlockedPhotosynthetic && Math.random() < 0.025) p.type = 'photosynthetic';
-                else if (biology.unlockedAnaerobic && Math.random() < 0.03) p.type = 'anaerobic';
-                else p.type = 'soup';
-            } else if (planet.activeSolvent === 'ammonia') {
-                if (biology.unlockedCryoHivemind && Math.random() < 0.005) p.type = 'cryo_hivemind';
-                else if (biology.unlockedQuantumLattice && Math.random() < 0.005) p.type = 'quantum_lattices';
-                else if (biology.unlockedCrystallineCognitive && Math.random() < 0.006) p.type = 'crystalline_cognitive';
-                else if (biology.unlockedCryoFauna && Math.random() < 0.008) p.type = 'cryo_fauna';
-                else if (biology.unlockedSilicoFlora && Math.random() < 0.01) p.type = 'silico_flora';
-                else if (biology.unlockedAmmonicMulti && Math.random() < 0.02) p.type = 'ammonic_multi';
-                else if (biology.unlockedAmmonicProto && Math.random() < 0.03) p.type = 'ammonic_proto';
-                else p.type = 'ammonic_soup';
-            } else if (planet.activeSolvent === 'methane') {
-                if (biology.unlockedCryoColloid && Math.random() < 0.005) p.type = 'cryo_colloids';
-                else if (biology.unlockedThinkingOcean && Math.random() < 0.005) p.type = 'thinking_ocean';
-                else if (biology.unlockedCryoPolymerNetwork && Math.random() < 0.006) p.type = 'cryo_polymer_network';
-                else if (biology.unlockedCryoOrganisms && Math.random() < 0.01) p.type = 'cryo_organisms';
-                else if (biology.unlockedMethaneMulti && Math.random() < 0.02) p.type = 'methane_multi';
-                else if (biology.unlockedMethaneProto && Math.random() < 0.03) p.type = 'methane_proto';
-                else p.type = 'methane_soup';
-            }
 
             // Draw micro shapes
             ctx.save();
@@ -672,7 +763,6 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'eukaryotic') {
-                // Eukaryote with dark central nucleus and mitochondria dots
                 ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
                 ctx.strokeStyle = 'rgba(14, 165, 233, 0.8)';
                 ctx.lineWidth = 1.5;
@@ -681,13 +771,11 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
                 
-                // Nucleus
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
                 ctx.beginPath();
                 ctx.arc(1, 1, 2.5, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'multicellular') {
-                // Cluster chain
                 ctx.rotate(p.wobble * 0.05);
                 ctx.fillStyle = 'rgba(236, 72, 153, 0.55)';
                 ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
@@ -697,8 +785,87 @@ export class GameVisualizer {
                 ctx.arc(-5, -3, 3, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
+            } else if (p.type === 'sponges') {
+                ctx.rotate(p.wobble * 0.1);
+                ctx.fillStyle = 'rgba(217, 119, 6, 0.6)';
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-6, 8);
+                ctx.lineTo(-4, -6);
+                ctx.quadraticCurveTo(0, -9, 4, -6);
+                ctx.lineTo(6, 8);
+                ctx.quadraticCurveTo(0, 10, -6, 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(67, 20, 7, 0.7)';
+                ctx.beginPath();
+                ctx.arc(-2, 2, 1.2, 0, Math.PI*2);
+                ctx.arc(2, 4, 1, 0, Math.PI*2);
+                ctx.arc(0, -2, 1.5, 0, Math.PI*2);
+                ctx.fill();
+            } else if (p.type === 'meduses') {
+                ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI/2);
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.5)';
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.arc(0, -2, 6, Math.PI, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+                ctx.lineWidth = 1;
+                for (let j = -2; j <= 2; j += 2) {
+                    ctx.beginPath();
+                    ctx.moveTo(j, 0);
+                    ctx.quadraticCurveTo(
+                        j + Math.sin(p.wobble * 2 + j) * 2, 
+                        5, 
+                        j + Math.sin(p.wobble * 2 + j * 0.5) * 4, 
+                        10
+                    );
+                    ctx.stroke();
+                }
+            } else if (p.type === 'worms') {
+                ctx.rotate(Math.atan2(p.vy, p.vx));
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.6)';
+                ctx.strokeStyle = 'rgba(192, 132, 252, 0.8)';
+                ctx.lineWidth = 1.2;
+                for (let j = 0; j < 5; j++) {
+                    const segX = -j * 3.5;
+                    const segY = Math.sin(p.wobble * 1.5 - j * 0.8) * 2.2;
+                    const segRad = 3.5 - j * 0.4;
+                    ctx.beginPath();
+                    ctx.arc(segX, segY, segRad, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            } else if (p.type === 'fish') {
+                ctx.rotate(Math.atan2(p.vy, p.vx));
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 7, 3.5, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+                const tailX = -7;
+                const tailY = Math.sin(p.wobble * 2.5) * 3;
+                ctx.beginPath();
+                ctx.moveTo(tailX, 0);
+                ctx.lineTo(tailX - 4, tailY - 3);
+                ctx.lineTo(tailX - 2, tailY);
+                ctx.lineTo(tailX - 4, tailY + 3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(4, -1, 1, 0, Math.PI*2);
+                ctx.fill();
             } else if (p.type === 'cambrian') {
-                // Trilobite segmented oval
                 ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI/2);
                 ctx.fillStyle = 'rgba(245, 158, 11, 0.55)';
                 ctx.strokeStyle = 'rgba(217, 119, 6, 0.85)';
@@ -707,14 +874,11 @@ export class GameVisualizer {
                 ctx.ellipse(0, 0, 6, 10, 0, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                
-                // Segmentation lines
                 ctx.beginPath();
                 ctx.moveTo(-5, -2); ctx.lineTo(5, -2);
                 ctx.moveTo(-6, 2); ctx.lineTo(5, 2);
                 ctx.stroke();
             } else if (p.type === 'plants') {
-                // Green chloroplast cells block
                 ctx.fillStyle = 'rgba(4, 120, 87, 0.7)';
                 ctx.strokeStyle = 'rgba(16, 185, 129, 0.9)';
                 ctx.lineWidth = 1.5;
@@ -723,13 +887,11 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'tetrapod') {
-                // Tadpole salamander shape
                 ctx.rotate(Math.atan2(p.vy, p.vx));
                 ctx.fillStyle = 'rgba(14, 116, 144, 0.65)';
                 ctx.beginPath();
-                ctx.arc(4, 0, 5, 0, Math.PI*2); // Head
+                ctx.arc(4, 0, 5, 0, Math.PI*2);
                 ctx.fill();
-                // Tail
                 ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
@@ -737,7 +899,6 @@ export class GameVisualizer {
                 ctx.quadraticCurveTo(-7, Math.sin(p.wobble*2)*4, -14, 0);
                 ctx.stroke();
             } else if (p.type === 'sauropsid') {
-                // Scales or tiny dinosaur cell structure (warm reddish scale)
                 ctx.fillStyle = 'rgba(185, 28, 28, 0.6)';
                 ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
                 ctx.beginPath();
@@ -749,7 +910,6 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'synapsid') {
-                // Mammalian nucleus with cilia hairs
                 ctx.fillStyle = 'rgba(180, 83, 9, 0.6)';
                 ctx.strokeStyle = '#d97706';
                 ctx.beginPath();
@@ -757,7 +917,6 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cognitive') {
-                // Circle cell with dendrites web
                 ctx.fillStyle = 'rgba(168, 85, 247, 0.65)';
                 ctx.strokeStyle = 'rgba(216, 180, 254, 0.9)';
                 ctx.lineWidth = 1;
@@ -765,14 +924,12 @@ export class GameVisualizer {
                 ctx.arc(0, 0, 6, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                // Dendrite lines
                 ctx.beginPath();
                 ctx.moveTo(-3, -3); ctx.lineTo(-8, -8);
                 ctx.moveTo(3, -3); ctx.lineTo(8, -8);
                 ctx.moveTo(0, 3); ctx.lineTo(0, 9);
                 ctx.stroke();
             } else if (p.type === 'ai') {
-                // Tiny gold microchip square
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
                 ctx.strokeStyle = 'rgba(0, 242, 254, 0.9)';
                 ctx.lineWidth = 1.5;
@@ -780,7 +937,6 @@ export class GameVisualizer {
                 ctx.rect(-6, -6, 12, 12);
                 ctx.fill();
                 ctx.stroke();
-                // Golden trace lines
                 ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -788,15 +944,13 @@ export class GameVisualizer {
                 ctx.moveTo(0, -3); ctx.lineTo(0, 3);
                 ctx.stroke();
             } else if (p.type === 'cyborg') {
-                // Human-like nucleus with gold circuit wiring
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.65)'; // emerald bio body
-                ctx.strokeStyle = '#d97706'; // gold structural borders
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.65)';
+                ctx.strokeStyle = '#d97706';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(0, 0, 5, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                // Golden traces
                 ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
                 ctx.lineWidth = 0.8;
                 ctx.beginPath();
@@ -804,31 +958,27 @@ export class GameVisualizer {
                 ctx.moveTo(3, -3); ctx.lineTo(-3, 3);
                 ctx.stroke();
             } else if (p.type === 'noosphere') {
-                // Glowing golden computing node emitting circles
                 ctx.rotate(p.wobble * 0.1);
                 ctx.fillStyle = 'rgba(245, 158, 11, 0.7)';
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)'; // cyan glow shell
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.rect(-5, -5, 10, 10);
                 ctx.fill();
                 ctx.stroke();
-                // Pulse ring
                 ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
                 ctx.beginPath();
                 ctx.arc(0, 0, 8 + Math.sin(p.wobble)*3, 0, Math.PI*2);
                 ctx.stroke();
             } else if (p.type === 'gaia_hivemind') {
-                // Chloroplast cell with radiating mycelial hairs
                 ctx.rotate(p.wobble * 0.05);
                 ctx.fillStyle = 'rgba(4, 120, 87, 0.6)';
-                ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)'; // pink biological synapses
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(0, 0, 6, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                // Radials
                 ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
                 ctx.beginPath();
                 for (let j = 0; j < 4; j++) {
@@ -839,14 +989,12 @@ export class GameVisualizer {
                 ctx.stroke();
             }
             
-            // Ammonia-based cells
             else if (p.type === 'ammonic_soup') {
                 ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
                 ctx.beginPath();
                 ctx.rect(-3, -3, 6, 6);
                 ctx.fill();
             } else if (p.type === 'ammonic_proto') {
-                // Needle crystal shape
                 ctx.rotate(p.wobble * 0.2);
                 ctx.strokeStyle = 'rgba(167, 139, 250, 0.8)';
                 ctx.lineWidth = 1.8;
@@ -878,7 +1026,6 @@ export class GameVisualizer {
                 ctx.ellipse(0, 0, 4, 7, 0, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'crystalline_cognitive') {
-                // Hexagonal crystal pulsing
                 ctx.rotate(p.wobble * 0.1);
                 ctx.fillStyle = 'rgba(129, 140, 248, 0.65)';
                 ctx.strokeStyle = '#818cf8';
@@ -892,13 +1039,11 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'quantum_lattices') {
-                // High contrast cyan superconducting crystal grid
                 ctx.rotate(p.wobble * 0.08);
                 ctx.fillStyle = 'rgba(14, 165, 233, 0.65)';
                 ctx.strokeStyle = 'rgba(99, 102, 241, 0.85)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
-                // diamond shape
                 ctx.moveTo(0, -6);
                 ctx.lineTo(6, 0);
                 ctx.lineTo(0, 6);
@@ -906,13 +1051,11 @@ export class GameVisualizer {
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-                // Inner core
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(0, 0, 1.8, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'cryo_hivemind') {
-                // Chain of linked indigo crystal tubes
                 ctx.rotate(p.wobble * 0.05);
                 ctx.strokeStyle = 'rgba(139, 92, 246, 0.8)';
                 ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
@@ -921,20 +1064,17 @@ export class GameVisualizer {
                 ctx.ellipse(0, 0, 3, 7, 0, 0, Math.PI*2);
                 ctx.stroke();
                 ctx.fill();
-                // Linked satellite crystal
                 ctx.beginPath();
                 ctx.arc(6, -4, 2, 0, Math.PI*2);
                 ctx.fill();
             }
  
-            // Methane-based cells
             else if (p.type === 'methane_soup') {
                 ctx.fillStyle = 'rgba(217, 119, 6, 0.35)';
                 ctx.beginPath();
                 ctx.arc(0, 0, 3, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'methane_proto') {
-                // Azotosome vesicle bubble
                 ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
@@ -957,19 +1097,16 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cryo_polymer_network') {
-                // Orange polymer chain
                 ctx.fillStyle = '#f97316';
                 ctx.beginPath();
                 ctx.arc(-4, -2, 2.5, 0, Math.PI*2);
                 ctx.arc(2, 2, 2.5, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'thinking_ocean') {
-                // Amorphous orange polymer matrix with data node
                 ctx.fillStyle = 'rgba(234, 88, 12, 0.6)';
                 ctx.strokeStyle = '#f59e0b';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                // Wobbling blob
                 for (let j = 0; j < 5; j++) {
                     const angle = (j * Math.PI * 2) / 5;
                     const r = 5 + Math.sin(p.wobble + j) * 1.5;
@@ -979,7 +1116,6 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cryo_colloids') {
-                // Large circular membrane holding nested smaller azotosomes
                 ctx.strokeStyle = 'rgba(217, 119, 6, 0.85)';
                 ctx.fillStyle = 'rgba(180, 83, 9, 0.4)';
                 ctx.lineWidth = 1.8;
@@ -987,7 +1123,6 @@ export class GameVisualizer {
                 ctx.arc(0, 0, 9, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                // Nested dots
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(-2.5, -2, 1, 0, Math.PI*2);
