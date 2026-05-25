@@ -640,7 +640,7 @@ export class GameUI {
                 { id: 'photosynthetic', name: 'Cyanobacteria', pop: biology.photosyntheticPop, cap: 200.0, unit: 'M/mL', req: 'Bacteria > 25 M/mL', nudgeId: null, cost: 0 },
                 { id: 'nucleus', name: 'Cellular Nucleus', pop: biology.unlockedNucleus ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Cyanobacteria > 15 M/mL', nudgeId: null, cost: 0 },
                 { id: 'mitochondria', name: 'Mitochondria Symbiosis', pop: biology.unlockedMitochondria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Nucleus & O₂ > 1.2% OR Nudge', nudgeId: 'endosymbiosis', nudgeName: 'Promote Endosymbiosis', cost: 8 },
-                { id: 'eukaryotes', name: 'Eukaryotic Cells', pop: biology.eukaryoticPop, cap: 120.0, unit: 'M/mL', req: 'Mitochondria Symbiosis', nudgeId: null, cost: 0 },
+                { id: 'eukaryotes', name: 'Eukaryotic Cells', pop: biology.eukaryoticPop, cap: biology.unlockedSexualReproduction ? 180.0 : 120.0, unit: 'M/mL', req: 'Mitochondria Symbiosis', nudgeId: null, cost: 0 },
                 { id: 'sexual', name: 'Sexual Reproduction', pop: biology.unlockedSexualReproduction ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Eukaryotes > 20 M/mL', nudgeId: null, cost: 0 },
                 { id: 'multicellular', name: 'Multicellularity', pop: biology.multicellularPop, cap: 100.0, unit: 'Idx', req: 'Sexual Reprod & Eukaryotes > 45 M/mL', nudgeId: null, cost: 0 },
                 
@@ -860,8 +860,9 @@ export class GameUI {
             this.anaerobicProgress.style.width = `${(biology.anaerobicPop / 150) * 100}%`;
             this.photosyntheticPop.textContent = `${biology.photosyntheticPop.toFixed(2)} M/mL`;
             this.photosyntheticProgress.style.width = `${(biology.photosyntheticPop / 200) * 100}%`;
+            const eukaryotesCap = biology.unlockedSexualReproduction ? 180 : 120;
             this.eukaryoticPop.textContent = `${biology.eukaryoticPop.toFixed(2)} M/mL`;
-            this.eukaryoticProgress.style.width = `${(biology.eukaryoticPop / 120) * 100}%`;
+            this.eukaryoticProgress.style.width = `${(biology.eukaryoticPop / eukaryotesCap) * 100}%`;
             this.multicellularPop.textContent = `${biology.multicellularPop.toFixed(2)} Index`;
             this.multicellularProgress.style.width = `${biology.multicellularPop}%`;
 

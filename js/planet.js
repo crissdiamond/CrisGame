@@ -421,13 +421,27 @@ export class Planet {
             this.hasMagnetosphere = false;
         }
 
+        // Abiotic water photolysis under radiation
+        if (this.activeSolvent === 'water' && this.waterCoverage > 0.0) {
+            // Radiation splits water vapor into O2 and H2
+            const photolysis = 0.005 * this.radiation * (this.waterCoverage / 100.0) * tickRate;
+            this.waterCoverage = Math.max(0.0, this.waterCoverage - photolysis);
+            this.o2 += photolysis * 0.4;
+            this.h2 += photolysis * 0.8;
+        }
+
+        // Hydrogen gas atmospheric escape to space (lightest element escapes into the void)
+        // Rate is 6x faster if magnetosphere is lost
+        const h2EscapeRate = (this.hasMagnetosphere ? 0.04 : 0.25) * tickRate;
+        this.h2 = Math.max(0.0, this.h2 - this.h2 * h2EscapeRate);
+
         // Atmospheric Stripping if magnetosphere is gone
         if (!this.hasMagnetosphere) {
             this.atmospherePressure = Math.max(0.1, this.atmospherePressure - 0.003 * this.radiation * tickRate);
-            // Solar wind strips solvents slowly
-            this.waterCoverage = Math.max(0, this.waterCoverage - 0.05 * tickRate);
-            this.ammoniaCoverage = Math.max(0, this.ammoniaCoverage - 0.05 * tickRate);
-            this.methaneCoverage = Math.max(0, this.methaneCoverage - 0.05 * tickRate);
+            // Solar wind strips solvents slowly (over and above photolysis)
+            this.waterCoverage = Math.max(0.0, this.waterCoverage - 0.04 * tickRate);
+            this.ammoniaCoverage = Math.max(0.0, this.ammoniaCoverage - 0.05 * tickRate);
+            this.methaneCoverage = Math.max(0.0, this.methaneCoverage - 0.05 * tickRate);
         }
 
         // Base equilibrium temp: T_eq = 278 * (L / d^2)^0.25 - 273.15

@@ -166,7 +166,16 @@ export class BiologySimulation {
         const solventMult = SOLVENT_RATE_FACTOR[planet.activeSolvent] ?? 1.0;
         const nudge = this.pendingNudges[transitionKey];
         const nudgeMult = nudge ? nudge.multiplier : 1.0;
-        const lambda = rarity.rate * solventMult * conditionMult * nudgeMult;
+
+        let sexBoost = 1.0;
+        if (this.unlockedSexualReproduction) {
+            const earlyKeys = ['soup', 'anaerobic', 'photosynthesis', 'nucleus', 'endosymbiosis', 'sexual_reproduction', 'ammonic_soup', 'ammonic_proto', 'methane_soup', 'methane_proto'];
+            if (!earlyKeys.includes(transitionKey)) {
+                sexBoost = 1.30; // 30% speed boost from genetic recombination
+            }
+        }
+
+        const lambda = rarity.rate * solventMult * conditionMult * nudgeMult * sexBoost;
         const p = 1 - Math.exp(-lambda * tickRate);
         return Math.random() < p;
     }
@@ -365,8 +374,13 @@ export class BiologySimulation {
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const growthRate = 0.8 * totalViability;
-                    const dPop = growthRate * this.eukaryoticPop * (1 - this.eukaryoticPop / 120.0) * tickRate;
+                    // Sexual reproduction provides 1.25x growth rate boost (rapid niche colonization)
+                    // and increases carrying capacity from 120 to 180 M/mL.
+                    const sexGrowthMult = this.unlockedSexualReproduction ? 1.25 : 1.0;
+                    const eukaryotesCap = this.unlockedSexualReproduction ? 180.0 : 120.0;
+
+                    const growthRate = 0.8 * totalViability * sexGrowthMult;
+                    const dPop = growthRate * this.eukaryoticPop * (1 - this.eukaryoticPop / eukaryotesCap) * tickRate;
                     this.eukaryoticPop = Math.max(0.01, this.eukaryoticPop + dPop);
                 } else {
                     this.eukaryoticPop = Math.max(0, this.eukaryoticPop - this.eukaryoticPop * 0.6 * tickRate);
