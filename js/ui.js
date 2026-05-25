@@ -536,27 +536,52 @@ export class GameUI {
      * Render active threats/warnings list in threat control panel
      */
     updateThreats(warnings) {
-        this.threatList.innerHTML = '';
-        if (warnings.length === 0) {
-            this.threatList.innerHTML = '<div class="no-threats-msg">No active threats detected.</div>';
-            return;
-        }
-
-        warnings.forEach(threat => {
-            const row = document.createElement('div');
-            row.className = `threat-card ${threat.type}`;
-            row.innerHTML = `
-                <div class="threat-header">
-                    <span class="threat-title">⚠️ ${threat.name}</span>
-                    <span class="threat-timer">${threat.durationRemaining.toFixed(1)} Myr</span>
-                </div>
-                <div class="threat-desc">${threat.description}</div>
-                <button class="btn btn-warning btn-deflect" data-id="${threat.id}">
-                    Deflect [${threat.cost}T]
-                </button>
-            `;
-            this.threatList.appendChild(row);
+        const cards = this.threatList.querySelectorAll('.threat-card');
+        const cardIds = Array.from(cards).map(card => {
+            const btn = card.querySelector('.btn-deflect');
+            return btn ? btn.getAttribute('data-id') : null;
         });
+        const warningIds = warnings.map(w => w.id);
+
+        const hasChanged = cardIds.length !== warningIds.length || 
+                           cardIds.some((id, idx) => id !== warningIds[idx]) ||
+                           this.threatList.querySelector('.no-threats-msg');
+
+        if (hasChanged) {
+            this.threatList.innerHTML = '';
+            if (warnings.length === 0) {
+                this.threatList.innerHTML = '<div class="no-threats-msg">No active threats detected.</div>';
+                return;
+            }
+
+            warnings.forEach(threat => {
+                const row = document.createElement('div');
+                row.className = `threat-card ${threat.type}`;
+                row.innerHTML = `
+                    <div class="threat-header">
+                        <span class="threat-title">⚠️ ${threat.name}</span>
+                        <span class="threat-timer">${threat.durationRemaining.toFixed(1)} Myr</span>
+                    </div>
+                    <div class="threat-desc">${threat.description}</div>
+                    <button class="btn btn-warning btn-deflect" data-id="${threat.id}">
+                        Deflect [${threat.cost}T]
+                    </button>
+                `;
+                this.threatList.appendChild(row);
+            });
+        } else {
+            // Update timers in place to prevent button recreation from breaking click events
+            cards.forEach((card, idx) => {
+                const threat = warnings[idx];
+                const timerSpan = card.querySelector('.threat-timer');
+                if (timerSpan) {
+                    const newText = `${threat.durationRemaining.toFixed(1)} Myr`;
+                    if (timerSpan.textContent !== newText) {
+                        timerSpan.textContent = newText;
+                    }
+                }
+            });
+        }
     }
 
     /**
