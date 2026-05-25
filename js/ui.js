@@ -11,6 +11,7 @@ export class GameUI {
         this.waterVal = document.getElementById('water-val');
         this.radSlider = document.getElementById('radiation-slider');
         this.radVal = document.getElementById('radiation-val');
+        this.radEffectiveVal = document.getElementById('radiation-effective-val');
         
         // Cache DOM Elements - Buttons & Core Telemetry
         this.btnPausePlay = document.getElementById('btn-pause-play');
@@ -108,6 +109,13 @@ export class GameUI {
         this.waterMetrics = document.getElementById('water-metrics');
         this.ammoniaMetrics = document.getElementById('ammonia-metrics');
         this.methaneMetrics = document.getElementById('methane-metrics');
+        
+        // Biomass History Legends
+        this.bioLegend1 = document.getElementById('bio-legend-1');
+        this.bioLegend2 = document.getElementById('bio-legend-2');
+        this.bioLegend3 = document.getElementById('bio-legend-3');
+        this.bioLegend4 = document.getElementById('bio-legend-4');
+        this.bioLegend5 = document.getElementById('bio-legend-5');
         
         // Water Biomass progress bars
         this.soupDensity = document.getElementById('soup-density');
@@ -510,14 +518,33 @@ export class GameUI {
      * Synchronize sliders back to planet values
      */
     syncSliders(planet) {
-        this.tempSlider.value = Math.round(planet.targetTemperature);
+        this.tempSlider.value = Math.round(planet.temperature);
         this.tempVal.textContent = `${this.tempSlider.value}°C`;
 
         this.waterSlider.value = Math.round(planet.getSolventCoverage());
         this.waterVal.textContent = `${this.waterSlider.value}%`;
 
-        this.radSlider.value = planet.targetRadiation.toFixed(1);
-        this.radVal.textContent = `${this.radSlider.value} rad/s`;
+        const currentRad = planet.radiation;
+        const effectiveRad = planet.getEffectiveRadiation();
+        this.radSlider.value = currentRad.toFixed(1);
+        this.radVal.textContent = `Space: ${currentRad.toFixed(1)}`;
+        if (this.radEffectiveVal) {
+            this.radEffectiveVal.textContent = `Surf: ${effectiveRad.toFixed(1)} rad/s`;
+        }
+
+        // Color surface radiation value by warning level
+        if (this.radEffectiveVal) {
+            if (effectiveRad > 4.0) {
+                this.radEffectiveVal.style.color = 'var(--accent-red)';
+                this.radEffectiveVal.style.background = 'var(--accent-red-glow)';
+            } else if (effectiveRad > 1.5) {
+                this.radEffectiveVal.style.color = 'var(--accent-amber)';
+                this.radEffectiveVal.style.background = 'rgba(245, 158, 11, 0.1)';
+            } else {
+                this.radEffectiveVal.style.color = 'var(--accent-green)';
+                this.radEffectiveVal.style.background = 'var(--accent-green-glow)';
+            }
+        }
 
         // Update labels based on solvent
         if (planet.activeSolvent === 'water') {
@@ -709,6 +736,9 @@ export class GameUI {
      * Redraw dashboard telemetry, progress bars, and tab information
      */
     updateDashboard(planet, biology) {
+        // Synchronize main sliders / gauges in real-time
+        this.syncSliders(planet);
+
         // Curatorial Token display
         this.tokenBalance.textContent = planet.age > 0 
             ? `${Math.floor(biology.organicSoup > 0 || biology.ammonicSoup > 0 || biology.methaneSoup > 0 ? biology.organicSoup * 0.1 + biology.anaerobicPop * 0.05 + 15 : 15)}` 
@@ -725,6 +755,31 @@ export class GameUI {
         
         // Solvent details
         this.solventState.textContent = planet.activeSolvent.toUpperCase();
+
+        // Update biomass history graph legend text and visibility
+        if (planet.activeSolvent === 'water') {
+            this.bioLegend1.innerHTML = `<em class="dot bio-anaerobic"></em>Anaerobic`;
+            this.bioLegend2.innerHTML = `<em class="dot bio-photo"></em>Photo.`;
+            this.bioLegend3.innerHTML = `<em class="dot bio-multi"></em>Early Multi.`;
+            this.bioLegend4.innerHTML = `<em class="dot bio-complex"></em>Complex`;
+            this.bioLegend5.innerHTML = `<em class="dot bio-sentient"></em>Sentient`;
+        } else if (planet.activeSolvent === 'ammonia') {
+            this.bioLegend1.innerHTML = `<em class="dot bio-anaerobic"></em>Ammonic Proto`;
+            this.bioLegend2.innerHTML = `<em class="dot bio-photo"></em>Silico-Flora`;
+            this.bioLegend3.innerHTML = `<em class="dot bio-multi"></em>Early Multi.`;
+            this.bioLegend4.innerHTML = `<em class="dot bio-complex"></em>Complex Fauna`;
+            this.bioLegend5.innerHTML = `<em class="dot bio-sentient"></em>Sentient`;
+        } else if (planet.activeSolvent === 'methane') {
+            this.bioLegend1.innerHTML = `<em class="dot bio-anaerobic"></em>Methane Proto`;
+            this.bioLegend2.innerHTML = `<em class="dot bio-photo"></em>Polymer Net.`;
+            this.bioLegend3.innerHTML = `<em class="dot bio-multi"></em>Early Multi.`;
+            this.bioLegend4.innerHTML = `<em class="dot bio-complex"></em>Complex Fauna`;
+            this.bioLegend5.innerHTML = `<em class="dot bio-sentient"></em>Sentient`;
+        }
+
+        const hasSentient = biology.unlockedCognitive || biology.unlockedCrystallineCognitive || biology.unlockedThinkingOcean || 
+                            biology.cognitiveSpeciesPop > 0.0 || biology.crystallineCognitivePop > 0.0 || biology.thinkingOceanPop > 0.0;
+        this.bioLegend5.style.display = hasSentient ? 'inline-flex' : 'none';
         
         // Shield, Ozone, Star, and Moon telemetry
         this.magnetShield.textContent = `${planet.magneticStrength.toFixed(0)}%`;

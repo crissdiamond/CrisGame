@@ -17,7 +17,9 @@ const SERIES_KEYS = [
     'o2',
     'anaerobic',
     'photosynthetic',
-    'multicellular'
+    'multicellular',
+    'complex',
+    'sentient'
 ];
 
 export class HistoryRecorder {
@@ -76,9 +78,38 @@ export class HistoryRecorder {
         this.series.co2[i] = planet.co2;
         this.series.n2[i] = planet.n2;
         this.series.o2[i] = planet.o2;
-        this.series.anaerobic[i] = biology.anaerobicPop;
-        this.series.photosynthetic[i] = biology.photosyntheticPop;
-        this.series.multicellular[i] = biology.multicellularPop;
+
+        let anaerobicVal = 0.0;
+        let photosyntheticVal = 0.0;
+        let multicellularVal = 0.0;
+        let complexVal = 0.0;
+        let sentientVal = 0.0;
+
+        if (planet.activeSolvent === 'water') {
+            anaerobicVal = biology.anaerobicPop + biology.eukaryoticPop;
+            photosyntheticVal = biology.photosyntheticPop;
+            multicellularVal = biology.multicellularPop + biology.spongesPop + biology.medusesPop + biology.wormsPop;
+            complexVal = biology.fishPop + biology.mossesPop + biology.fernsPop + biology.conifersPop + biology.angiospermsPop + biology.cambrianPop + biology.landPlantsPop + biology.arthropodPop + biology.tetrapodPop + biology.sauropsidPop + biology.synapsidPop;
+            sentientVal = biology.cognitiveSpeciesPop + biology.technologicalAIPop + biology.cyborgPop + biology.noospherePop + biology.gaiaHivemindPop;
+        } else if (planet.activeSolvent === 'ammonia') {
+            anaerobicVal = biology.ammonicProtoPop;
+            photosyntheticVal = biology.silicoFloraPop;
+            multicellularVal = biology.ammonicMultiPop;
+            complexVal = biology.cryoFaunaPop;
+            sentientVal = biology.crystallineCognitivePop + biology.quantumLatticePop + biology.cryoHivemindPop;
+        } else if (planet.activeSolvent === 'methane') {
+            anaerobicVal = biology.methaneProtoPop;
+            photosyntheticVal = biology.cryoPolymerNetworkPop;
+            multicellularVal = biology.methaneMultiPop;
+            complexVal = biology.cryoOrganismsPop;
+            sentientVal = biology.thinkingOceanPop + biology.cryoColloidPop;
+        }
+
+        this.series.anaerobic[i] = anaerobicVal;
+        this.series.photosynthetic[i] = photosyntheticVal;
+        this.series.multicellular[i] = multicellularVal;
+        this.series.complex[i] = complexVal;
+        this.series.sentient[i] = sentientVal;
 
         this.writeIndex = (i + 1) % this.capacity;
         if (this.count < this.capacity) this.count++;

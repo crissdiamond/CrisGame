@@ -526,6 +526,11 @@ export class Planet {
                 this.co2 -= converted;
                 this.o2 += converted;
             }
+            // Terrestrial Nitrogen cycle feedback:
+            if (biologicalImpact.n2Prod !== 0) {
+                this.n2 += biologicalImpact.n2Prod * tickRate * 0.1;
+                this.n2 = Math.max(0.1, this.n2);
+            }
         } else if (this.activeSolvent === 'ammonia') {
             if (biologicalImpact.n2Prod > 0) {
                 const converted = Math.min(this.co2, biologicalImpact.n2Prod * tickRate * 0.1);

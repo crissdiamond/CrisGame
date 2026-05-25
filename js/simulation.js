@@ -192,6 +192,8 @@ export class BiologySimulation {
         // 1. WATER-BASED BIOCHEMISTRY CYCLE
         // ----------------------------------------------------
         if (isWater) {
+            const nitrogenViability = 0.5 + 0.5 * clamp01(planet.n2 / 40.0);
+
             // Soup Synthesis (needs liquid water, 0 to 100°C)
             if (planet.temperature > 10 && planet.temperature < 90 && planet.waterCoverage > 10) {
                 const tempFactor = 1 - Math.abs(planet.temperature - 50) / 45;
@@ -298,7 +300,7 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const growthRate = 1.0 * totalViability * (0.3 + (planet.radiation / 5.0));
+                    const growthRate = 1.0 * totalViability * nitrogenViability * (0.3 + (planet.radiation / 5.0));
                     const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / 200.0) * tickRate;
                     this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
                 } else {
@@ -592,7 +594,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 0, 20, 38);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * tickRate;
@@ -623,7 +625,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 2, 22, 40);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * tickRate;
@@ -654,7 +656,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, -10, 18, 36);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * tickRate;
@@ -685,7 +687,7 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 42);
                 const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
-                const totalViability = tempViability * radViability * landViability;
+                const totalViability = tempViability * radViability * landViability * nitrogenViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * tickRate;
@@ -1012,6 +1014,12 @@ export class BiologySimulation {
                 o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
             }
             co2Cons = this.photosyntheticPop * 0.05 + this.landPlantsPop * 0.15 + this.anaerobicPop * 0.01 + this.synapsidPop * 0.08 + this.sauropsidPop * 0.05 + this.cognitiveSpeciesPop * 0.08;
+            
+            // Nitrogen Cycle: denitrifiers vent N2, fixers consume N2, radiation fixes N2
+            const denitrification = this.anaerobicPop * 0.04;
+            const nitrogenFixation = this.photosyntheticPop * 0.025 + this.landPlantsPop * 0.06;
+            const atmosphericFixation = Math.min(1.0, planet.radiation * 0.08);
+            n2Prod = denitrification - nitrogenFixation - atmosphericFixation;
         }
 
         // ----------------------------------------------------

@@ -73,7 +73,10 @@
                 <div class="control-group">
                     <div class="control-header">
                         <label for="radiation-slider"><span class="icon">☢️</span> Cosmic Radiation</label>
-                        <span class="control-value" id="radiation-val">1.2 rad/s</span>
+                        <div class="radiation-readouts" style="display: flex; gap: 4px;">
+                            <span class="control-value" id="radiation-val" title="Cosmic Radiation in Space">Space: 3.5</span>
+                            <span class="control-value" id="radiation-effective-val" title="Effective Radiation at Surface" style="color: var(--accent-amber); background: rgba(245, 158, 11, 0.1);">Surf: 0.9 rad/s</span>
+                        </div>
                     </div>
                     <input type="range" id="radiation-slider" min="0" max="10" step="0.1" value="3.5" class="custom-slider">
                     <div class="slider-labels">
@@ -368,10 +371,12 @@
                 <div class="history-row">
                     <div class="history-label-col">
                         <span class="label">BIOMASS</span>
-                        <span class="history-legend">
-                            <span class="legend-item"><em class="dot bio-anaerobic"></em>Anaerobic</span>
-                            <span class="legend-item"><em class="dot bio-photo"></em>Photo.</span>
-                            <span class="legend-item"><em class="dot bio-multi"></em>Multi.</span>
+                        <span class="history-legend" id="bio-history-legend">
+                            <span class="legend-item" id="bio-legend-1"><em class="dot bio-anaerobic"></em>Anaerobic</span>
+                            <span class="legend-item" id="bio-legend-2"><em class="dot bio-photo"></em>Photo.</span>
+                            <span class="legend-item" id="bio-legend-3"><em class="dot bio-multi"></em>Multi.</span>
+                            <span class="legend-item" id="bio-legend-4"><em class="dot bio-complex"></em>Complex</span>
+                            <span class="legend-item" id="bio-legend-5" style="display: none;"><em class="dot bio-sentient"></em>Sentient</span>
                         </span>
                     </div>
                     <canvas class="history-canvas" id="history-bio"></canvas>

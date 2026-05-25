@@ -16,7 +16,9 @@ const PALETTE = {
     o2: '#00f2fe',
     anaerobic: '#a855f7',
     photosynthetic: '#10b981',
-    multicellular: '#f59e0b'
+    multicellular: '#06b6d4',
+    complex: '#f59e0b',
+    sentient: '#ec4899'
 };
 
 const MARKER_COLOR = {
@@ -56,7 +58,9 @@ const GROUPS = {
     bio: [
         { key: 'anaerobic', dynamicMax: 50 },
         { key: 'photosynthetic', dynamicMax: 50 },
-        { key: 'multicellular', min: 0, max: 100 }
+        { key: 'multicellular', dynamicMax: 50 },
+        { key: 'complex', dynamicMax: 50 },
+        { key: 'sentient', dynamicMax: 50 }
     ]
 };
 
@@ -138,6 +142,19 @@ export class HistoryView {
         for (const spec of series) {
             const data = recorder.getSeries(spec.key);
             const values = data.values;
+
+            if (spec.key === 'sentient') {
+                let hasSentientData = false;
+                for (let i = 0; i < count; i++) {
+                    const idx = (startIdx + i) % cap;
+                    if (values[idx] > 0.0) {
+                        hasSentientData = true;
+                        break;
+                    }
+                }
+                if (!hasSentientData) continue;
+            }
+
             const { min, max } = this._resolveDomain(spec, values, count, cap, startIdx);
             if (max <= min) continue;
 

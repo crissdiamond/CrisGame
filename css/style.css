@@ -24,6 +24,8 @@
     --accent-amber: #f59e0b;
     --accent-red: #ef4444;
     --accent-red-glow: rgba(239, 68, 68, 0.35);
+    --accent-pink: #ec4899;
+    --accent-pink-glow: rgba(236, 72, 153, 0.35);
     
     /* Fonts */
     --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -686,7 +688,9 @@ body {
 .history-legend .atm-o2 { background: var(--accent-cyan); }
 .history-legend .bio-anaerobic { background: var(--accent-purple); }
 .history-legend .bio-photo { background: var(--accent-green); }
-.history-legend .bio-multi { background: var(--accent-amber); }
+.history-legend .bio-multi { background: var(--accent-cyan); }
+.history-legend .bio-complex { background: var(--accent-amber); }
+.history-legend .bio-sentient { background: var(--accent-pink); }
 
 .history-canvas {
     width: 100%;
