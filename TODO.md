@@ -54,11 +54,13 @@
 - **Balanced Carbon-Oxygen Respiration**: Consumer animal respiration rates scale with complexity and metabolisms, drawing down O₂ and releasing CO₂ to counter runaway oxygenation.
 - **Abiotic Water Photolysis & Hydrogen Escape**: Solar UV splits atmospheric water vapor into H₂ and O₂ under radiation. Light hydrogen gas escapes to the void of space over time, with the escape rate accelerating 6x if the protective magnetosphere is lost.
 - **Greenhouse Vapor Feedbacks**: Included baseline water and ammonia vapor greenhouse heating in temperature calculations so planets with liquid oceans do not freeze instantly if CO₂ drops.
+- **Geological Crustal Oxidation Sink**: Excess oxygen ($\text{O}_2 > 21\%$) reacts chemically with crustal mineral sinks (such as ferrous iron), depositing iron oxides and buffering atmospheric $\text{O}_2$ (mimicking Earth's Banded Iron Formations).
 
 ### 2. Ecological & Evolutionary Dynamics
-- **Photosynthesis CO₂ Dependency**: Plant and cyanobacteria growth rates are throttled when CO₂ drops below 2%, simulating carbon starvation and preventing absolute CO₂ depletion.
+- **Photosynthesis CO₂ Dependency**: Photosynthesis oxygen production and carbon consumption rates scale with CO₂ availability. If CO₂ drops to zero, photosynthesis stops entirely to prevent absolute carbon depletion.
 - **Decomposer CO₂ Venting**: Heterotrophic decay of organic soup and anaerobic bacteria respiration directly replenishes atmospheric CO₂.
-- **Spontaneous Wildfires & Firestorms**: Spontaneous brushfires above 25% oxygen consume O₂ and release CO₂ while burning plant biomass. An **Atmospheric Firestorm** hazard event triggers above 35% oxygen to restore planetary gas equilibrium.
+- **Abiotic Prebiotic Soup Oxidation**: Excess oxygen ($\text{O}_2 > 21\%$) abiotically decomposes dissolved organic compounds in the water pool, consuming $\text{O}_2$ and venting $\text{CO}_2$.
+- **Spontaneous Wildfires & Firestorms**: Spontaneous brushfires above 25% oxygen consume O₂ and release CO₂ while burning plant biomass. An **Atmospheric Firestorm** hazard event triggers above 35% oxygen (on either land plants or marine algal/cyanobacteria mats) to restore planetary gas equilibrium.
 - **Eukaryote Recombination Boost**: Evolutionary endosymbiosis (Mitochondria) enables meiotic Sexual Reproduction. Evolving sex provides a 1.25x niche colonization growth/capacity boost to eukaryotes, and accelerates all subsequent advanced evolutionary breakthroughs by 30% due to genetic recombination.
 
 ### 3. Interface & Quality of Life
@@ -93,11 +95,13 @@ This simulator utilizes established astrophysical, chemical, and biological prin
 ### 4. Wildfire Oxygen Buffers & Feedback Loops
 * **Scientific Basis**: High atmospheric oxygen concentrations (exceeding 25–30%) lower the activation energy of combustion. Under these hyper-oxygenated conditions, damp organic material ignites spontaneously from lightning strikes.
 * **Equilibrium Feedback**: Runaway forest fires burn terrestrial biomass, consuming atmospheric $\text{O}_2$ and venting $\text{CO}_2$ at a molecular 1:1 ratio. This functions as a natural geochemical negative feedback loop, preventing oxygen levels from reaching values like 60%+ that would incinerate the biosphere.
-* **Model Implementation**: Fireburn equations consume plant biomass and shift oxygen back into carbon dioxide when $\text{O}_2 > 25\%$, with a catastrophic **Atmospheric Firestorm** hazard event triggering if oxygen surpasses 35%.
+* **Early Oxygen Caps**: If oxygen spikes before land plants evolve, it is buffered by abiotic chemical oxidation of dissolved organic compounds and early marine cyanobacteria mat combustions (spontaneously triggered via **Atmospheric Firestorms** above 35% oxygen).
+* **Model Implementation**: Fireburn equations consume plant/algae biomass and shift oxygen back into carbon dioxide when $\text{O}_2 > 25\%$, with a catastrophic **Atmospheric Firestorm** hazard event triggering if oxygen surpasses 35%.
 
 ### 5. Biological & Geological Carbon Cycles
 * **Scientific Basis**: Carbon dioxide ($\text{CO}_2$) is drawn down biologically by carbon fixation (photosynthesis) and abiotically by silicate weathering. It is replenished biologically by respiration and decomposer decay, and geologically by volcanic outgassing.
-* **Photosynthetic Constraints**: Photosynthesis requires gaseous carbon. If $\text{CO}_2$ is depleted, photosynthesizers undergo carbon starvation and their growth collapses, preventing the atmosphere from being entirely stripped of carbon.
+* **Photosynthetic Constraints**: Photosynthesis requires gaseous carbon. If $\text{CO}_2$ is depleted, photosynthesizers undergo carbon starvation and their growth and oxygen production collapses, preventing the atmosphere from being entirely stripped of carbon.
+* **Abiotic Resupply (Soup Oxidation)**: Gaseous oxygen chemically reacts with the prebiotic organic soup, decomposing organic molecules back into $\text{CO}_2$ and $\text{H}_2\text{O}$ abiotically when oxygen levels are high.
 * **Tectonic Replenishment**: Background volcanic outgassing (driven by internal mantle heat and core convection) slowly vents mantle $\text{CO}_2$ back into the air over millions of years, closing the geological carbon loop.
 
 ### 6. Geodynamo Core Cooling & Lunar Tidal Flexing
