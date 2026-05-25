@@ -67,3 +67,37 @@
 - **Biomass Graph & Color Alignment**: Restructured the environment history graph to dynamically color solvent lines based on active presets (Green/Water, Purple/Ammonia, Amber/Methane), changed N₂ history line to match the dashboard, and color-aligned all 20+ microscopic view particles to their 5 biomass categories.
 - **Auto-Pause & Dynamic Milestone Popups**: Milestone modal overlays automatically pause the simulation ticks and threat clocks, resuming automatically on close. Milestone popups dynamically display actual token rewards (+2, +5, +12, or +25) based on event rarity.
 
+---
+
+## Scientific Foundations & Rationale
+
+This simulator utilizes established astrophysical, chemical, and biological principles to model planetary evolution:
+
+### 1. Eukaryogenesis & Mitochondria Symbiosis
+* **Scientific Basis**: Eukaryotic cells arose from the endosymbiotic engulfment of an aerobic alphaproteobacterium (proto-mitochondrion) by an archaeal host cell. 
+* **Energetics (Lane & Martin, 2010)**: This singular event bypassed the surface-area-to-volume physical limitations that constrain prokaryotic ATP synthesis. Mitochondria provided a **100,000-fold increase in energy availability per gene**, enabling eukaryotes to support massive genomes, synthesize thousands of times more proteins, construct dynamic cytoskeletons, and evolve phagocytosis.
+* **Reproductive Evolution**: This energetic surplus physically enabled the evolution of energy-expensive meiosis and sexual recombination.
+
+### 2. Meiotic Sexual Recombination
+* **Scientific Basis**: Recombination during sexual reproduction reshuffles genetic material, creating unique combinations of alleles in every generation.
+* **Evolutionary Speed Boost**: Sex provides two major evolutionary benefits:
+  1. **The Red Queen Hypothesis**: Accelerated adaptation rates allow host organisms to adapt fast enough to stay ahead of co-evolving parasites and rapid environmental shifts.
+  2. **Fisher-Muller Effect / Muller's Ratchet**: Recombination combines beneficial mutations and purges deleterious ones far more efficiently than asexual cloning (mitosis). 
+* **Model Implementation**: This is represented in-game by a 30% transition rate speed boost (`1.30x` multiplier to evolutionary breakthroughs) and increased carrying capacity and growth rates for eukaryotic populations due to rapid niche specialization.
+
+### 3. Atmospheric Photolysis & Hydrodynamic Escape
+* **Scientific Basis**: In the upper atmosphere, water vapor molecules are split by starlight ultraviolet radiation ($2\text{H}_2\text{O} + h\nu \rightarrow 2\text{H}_2 + \text{O}_2$). 
+* **Hydrogen Loss**: Due to its extremely low atomic weight, molecular hydrogen ($\text{H}_2$) reaches escape velocity easily and escapes into the vacuum of space (hydrodynamic escape). Oxygen, being heavier, is retained by gravity and contributes to abiotic atmospheric oxygenation.
+* **Magnetic Shielding**: A planetary magnetosphere deflects the stellar wind. If the magnetic field decays below critical strength, solar wind collides directly with the atmosphere, accelerating hydrogen stripping by orders of magnitude and causing oceans to dry out.
+
+### 4. Wildfire Oxygen Buffers & Feedback Loops
+* **Scientific Basis**: High atmospheric oxygen concentrations (exceeding 25–30%) lower the activation energy of combustion. Under these hyper-oxygenated conditions, damp organic material ignites spontaneously from lightning strikes.
+* **Equilibrium Feedback**: Runaway forest fires burn terrestrial biomass, consuming atmospheric $\text{O}_2$ and venting $\text{CO}_2$ at a molecular 1:1 ratio. This functions as a natural geochemical negative feedback loop, preventing oxygen levels from reaching values like 60%+ that would incinerate the biosphere.
+* **Model Implementation**: Fireburn equations consume plant biomass and shift oxygen back into carbon dioxide when $\text{O}_2 > 25\%$, with a catastrophic **Atmospheric Firestorm** hazard event triggering if oxygen surpasses 35%.
+
+### 5. Biological & Geological Carbon Cycles
+* **Scientific Basis**: Carbon dioxide ($\text{CO}_2$) is drawn down biologically by carbon fixation (photosynthesis) and abiotically by silicate weathering. It is replenished biologically by respiration and decomposer decay, and geologically by volcanic outgassing.
+* **Photosynthetic Constraints**: Photosynthesis requires gaseous carbon. If $\text{CO}_2$ is depleted, photosynthesizers undergo carbon starvation and their growth collapses, preventing the atmosphere from being entirely stripped of carbon.
+* **Tectonic Replenishment**: Background volcanic outgassing (driven by internal mantle heat and core convection) slowly vents mantle $\text{CO}_2$ back into the air over millions of years, closing the geological carbon loop.
+
+
