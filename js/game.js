@@ -3,6 +3,8 @@ import { BiologySimulation } from './simulation.js';
 import { GameUI } from './ui.js';
 import { GameVisualizer } from './visualization.js';
 import { EventSystem } from './events.js';
+import { HistoryRecorder } from './history.js';
+import { HistoryView } from './historyView.js';
 
 class GameController {
     constructor() {
@@ -12,6 +14,13 @@ class GameController {
         this.ui = new GameUI();
         this.visualizer = new GameVisualizer('simulation-canvas');
         this.eventSystem = new EventSystem();
+        this.history = new HistoryRecorder();
+        this.historyView = new HistoryView({
+            envCanvasId: 'history-env',
+            atmCanvasId: 'history-atm',
+            bioCanvasId: 'history-bio',
+            recorder: this.history
+        });
 
         // Loop / Timing State
         this.isPlaying = false;
@@ -58,6 +67,7 @@ class GameController {
                 this.planet.initializeProtoplanet(config);
                 this.biology = new BiologySimulation();
                 this.eventSystem = new EventSystem();
+                this.history.reset();
                 this.isPlaying = true;
                 this.ui.setPlayState(this.isPlaying);
                 this.ui.syncSliders(this.planet);
@@ -149,6 +159,7 @@ class GameController {
             // Print any biological milestones / events to the science feed
             if (bioUpdate.events && bioUpdate.events.length > 0) {
                 bioUpdate.events.forEach(evt => {
+                    this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type);
                     if (evt.type === 'success') {
                         this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
@@ -160,6 +171,7 @@ class GameController {
             const eventLogs = this.eventSystem.tick(this.planet, this.biology, tickRate);
             if (eventLogs && eventLogs.length > 0) {
                 eventLogs.forEach(evt => {
+                    this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type);
                     if (evt.type === 'success' || evt.type === 'hazard') {
                         this.ui.showMilestonePopup(evt.title, evt.desc, evt.scientificDetails);
@@ -171,6 +183,9 @@ class GameController {
 
             // 3. Update planet physical state using biological outputs (O2 / CO2 cycle)
             this.planet.update(tickRate, bioUpdate.biologicalImpact);
+
+            // 4. Sample time-series history (real-time throttled inside the recorder)
+            this.history.tick(dt, this.planet, this.biology);
         }
 
         // 3. Render visuals (both macro and micro views update dynamically)
@@ -178,6 +193,9 @@ class GameController {
 
         // 4. Update panel values, progress bars, and atmospheric graphs
         this.ui.updateDashboard(this.planet, this.biology);
+
+        // Render history sparklines (cheap; renders trail even while paused)
+        this.historyView.render();
         
         // Update warnings panel
         this.ui.updateThreats(this.eventSystem.warnings);
@@ -195,5 +213,5 @@ class GameController {
 
 // Instantiate and start the simulator on page load
 window.addEventListener('DOMContentLoaded', () => {
-    new GameController();
+    window.game = new GameController();
 });

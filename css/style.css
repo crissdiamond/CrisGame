@@ -625,6 +625,85 @@ body {
     }
 }
 
+/* History Panel: time-series sparklines */
+#history-panel {
+    min-height: 0;
+    gap: 0.75rem;
+}
+
+.history-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    align-items: stretch;
+    min-height: 110px;
+}
+
+.history-label-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0;
+}
+
+.history-label-col .label {
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+.history-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+}
+
+.history-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.6rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.history-legend .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--text-muted);
+}
+
+.history-legend .env-temp { background: var(--accent-cyan); }
+.history-legend .env-water { background: var(--accent-green); }
+.history-legend .env-rad { background: var(--accent-amber); }
+.history-legend .env-hab { background: var(--accent-purple); }
+.history-legend .atm-co2 { background: var(--accent-red); }
+.history-legend .atm-n2 { background: var(--text-muted); }
+.history-legend .atm-o2 { background: var(--accent-cyan); }
+.history-legend .bio-anaerobic { background: var(--accent-purple); }
+.history-legend .bio-photo { background: var(--accent-green); }
+.history-legend .bio-multi { background: var(--accent-amber); }
+
+.history-canvas {
+    width: 100%;
+    height: 110px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: block;
+}
+
+@media (max-width: 1024px) {
+    .history-row {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+}
+
 .console-title {
     color: var(--text-secondary);
 }
