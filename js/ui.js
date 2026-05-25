@@ -753,6 +753,18 @@ export class GameUI {
         // Solvent details
         this.solventState.textContent = planet.activeSolvent.toUpperCase();
 
+        // Update solvent label and dot color in history legend dynamically
+        const envWaterLegend = document.getElementById('env-water-legend');
+        if (envWaterLegend) {
+            if (planet.activeSolvent === 'water') {
+                envWaterLegend.innerHTML = '<em class="dot env-water" style="background: var(--accent-green);"></em>Water';
+            } else if (planet.activeSolvent === 'ammonia') {
+                envWaterLegend.innerHTML = '<em class="dot env-water" style="background: var(--accent-purple);"></em>Ammonia';
+            } else if (planet.activeSolvent === 'methane') {
+                envWaterLegend.innerHTML = '<em class="dot env-water" style="background: var(--accent-amber);"></em>Methane';
+            }
+        }
+
         // Update biomass history graph legend text and visibility
         if (planet.activeSolvent === 'water') {
             this.bioLegend1.innerHTML = `<em class="dot bio-anaerobic"></em>Anaerobic`;

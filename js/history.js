@@ -11,6 +11,7 @@ const SERIES_KEYS = [
     'temperature',
     'waterCoverage',
     'radiation',
+    'effectiveRadiation',
     'habitability',
     'co2',
     'n2',
@@ -44,6 +45,7 @@ export class HistoryRecorder {
 
         this.firstSimAgeMyr = 0;
         this.latestSimAgeMyr = 0;
+        this.latestActiveSolvent = 'water';
     }
 
     reset() {
@@ -54,6 +56,7 @@ export class HistoryRecorder {
         this.markerCount = 0;
         this.firstSimAgeMyr = 0;
         this.latestSimAgeMyr = 0;
+        this.latestActiveSolvent = 'water';
         this.simAges.fill(0);
         for (const key of SERIES_KEYS) {
             this.series[key].fill(0);
@@ -73,11 +76,13 @@ export class HistoryRecorder {
         this.simAges[i] = planet.age;
         this.series.temperature[i] = planet.temperature;
         this.series.waterCoverage[i] = planet.waterCoverage;
-        this.series.radiation[i] = planet.getEffectiveRadiation();
+        this.series.radiation[i] = planet.radiation;
+        this.series.effectiveRadiation[i] = planet.getEffectiveRadiation();
         this.series.habitability[i] = planet.getHabitabilityScore();
         this.series.co2[i] = planet.co2;
         this.series.n2[i] = planet.n2;
         this.series.o2[i] = planet.o2;
+        this.latestActiveSolvent = planet.activeSolvent;
 
         let anaerobicVal = 0.0;
         let photosyntheticVal = 0.0;

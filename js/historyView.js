@@ -10,9 +10,10 @@ const PALETTE = {
     temperature: '#00f2fe',
     waterCoverage: '#10b981',
     radiation: '#f59e0b',
+    effectiveRadiation: '#ef4444',
     habitability: '#a855f7',
     co2: '#ef4444',
-    n2: '#94a3b8',
+    n2: '#a855f7',
     o2: '#00f2fe',
     anaerobic: '#a855f7',
     photosynthetic: '#10b981',
@@ -48,6 +49,7 @@ const GROUPS = {
         { key: 'temperature', min: -100, max: 200 },
         { key: 'waterCoverage', min: 0, max: 100 },
         { key: 'radiation', min: 0, max: 10 },
+        { key: 'effectiveRadiation', min: 0, max: 10 },
         { key: 'habitability', min: 0, max: 100 }
     ],
     atm: [
@@ -161,7 +163,15 @@ export class HistoryView {
             ctx.beginPath();
             ctx.lineWidth = 1.5;
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = PALETTE[spec.key] || '#fff';
+            
+            let strokeColor = PALETTE[spec.key] || '#fff';
+            if (spec.key === 'waterCoverage') {
+                const solvent = recorder.latestActiveSolvent || 'water';
+                if (solvent === 'water') strokeColor = '#10b981'; // Emerald Green
+                else if (solvent === 'ammonia') strokeColor = '#a855f7'; // Purple
+                else if (solvent === 'methane') strokeColor = '#f59e0b'; // Amber/Orange
+            }
+            ctx.strokeStyle = strokeColor;
 
             for (let i = 0; i < count; i++) {
                 const idx = (startIdx + i) % cap;

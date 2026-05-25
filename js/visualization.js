@@ -738,7 +738,7 @@ export class GameVisualizer {
             ctx.translate(p.x, p.y);
             
             if (p.type === 'soup') {
-                ctx.fillStyle = 'rgba(168, 85, 247, 0.45)';
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.45)'; // Purple (Anaerobic)
                 ctx.beginPath();
                 ctx.arc(0, 0, 2, 0, Math.PI*2);
                 ctx.arc(6, Math.sin(p.wobble)*3, 1.8, 0, Math.PI*2);
@@ -746,8 +746,8 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'anaerobic') {
                 ctx.rotate(Math.atan2(p.vy, p.vx));
-                ctx.fillStyle = 'rgba(99, 102, 241, 0.65)';
-                ctx.strokeStyle = 'rgba(129, 140, 248, 0.8)';
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.65)'; // Purple (Anaerobic)
+                ctx.strokeStyle = 'rgba(192, 132, 252, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.roundRect(-7, -3.5, 14, 7, 3);
@@ -755,7 +755,7 @@ export class GameVisualizer {
                 ctx.stroke();
             } else if (p.type === 'photosynthetic') {
                 ctx.rotate(p.wobble * 0.1);
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.6)';
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.6)'; // Green (Photosynthetic)
                 ctx.strokeStyle = 'rgba(52, 211, 153, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
@@ -763,8 +763,8 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'eukaryotic') {
-                ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
-                ctx.strokeStyle = 'rgba(14, 165, 233, 0.8)';
+                ctx.fillStyle = 'rgba(192, 132, 252, 0.5)'; // Light Purple (Anaerobic)
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.arc(0, 0, 8, 0, Math.PI * 2);
@@ -777,8 +777,8 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'multicellular') {
                 ctx.rotate(p.wobble * 0.05);
-                ctx.fillStyle = 'rgba(236, 72, 153, 0.55)';
-                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.55)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
                 ctx.beginPath();
                 ctx.arc(0, 0, 3.5, 0, Math.PI*2);
                 ctx.arc(6, 2, 3, 0, Math.PI*2);
@@ -787,8 +787,8 @@ export class GameVisualizer {
                 ctx.stroke();
             } else if (p.type === 'sponges') {
                 ctx.rotate(p.wobble * 0.1);
-                ctx.fillStyle = 'rgba(217, 119, 6, 0.6)';
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.moveTo(-6, 8);
@@ -807,15 +807,15 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'meduses') {
                 ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI/2);
-                ctx.fillStyle = 'rgba(236, 72, 153, 0.5)';
-                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(0, -2, 6, Math.PI, 0);
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
                 ctx.lineWidth = 1;
                 for (let j = -2; j <= 2; j += 2) {
                     ctx.beginPath();
@@ -830,8 +830,8 @@ export class GameVisualizer {
                 }
             } else if (p.type === 'worms') {
                 ctx.rotate(Math.atan2(p.vy, p.vx));
-                ctx.fillStyle = 'rgba(168, 85, 247, 0.6)';
-                ctx.strokeStyle = 'rgba(192, 132, 252, 0.8)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
                 ctx.lineWidth = 1.2;
                 for (let j = 0; j < 5; j++) {
                     const segX = -j * 3.5;
@@ -844,8 +844,8 @@ export class GameVisualizer {
                 }
             } else if (p.type === 'fish') {
                 ctx.rotate(Math.atan2(p.vy, p.vx));
-                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
-                ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.6)'; // Amber (Complex)
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 7, 3.5, 0, 0, Math.PI*2);
@@ -867,8 +867,8 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'cambrian') {
                 ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI/2);
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.55)';
-                ctx.strokeStyle = 'rgba(217, 119, 6, 0.85)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.55)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.85)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 6, 10, 0, 0, Math.PI*2);
@@ -879,7 +879,7 @@ export class GameVisualizer {
                 ctx.moveTo(-6, 2); ctx.lineTo(5, 2);
                 ctx.stroke();
             } else if (p.type === 'plants') {
-                ctx.fillStyle = 'rgba(4, 120, 87, 0.7)';
+                ctx.fillStyle = 'rgba(4, 120, 87, 0.7)'; // Green (Photosynthetic)
                 ctx.strokeStyle = 'rgba(16, 185, 129, 0.9)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
@@ -888,19 +888,19 @@ export class GameVisualizer {
                 ctx.stroke();
             } else if (p.type === 'tetrapod') {
                 ctx.rotate(Math.atan2(p.vy, p.vx));
-                ctx.fillStyle = 'rgba(14, 116, 144, 0.65)';
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.65)'; // Amber (Complex)
                 ctx.beginPath();
                 ctx.arc(4, 0, 5, 0, Math.PI*2);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 ctx.moveTo(-1, 0);
                 ctx.quadraticCurveTo(-7, Math.sin(p.wobble*2)*4, -14, 0);
                 ctx.stroke();
             } else if (p.type === 'sauropsid') {
-                ctx.fillStyle = 'rgba(185, 28, 28, 0.6)';
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.6)'; // Amber (Complex)
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
                 ctx.beginPath();
                 ctx.moveTo(0, -6);
                 ctx.lineTo(6, 0);
@@ -910,15 +910,15 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'synapsid') {
-                ctx.fillStyle = 'rgba(180, 83, 9, 0.6)';
-                ctx.strokeStyle = '#d97706';
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.6)'; // Amber (Complex)
+                ctx.strokeStyle = '#f59e0b';
                 ctx.beginPath();
                 ctx.arc(0, 0, 5, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cognitive') {
-                ctx.fillStyle = 'rgba(168, 85, 247, 0.65)';
-                ctx.strokeStyle = 'rgba(216, 180, 254, 0.9)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.65)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.9)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.arc(0, 0, 6, 0, Math.PI*2);
@@ -930,28 +930,28 @@ export class GameVisualizer {
                 ctx.moveTo(0, 3); ctx.lineTo(0, 9);
                 ctx.stroke();
             } else if (p.type === 'ai') {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-                ctx.strokeStyle = 'rgba(0, 242, 254, 0.9)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.8)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.9)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.rect(-6, -6, 12, 12);
                 ctx.fill();
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(-3, 0); ctx.lineTo(3, 0);
                 ctx.moveTo(0, -3); ctx.lineTo(0, 3);
                 ctx.stroke();
             } else if (p.type === 'cyborg') {
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.65)';
-                ctx.strokeStyle = '#d97706';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.65)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(0, 0, 5, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
                 ctx.lineWidth = 0.8;
                 ctx.beginPath();
                 ctx.moveTo(-3, -3); ctx.lineTo(3, 3);
@@ -959,27 +959,27 @@ export class GameVisualizer {
                 ctx.stroke();
             } else if (p.type === 'noosphere') {
                 ctx.rotate(p.wobble * 0.1);
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.7)';
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.7)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.9)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.rect(-5, -5, 10, 10);
                 ctx.fill();
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.45)';
                 ctx.beginPath();
                 ctx.arc(0, 0, 8 + Math.sin(p.wobble)*3, 0, Math.PI*2);
                 ctx.stroke();
             } else if (p.type === 'gaia_hivemind') {
                 ctx.rotate(p.wobble * 0.05);
-                ctx.fillStyle = 'rgba(4, 120, 87, 0.6)';
-                ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.6)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(0, 0, 6, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)';
                 ctx.beginPath();
                 for (let j = 0; j < 4; j++) {
                     const angle = (j * Math.PI) / 2;
@@ -990,21 +990,21 @@ export class GameVisualizer {
             }
             
             else if (p.type === 'ammonic_soup') {
-                ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.4)'; // Purple (Anaerobic)
                 ctx.beginPath();
                 ctx.rect(-3, -3, 6, 6);
                 ctx.fill();
             } else if (p.type === 'ammonic_proto') {
                 ctx.rotate(p.wobble * 0.2);
-                ctx.strokeStyle = 'rgba(167, 139, 250, 0.8)';
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)'; // Purple (Anaerobic)
                 ctx.lineWidth = 1.8;
                 ctx.beginPath();
                 ctx.moveTo(-8, 0);
                 ctx.lineTo(8, 0);
                 ctx.stroke();
             } else if (p.type === 'ammonic_multi') {
-                ctx.fillStyle = 'rgba(124, 58, 237, 0.6)';
-                ctx.strokeStyle = 'rgba(139, 92, 246, 0.9)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)'; // Cyan (Multicellular)
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.9)';
                 ctx.beginPath();
                 ctx.moveTo(0, -6);
                 ctx.lineTo(5, 4);
@@ -1013,7 +1013,7 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'silico_flora') {
-                ctx.fillStyle = '#4f46e5';
+                ctx.fillStyle = '#10b981'; // Green (Photosynthetic)
                 ctx.beginPath();
                 ctx.arc(0, -3, 3, 0, Math.PI*2);
                 ctx.arc(4, 3, 2.5, 0, Math.PI*2);
@@ -1021,14 +1021,14 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'cryo_fauna') {
                 ctx.rotate(p.wobble*0.05);
-                ctx.fillStyle = '#6366f1';
+                ctx.fillStyle = '#f59e0b'; // Amber (Complex)
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 4, 7, 0, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'crystalline_cognitive') {
                 ctx.rotate(p.wobble * 0.1);
-                ctx.fillStyle = 'rgba(129, 140, 248, 0.65)';
-                ctx.strokeStyle = '#818cf8';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.65)'; // Pink (Sentient)
+                ctx.strokeStyle = '#ec4899';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 for (let j = 0; j < 6; j++) {
@@ -1040,8 +1040,8 @@ export class GameVisualizer {
                 ctx.stroke();
             } else if (p.type === 'quantum_lattices') {
                 ctx.rotate(p.wobble * 0.08);
-                ctx.fillStyle = 'rgba(14, 165, 233, 0.65)';
-                ctx.strokeStyle = 'rgba(99, 102, 241, 0.85)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.65)'; // Pink (Sentient)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.moveTo(0, -6);
@@ -1057,8 +1057,8 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'cryo_hivemind') {
                 ctx.rotate(p.wobble * 0.05);
-                ctx.strokeStyle = 'rgba(139, 92, 246, 0.8)';
-                ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.5)'; // Pink (Sentient)
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 3, 7, 0, 0, Math.PI*2);
@@ -1070,18 +1070,18 @@ export class GameVisualizer {
             }
  
             else if (p.type === 'methane_soup') {
-                ctx.fillStyle = 'rgba(217, 119, 6, 0.35)';
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.35)'; // Purple (Anaerobic)
                 ctx.beginPath();
                 ctx.arc(0, 0, 3, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'methane_proto') {
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)'; // Purple (Anaerobic)
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
                 ctx.arc(0, 0, 6, 0, Math.PI*2);
                 ctx.stroke();
             } else if (p.type === 'methane_multi') {
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; // Cyan (Multicellular)
                 ctx.beginPath();
                 ctx.arc(-4, 0, 2.5, 0, Math.PI*2);
                 ctx.arc(1, 1, 2.5, 0, Math.PI*2);
@@ -1089,22 +1089,22 @@ export class GameVisualizer {
                 ctx.fill();
             } else if (p.type === 'cryo_organisms') {
                 ctx.rotate(p.wobble * 0.1);
-                ctx.fillStyle = '#ea580c';
-                ctx.strokeStyle = '#f97316';
+                ctx.fillStyle = '#f59e0b'; // Amber (Complex)
+                ctx.strokeStyle = '#fbbf24';
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, 5, 8, 0, 0, Math.PI*2);
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cryo_polymer_network') {
-                ctx.fillStyle = '#f97316';
+                ctx.fillStyle = '#10b981'; // Green (Photosynthetic)
                 ctx.beginPath();
                 ctx.arc(-4, -2, 2.5, 0, Math.PI*2);
                 ctx.arc(2, 2, 2.5, 0, Math.PI*2);
                 ctx.fill();
             } else if (p.type === 'thinking_ocean') {
-                ctx.fillStyle = 'rgba(234, 88, 12, 0.6)';
-                ctx.strokeStyle = '#f59e0b';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.6)'; // Pink (Sentient)
+                ctx.strokeStyle = '#ec4899';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 for (let j = 0; j < 5; j++) {
@@ -1116,8 +1116,8 @@ export class GameVisualizer {
                 ctx.fill();
                 ctx.stroke();
             } else if (p.type === 'cryo_colloids') {
-                ctx.strokeStyle = 'rgba(217, 119, 6, 0.85)';
-                ctx.fillStyle = 'rgba(180, 83, 9, 0.4)';
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.4)'; // Pink (Sentient)
                 ctx.lineWidth = 1.8;
                 ctx.beginPath();
                 ctx.arc(0, 0, 9, 0, Math.PI*2);
