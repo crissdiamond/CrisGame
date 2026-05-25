@@ -407,11 +407,16 @@ export class Planet {
         }
         this.radiation += (starRad - this.radiation) * 0.05 * tickRate;
 
-        // Magnetic core decay: core cools down (rate depends on planet size)
+        // Magnetic core decay: core cools down (rate depends on planet size and lunar tides)
         let coreDecayFactor = 1.0;
         if (this.planetSize === 'small') coreDecayFactor = 1.8;
         if (this.planetSize === 'large') coreDecayFactor = 0.4;
-        this.magneticStrength = Math.max(0, this.magneticStrength - 0.12 * coreDecayFactor * tickRate);
+        
+        // Scientific geodynamo preservation: lunar tides reduce core cooling decay by 50%
+        const moonTidalPreservation = this.hasMoon ? 0.5 : 1.0;
+        const decayRate = 0.07 * coreDecayFactor * moonTidalPreservation;
+        
+        this.magneticStrength = Math.max(0, this.magneticStrength - decayRate * tickRate);
         if (this.magneticStrength < 20.0) {
             this.hasMagnetosphere = false;
         }
