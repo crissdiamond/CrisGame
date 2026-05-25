@@ -525,6 +525,11 @@ export class Planet {
                 const converted = Math.min(this.co2, biologicalImpact.o2Prod * tickRate * 0.1);
                 this.co2 -= converted;
                 this.o2 += converted;
+            } else if (biologicalImpact.o2Prod < 0) {
+                // Aerobic respiration exceeds photosynthesis: consume O2, release CO2
+                const converted = Math.min(this.o2, -biologicalImpact.o2Prod * tickRate * 0.1);
+                this.o2 -= converted;
+                this.co2 += converted;
             }
             // Terrestrial Nitrogen cycle feedback:
             if (biologicalImpact.n2Prod !== 0) {

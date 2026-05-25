@@ -1002,18 +1002,25 @@ export class BiologySimulation {
             }
 
             // Homeostatic oxygen stabilization feedback from Gaia
+            let o2ProdRaw = 0;
             if (this.gaiaHivemindPop > 0) {
                 if (planet.co2 > 1.0) {
-                    o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15;
+                    o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15;
                 } else if (planet.o2 > 22.0) {
-                    o2Prod = Math.max(0, (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2);
+                    o2ProdRaw = Math.max(0, (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2);
                 } else {
-                    o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+                    o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
                 }
             } else {
-                o2Prod = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+                o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
             }
-            co2Cons = this.photosyntheticPop * 0.05 + this.landPlantsPop * 0.15 + this.anaerobicPop * 0.01 + this.synapsidPop * 0.08 + this.sauropsidPop * 0.05 + this.cognitiveSpeciesPop * 0.08;
+
+            // Aerobic respiration from consumers (sponges, meduses, worms, fish, cambrian invertebrates, synapsids, sauropsids, cognitive species)
+            const respiration = this.spongesPop * 0.008 + this.medusesPop * 0.01 + this.wormsPop * 0.012 + this.fishPop * 0.025 + 
+                                this.cambrianPop * 0.02 + this.sauropsidPop * 0.05 + this.synapsidPop * 0.06 + this.cognitiveSpeciesPop * 0.06;
+
+            o2Prod = o2ProdRaw - respiration;
+            co2Cons = o2Prod;
             
             // Nitrogen Cycle: denitrifiers vent N2, fixers consume N2, radiation fixes N2
             const denitrification = this.anaerobicPop * 0.04;
