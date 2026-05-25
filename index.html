@@ -98,16 +98,18 @@
             <!-- CENTER PANEL: PLANET VISUALIZATION -->
             <section class="panel glass-card main-viewport" id="viewport-panel">
                 <div class="viewport-header">
-                    <div class="view-toggles">
-                        <button id="btn-view-macro" class="view-btn active">Planet View (Macro)</button>
-                        <button id="btn-view-micro" class="view-btn">Microscopic View (Micro)</button>
+                    <div class="view-indicator">
+                        <span class="view-hint">Active View</span>
+                        <span id="current-view-mode" class="badge">PLANET (MACRO)</span>
                     </div>
                     <div class="time-controls">
+                        <button id="btn-save-state" class="control-icon-btn">💾 Save</button>
+                        <button id="btn-load-state" class="control-icon-btn">📂 Load</button>
                         <button id="btn-pause-play" class="control-icon-btn">⏸️ Pause</button>
                     </div>
                 </div>
                 
-                <div class="canvas-container">
+                <div id="canvas-container" class="canvas-container">
                     <canvas id="simulation-canvas"></canvas>
                 </div>
 

@@ -127,13 +127,34 @@ class GameController {
                 }
             },
             
-            onViewChange: (viewMode) => {
-                this.visualizer.setViewMode(viewMode);
+            onToggleView: () => {
+                const nextMode = this.visualizer.viewMode === 'macro' ? 'micro' : 'macro';
+                this.visualizer.setViewMode(nextMode);
+                this.ui.updateViewModeLabel(nextMode);
+            },
+
+            onSaveState: () => {
+                this.saveGame();
+            },
+
+            onLoadState: () => {
+                this.loadGame();
             }
         });
 
         // Log opening console message
         this.ui.logEvent("CURATOR TERMINAL ONLINE", "Awaiting Protoplanetary Configuration injection from Setup Terminal...", "system");
+
+        // Scan for saved states
+        try {
+            if (localStorage.getItem('evoplanet_save')) {
+                this.ui.logEvent("LOCAL SCAN", "Saved state detected. Click 'Load' to restore previous configuration.", "success");
+            } else {
+                this.ui.logEvent("LOCAL SCAN", "No saved states found. Initialize a protoplanet to start.", "system");
+            }
+        } catch (e) {
+            // localStorage not available
+        }
 
         // Launch simulation loop
         this.lastTime = performance.now();
@@ -216,6 +237,320 @@ class GameController {
 
         // Keep loop running
         requestAnimationFrame((time) => this.loop(time));
+    }
+
+    saveGame() {
+        try {
+            const data = {
+                version: 1.0,
+                timestamp: Date.now(),
+                planet: {
+                    temperature: this.planet.temperature,
+                    waterCoverage: this.planet.waterCoverage,
+                    ammoniaCoverage: this.planet.ammoniaCoverage,
+                    methaneCoverage: this.planet.methaneCoverage,
+                    radiation: this.planet.radiation,
+                    
+                    targetTemperature: this.planet.targetTemperature,
+                    targetWaterCoverage: this.planet.targetWaterCoverage,
+                    targetAmmoniaCoverage: this.planet.targetAmmoniaCoverage,
+                    targetMethaneCoverage: this.planet.targetMethaneCoverage,
+                    targetRadiation: this.planet.targetRadiation,
+                    
+                    co2: this.planet.co2,
+                    n2: this.planet.n2,
+                    o2: this.planet.o2,
+                    ch4: this.planet.ch4,
+                    h2: this.planet.h2,
+                    
+                    atmospherePressure: this.planet.atmospherePressure,
+                    magneticStrength: this.planet.magneticStrength,
+                    hasMagnetosphere: this.planet.hasMagnetosphere,
+                    ozone: this.planet.ozone,
+                    
+                    age: this.planet.age,
+                    starAge: this.planet.starAge,
+                    starLuminosity: this.planet.starLuminosity,
+                    
+                    isDisasterActive: this.planet.isDisasterActive,
+                    disasterDuration: this.planet.disasterDuration,
+                    hasMoon: this.planet.hasMoon,
+                    isGlaciated: this.planet.isGlaciated,
+                    activeSolvent: this.planet.activeSolvent,
+                    
+                    impactTemperatureOffset: this.planet.impactTemperatureOffset,
+                    impactOffsetDecayRate: this.planet.impactOffsetDecayRate,
+                    impactCooldownMyr: this.planet.impactCooldownMyr,
+                    nextImpactTemperatureOffset: this.planet.nextImpactTemperatureOffset,
+                    nextImpactCooldownMyr: this.planet.nextImpactCooldownMyr,
+                    nextImpactOffsetDecayRate: this.planet.nextImpactOffsetDecayRate,
+                    
+                    starClass: this.planet.starClass,
+                    starSize: this.planet.starSize,
+                    orbitDistance: this.planet.orbitDistance,
+                    planetSize: this.planet.planetSize,
+                    initialVolatiles: this.planet.initialVolatiles,
+                    initialIron: this.planet.initialIron,
+                    initialCarbon: this.planet.initialCarbon,
+                    
+                    dustVeilActive: this.planet.dustVeilActive,
+                    orbitalPerturbationActive: this.planet.orbitalPerturbationActive
+                },
+                biology: {
+                    organicSoup: this.biology.organicSoup,
+                    anaerobicPop: this.biology.anaerobicPop,
+                    photosyntheticPop: this.biology.photosyntheticPop,
+                    eukaryoticPop: this.biology.eukaryoticPop,
+                    multicellularPop: this.biology.multicellularPop,
+                    
+                    spongesPop: this.biology.spongesPop,
+                    medusesPop: this.biology.medusesPop,
+                    wormsPop: this.biology.wormsPop,
+                    fishPop: this.biology.fishPop,
+                    
+                    mossesPop: this.biology.mossesPop,
+                    fernsPop: this.biology.fernsPop,
+                    conifersPop: this.biology.conifersPop,
+                    angiospermsPop: this.biology.angiospermsPop,
+                    
+                    cambrianPop: this.biology.cambrianPop,
+                    landPlantsPop: this.biology.landPlantsPop,
+                    arthropodPop: this.biology.arthropodPop,
+                    tetrapodPop: this.biology.tetrapodPop,
+                    sauropsidPop: this.biology.sauropsidPop,
+                    synapsidPop: this.biology.synapsidPop,
+                    cognitiveSpeciesPop: this.biology.cognitiveSpeciesPop,
+                    technologicalAIPop: this.biology.technologicalAIPop,
+                    cyborgPop: this.biology.cyborgPop,
+                    noospherePop: this.biology.noospherePop,
+                    gaiaHivemindPop: this.biology.gaiaHivemindPop,
+                    
+                    unlockedSoup: this.biology.unlockedSoup,
+                    unlockedMembrane: this.biology.unlockedMembrane,
+                    unlockedBacteria: this.biology.unlockedBacteria,
+                    unlockedAnaerobic: this.biology.unlockedAnaerobic,
+                    unlockedPhotosynthetic: this.biology.unlockedPhotosynthetic,
+                    unlockedNucleus: this.biology.unlockedNucleus,
+                    unlockedMitochondria: this.biology.unlockedMitochondria,
+                    unlockedSexualReproduction: this.biology.unlockedSexualReproduction,
+                    unlockedEukaryotic: this.biology.unlockedEukaryotic,
+                    unlockedMulticellular: this.biology.unlockedMulticellular,
+                    
+                    unlockedSponges: this.biology.unlockedSponges,
+                    unlockedMeduses: this.biology.unlockedMeduses,
+                    unlockedWorms: this.biology.unlockedWorms,
+                    unlockedFish: this.biology.unlockedFish,
+                    
+                    unlockedMosses: this.biology.unlockedMosses,
+                    unlockedFerns: this.biology.unlockedFerns,
+                    unlockedConifers: this.biology.unlockedConifers,
+                    unlockedAngiosperms: this.biology.unlockedAngiosperms,
+                    
+                    unlockedCambrian: this.biology.unlockedCambrian,
+                    unlockedLandPlants: this.biology.unlockedLandPlants,
+                    unlockedArthropod: this.biology.unlockedArthropod,
+                    unlockedTetrapod: this.biology.unlockedTetrapod,
+                    unlockedSauropsid: this.biology.unlockedSauropsid,
+                    unlockedSynapsid: this.biology.unlockedSynapsid,
+                    unlockedCognitive: this.biology.unlockedCognitive,
+                    unlockedTechnologicalAI: this.biology.unlockedTechnologicalAI,
+                    unlockedCyborg: this.biology.unlockedCyborg,
+                    unlockedNoosphere: this.biology.unlockedNoosphere,
+                    unlockedGaiaHivemind: this.biology.unlockedGaiaHivemind,
+                    
+                    ammonicSoup: this.biology.ammonicSoup,
+                    ammonicProtoPop: this.biology.ammonicProtoPop,
+                    ammonicMultiPop: this.biology.ammonicMultiPop,
+                    silicoFloraPop: this.biology.silicoFloraPop,
+                    cryoFaunaPop: this.biology.cryoFaunaPop,
+                    crystallineCognitivePop: this.biology.crystallineCognitivePop,
+                    quantumLatticePop: this.biology.quantumLatticePop,
+                    cryoHivemindPop: this.biology.cryoHivemindPop,
+                    
+                    unlockedAmmonicSoup: this.biology.unlockedAmmonicSoup,
+                    unlockedAmmonicProto: this.biology.unlockedAmmonicProto,
+                    unlockedAmmonicMulti: this.biology.unlockedAmmonicMulti,
+                    unlockedSilicoFlora: this.biology.unlockedSilicoFlora,
+                    unlockedCryoFauna: this.biology.unlockedCryoFauna,
+                    unlockedCrystallineCognitive: this.biology.unlockedCrystallineCognitive,
+                    unlockedQuantumLattice: this.biology.unlockedQuantumLattice,
+                    unlockedCryoHivemind: this.biology.unlockedCryoHivemind,
+                    
+                    methaneSoup: this.biology.methaneSoup,
+                    methaneProtoPop: this.biology.methaneProtoPop,
+                    methaneMultiPop: this.biology.methaneMultiPop,
+                    cryoOrganismsPop: this.biology.cryoOrganismsPop,
+                    cryoPolymerNetworkPop: this.biology.cryoPolymerNetworkPop,
+                    thinkingOceanPop: this.biology.thinkingOceanPop,
+                    cryoColloidPop: this.biology.cryoColloidPop,
+                    
+                    unlockedMethaneSoup: this.biology.unlockedMethaneSoup,
+                    unlockedMethaneProto: this.biology.unlockedMethaneProto,
+                    unlockedMethaneMulti: this.biology.unlockedMethaneMulti,
+                    unlockedCryoOrganisms: this.biology.unlockedCryoOrganisms,
+                    unlockedCryoPolymerNetwork: this.biology.unlockedCryoPolymerNetwork,
+                    unlockedThinkingOcean: this.biology.unlockedThinkingOcean,
+                    unlockedCryoColloid: this.biology.unlockedCryoColloid,
+                    
+                    activeAdaptations: Array.from(this.biology.activeAdaptations),
+                    pendingNudges: this.biology.pendingNudges,
+                    radiationResistance: this.biology.radiationResistance
+                },
+                eventSystem: {
+                    tokens: this.eventSystem.tokens,
+                    timeAccumulator: this.eventSystem.timeAccumulator,
+                    prevUnlocks: this.eventSystem.prevUnlocks,
+                    triggeredUniqueEvents: Array.from(this.eventSystem.triggeredUniqueEvents),
+                    activeEvents: this.eventSystem.activeEvents.map(e => ({
+                        id: e.id,
+                        name: e.name,
+                        remainingDuration: e.remainingDuration
+                    })),
+                    warnings: this.eventSystem.warnings.map(w => ({
+                        id: w.id,
+                        durationRemaining: w.durationRemaining,
+                        type: w.type
+                    }))
+                },
+                history: {
+                    writeIndex: this.history.writeIndex,
+                    count: this.history.count,
+                    accumulator: this.history.accumulator,
+                    markerWrite: this.history.markerWrite,
+                    markerCount: this.history.markerCount,
+                    firstSimAgeMyr: this.history.firstSimAgeMyr,
+                    latestSimAgeMyr: this.history.latestSimAgeMyr,
+                    simAges: Array.from(this.history.simAges),
+                    series: Object.fromEntries(
+                        Object.entries(this.history.series).map(([key, val]) => [key, Array.from(val)])
+                    ),
+                    markers: this.history.markers.slice(0, this.history.markerCount)
+                },
+                ui: {
+                    scienceLogHTML: this.ui.scienceLog.innerHTML
+                },
+                visualizer: {
+                    viewMode: this.visualizer.viewMode
+                }
+            };
+            localStorage.setItem('evoplanet_save', JSON.stringify(data));
+            this.ui.logEvent("STATE ENCRYPTED", "Simulation progress saved successfully to local archives.", "success");
+        } catch (err) {
+            console.error("Save state failed:", err);
+            this.ui.logEvent("SAVE FAILED", "Storage error encountered during serialization.", "hazard");
+        }
+    }
+
+    loadGame() {
+        try {
+            const raw = localStorage.getItem('evoplanet_save');
+            if (!raw) {
+                this.ui.logEvent("RESTORE FAILED", "No saved state detected in local storage.", "hazard");
+                return;
+            }
+            const data = JSON.parse(raw);
+
+            // Restore Planet
+            for (const key in data.planet) {
+                this.planet[key] = data.planet[key];
+            }
+
+            // Restore Biology
+            for (const key in data.biology) {
+                if (key === 'activeAdaptations') {
+                    this.biology.activeAdaptations = new Set(data.biology.activeAdaptations);
+                } else {
+                    this.biology[key] = data.biology[key];
+                }
+            }
+
+            // Restore EventSystem
+            this.eventSystem.tokens = data.eventSystem.tokens;
+            this.eventSystem.timeAccumulator = data.eventSystem.timeAccumulator;
+            this.eventSystem.prevUnlocks = { ...data.eventSystem.prevUnlocks };
+            this.eventSystem.triggeredUniqueEvents = new Set(data.eventSystem.triggeredUniqueEvents);
+            this.eventSystem.activeEvents = data.eventSystem.activeEvents.map(e => ({
+                id: e.id,
+                name: e.name,
+                remainingDuration: e.remainingDuration
+            }));
+            
+            // Rebuild warnings
+            this.eventSystem.warnings = data.eventSystem.warnings.map(savedWarning => {
+                if (savedWarning.id === 'dynamo_decay') {
+                    return {
+                        id: 'dynamo_decay',
+                        name: "MAGNETIC FIELD CRITICAL",
+                        description: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent.",
+                        scientificDetails: "As the outer nickel-iron core cools, thermal convection currents decline. This slows the geodynamo, weakening and ultimately collapsing the protective magnetosphere shield that diverts high-energy stellar winds.",
+                        durationRemaining: savedWarning.durationRemaining,
+                        cost: 15,
+                        type: "alert",
+                        apply: (p, b) => {
+                            p.hasMagnetosphere = false;
+                            p.magneticStrength = 10.0;
+                            return "Magnetosphere collapsed! Atmosphere stripping active.";
+                        }
+                    };
+                } else {
+                    const registryEvent = this.eventSystem.eventsRegistry.find(e => e.id === savedWarning.id);
+                    if (registryEvent) {
+                        return {
+                            id: registryEvent.id,
+                            name: registryEvent.name,
+                            description: registryEvent.description,
+                            scientificDetails: registryEvent.scientificDetails,
+                            durationRemaining: savedWarning.durationRemaining,
+                            cost: registryEvent.cost,
+                            apply: registryEvent.apply,
+                            type: savedWarning.type || (typeof registryEvent.type === 'function' ? registryEvent.type(this.planet, this.biology) : registryEvent.type)
+                        };
+                    }
+                    return null;
+                }
+            }).filter(Boolean);
+
+            // Restore HistoryRecorder
+            this.history.writeIndex = data.history.writeIndex;
+            this.history.count = data.history.count;
+            this.history.accumulator = data.history.accumulator;
+            this.history.markerWrite = data.history.markerWrite;
+            this.history.markerCount = data.history.markerCount;
+            this.history.firstSimAgeMyr = data.history.firstSimAgeMyr;
+            this.history.latestSimAgeMyr = data.history.latestSimAgeMyr;
+            this.history.simAges = new Float32Array(data.history.simAges);
+            
+            for (const key in data.history.series) {
+                this.history.series[key] = new Float32Array(data.history.series[key]);
+            }
+            
+            // Reconstruct markers array
+            this.history.markers = new Array(this.history.markerCapacity);
+            data.history.markers.forEach((m, idx) => {
+                if (m) this.history.markers[idx] = m;
+            });
+
+            // Restore UI and Visuals
+            this.ui.scienceLog.innerHTML = data.ui.scienceLogHTML;
+            this.visualizer.setViewMode(data.visualizer.viewMode);
+            this.ui.updateViewModeLabel(data.visualizer.viewMode);
+            
+            // Sync dashboard & controls
+            this.ui.syncSliders(this.planet);
+            
+            // Make sure simulation loops resume from active play state
+            this.ui.setPlayState(this.isPlaying);
+            
+            // Redraw everything once immediately to avoid any lag frame
+            this.visualizer.draw(this.planet, this.biology);
+            this.ui.updateDashboard(this.planet, this.biology);
+            this.historyView.render();
+
+            this.ui.logEvent("STATE RESTORED", "Simulation state successfully synchronized to local storage archive.", "success");
+        } catch (err) {
+            console.error("Load state failed:", err);
+            this.ui.logEvent("RECOVERY ERROR", "Saved file corrupted or incompatible.", "hazard");
+        }
     }
 }
 

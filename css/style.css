@@ -350,32 +350,28 @@ body {
     flex-wrap: wrap;
 }
 
-.view-toggles {
+.view-indicator {
     display: flex;
-    flex-wrap: wrap;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 0.25rem;
-    border: 1px solid var(--border-color);
+    flex-direction: column;
+    justify-content: center;
 }
 
-.view-btn {
-    flex: 1 1 145px;
-    background: transparent;
-    border: none;
+.view-indicator .view-hint {
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    padding: 0.4rem 0.85rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    opacity: 0.8;
 }
 
-.view-btn.active {
-    background: rgba(255, 255, 255, 0.08);
+.view-indicator .badge {
+    font-size: 0.85rem;
     color: var(--accent-cyan);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
 }
 
 .control-icon-btn {
@@ -406,6 +402,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.canvas-container:hover {
+    border-color: rgba(6, 182, 212, 0.5); /* Cyan highlight on hover */
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
 }
 
 #simulation-canvas {

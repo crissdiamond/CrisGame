@@ -15,8 +15,10 @@ export class GameUI {
         
         // Cache DOM Elements - Buttons & Core Telemetry
         this.btnPausePlay = document.getElementById('btn-pause-play');
-        this.btnViewMacro = document.getElementById('btn-view-macro');
-        this.btnViewMicro = document.getElementById('btn-view-micro');
+        this.btnSaveState = document.getElementById('btn-save-state');
+        this.btnLoadState = document.getElementById('btn-load-state');
+        this.currentViewModeLabel = document.getElementById('current-view-mode');
+        this.canvasContainer = document.getElementById('canvas-container');
         this.systemStatusText = document.getElementById('system-status-text');
         this.systemIndicator = document.querySelector('.status-indicator');
         
@@ -35,7 +37,6 @@ export class GameUI {
         this.threatList = document.getElementById('threat-list');
         
         // Interventions Modal
-        this.btnOpenInterventions = document.getElementById('btn-open-open-interventions'); // wait, the element id in HTML is btn-open-interventions! Let's correct it:
         this.btnOpenInterventions = document.getElementById('btn-open-interventions');
         this.interventionsModal = document.getElementById('interventions-modal');
         this.interventionsCloseBtn = document.getElementById('interventions-close-btn');
@@ -447,18 +448,14 @@ export class GameUI {
         // Play/Pause
         this.btnPausePlay.addEventListener('click', () => handlers.onPauseToggle());
 
-        // View Toggles
-        this.btnViewMacro.addEventListener('click', () => {
-            this.btnViewMacro.classList.add('active');
-            this.btnViewMicro.classList.remove('active');
-            handlers.onViewChange('macro');
+        // Canvas container click view toggle
+        this.canvasContainer.addEventListener('click', () => {
+            handlers.onToggleView();
         });
 
-        this.btnViewMicro.addEventListener('click', () => {
-            this.btnViewMicro.classList.add('active');
-            this.btnViewMacro.classList.remove('active');
-            handlers.onViewChange('micro');
-        });
+        // Save and Load State
+        this.btnSaveState.addEventListener('click', () => handlers.onSaveState());
+        this.btnLoadState.addEventListener('click', () => handlers.onLoadState());
 
         // Nudge evolution button click
         this.btnNudgeEvolution.addEventListener('click', () => {
@@ -1052,5 +1049,11 @@ export class GameUI {
 
             this.interventionsGridList.appendChild(card);
         });
+    }
+
+    updateViewModeLabel(viewMode) {
+        if (this.currentViewModeLabel) {
+            this.currentViewModeLabel.textContent = viewMode === 'macro' ? 'PLANET (MACRO)' : 'MICROSCOPIC (MICRO)';
+        }
     }
 }
