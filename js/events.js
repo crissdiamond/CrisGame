@@ -213,15 +213,20 @@ export class EventSystem {
                 chance: 0.25,
                 cost: 8,
                 warningDuration: 3.0,
-                condition: (p, b) => p.o2 > 35.0 && b.landPlantsPop > 10.0 && !this.isEventActive("atmospheric_firestorm"),
+                condition: (p, b) => p.o2 > 35.0 && (b.landPlantsPop > 10.0 || b.photosyntheticPop > 40.0) && !this.isEventActive("atmospheric_firestorm"),
                 duration: 5.0,
                 apply: (p, b) => {
                     // Burn down land flora populations by 50%
-                    b.mossesPop = Math.max(0.01, b.mossesPop * 0.5);
-                    b.fernsPop = Math.max(0.01, b.fernsPop * 0.5);
-                    b.conifersPop = Math.max(0.01, b.conifersPop * 0.5);
-                    b.angiospermsPop = Math.max(0.01, b.angiospermsPop * 0.5);
-                    b.landPlantsPop = b.mossesPop + b.fernsPop + b.conifersPop + b.angiospermsPop;
+                    if (b.landPlantsPop > 0) {
+                        b.mossesPop = Math.max(0.01, b.mossesPop * 0.5);
+                        b.fernsPop = Math.max(0.01, b.fernsPop * 0.5);
+                        b.conifersPop = Math.max(0.01, b.conifersPop * 0.5);
+                        b.angiospermsPop = Math.max(0.01, b.angiospermsPop * 0.5);
+                        b.landPlantsPop = b.mossesPop + b.fernsPop + b.conifersPop + b.angiospermsPop;
+                    }
+                    
+                    // Reduce cyanobacteria / algae populations by 40% (oxidative stress / shelf burns)
+                    b.photosyntheticPop = Math.max(0.01, b.photosyntheticPop * 0.6);
                     
                     // Kill some land animal fauna
                     if (b.sauropsidPop > 0) b.sauropsidPop *= 0.6;
@@ -233,7 +238,7 @@ export class EventSystem {
                     p.co2 = Math.min(100.0, p.co2 + 12.0);
                     p.rebalanceAtmosphere();
                     
-                    return "Firestorm ignited! Runaway wildfires scorched the continents, destroying 50% of plant biomass, drawing down oxygen, and venting carbon dioxide.";
+                    return "Firestorm ignited! Runaway wildfires and atmospheric oxidative stress scorched organic shelves and land plants, drawing down oxygen and venting carbon dioxide.";
                 },
                 onEnd: (p, b) => {
                     return "Planet-wide fires extinguished. Ash fertilization stimulates soil nutrients.";

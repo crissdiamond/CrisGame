@@ -548,6 +548,13 @@ export class Planet {
         const tectonicCO2 = (this.magneticStrength > 10.0 ? 0.005 : 0.001) * tickRate;
         this.co2 += tectonicCO2;
 
+        // Crustal mineral oxidation (geological oxygen sink)
+        // Excess O2 reacts with surface iron, sulfur, and rocks (rusting)
+        if (this.o2 > 21.0) {
+            const mineralOxidation = (this.o2 - 21.0) * 0.008 * tickRate;
+            this.o2 = Math.max(21.0, this.o2 - mineralOxidation);
+        }
+
         // Apply biological feedback to atmosphere gases
         if (this.activeSolvent === 'water') {
             if (biologicalImpact.o2Prod > 0) {

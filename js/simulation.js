@@ -1021,14 +1021,14 @@ export class BiologySimulation {
             let o2ProdRaw = 0;
             if (this.gaiaHivemindPop > 0) {
                 if (planet.co2 > 1.0) {
-                    o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15;
+                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15) * co2Viability;
                 } else if (planet.o2 > 22.0) {
-                    o2ProdRaw = Math.max(0, (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2);
+                    o2ProdRaw = Math.max(0, ((this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2) * co2Viability);
                 } else {
-                    o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) * co2Viability;
                 }
             } else {
-                o2ProdRaw = this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12;
+                o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) * co2Viability;
             }
 
             // Aerobic respiration from consumers (sponges, meduses, worms, fish, cambrian invertebrates, synapsids, sauropsids, cognitive species)
@@ -1058,9 +1058,19 @@ export class BiologySimulation {
                 fireCO2Release = biomassBurned;
             }
 
-            o2Prod = o2ProdRaw - respiration - fireO2Drawdown;
+            // Abiotic organic soup oxidation by free oxygen (O2 > 21%)
+            let soupOxidationO2Drawdown = 0;
+            let soupOxidationCO2Release = 0;
+            if (planet.o2 > 21.0 && this.organicSoup > 0.0) {
+                const soupOxidation = Math.min(this.organicSoup, (planet.o2 - 21.0) * 0.02 * tickRate);
+                this.organicSoup = Math.max(0.0, this.organicSoup - soupOxidation);
+                soupOxidationO2Drawdown = soupOxidation * 0.5;
+                soupOxidationCO2Release = soupOxidation * 0.5;
+            }
+
+            o2Prod = o2ProdRaw - respiration - fireO2Drawdown - soupOxidationO2Drawdown;
             co2Cons = o2Prod - decayCO2Prod;
-            co2Prod = decayCO2Prod + fireCO2Release;
+            co2Prod = decayCO2Prod + fireCO2Release + soupOxidationCO2Release;
             
             // Nitrogen Cycle: denitrifiers vent N2, fixers consume N2, radiation fixes N2
             const denitrification = this.anaerobicPop * 0.04;
