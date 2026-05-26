@@ -2,6 +2,58 @@
  * Manages UI interactions, DOM updates, tab switches, threat alerts,
  * and the interactive evolution tree rendering.
  */
+// Geological Earth ages (in Myr from planet formation) for singular biological milestones.
+const earthTimeline = {
+    // Water Line
+    'soup': { age: 600.0, name: "Prebiotic Soup" },
+    'membrane': { age: 700.0, name: "Membranes" },
+    'bacteria': { age: 800.0, name: "First Prokaryotes" },
+    'anaerobic': { age: 1000.0, name: "Anaerobic Archaea" },
+    'photosynthetic': { age: 1500.0, name: "Cyanobacteria" },
+    'nucleus': { age: 2100.0, name: "Cellular Nucleus" },
+    'mitochondria': { age: 2500.0, name: "Mitochondria Symbiosis" },
+    'eukaryotes': { age: 2700.0, name: "Eukaryotic Cells" },
+    'sexual': { age: 3300.0, name: "Sexual Reproduction" },
+    'multicellular': { age: 3700.0, name: "Multicellularity" },
+    'sponges': { age: 3900.0, name: "Marine Sponges" },
+    'meduses': { age: 3950.0, name: "Jellyfish & Meduses" },
+    'worms': { age: 3980.0, name: "Bilateral Worms" },
+    'fish': { age: 4000.0, name: "Early Vertebrate Fish" },
+    'mosses': { age: 4100.0, name: "Non-Vascular Mosses" },
+    'ferns': { age: 4150.0, name: "Vascular Ferns" },
+    'conifers': { age: 4250.0, name: "Gymnosperms" },
+    'angiosperms': { age: 4400.0, name: "Flowering Plants" },
+    'cambrian': { age: 4000.0, name: "Cambrian Explosion" },
+    'insects': { age: 4120.0, name: "Land Insects" },
+    'tetrapods': { age: 4180.0, name: "Tetrapods" },
+    'sauropsids': { age: 4300.0, name: "Dinosaurs/Sauropsids" },
+    'synapsids': { age: 4320.0, name: "Mammals/Synapsids" },
+    'cognitive': { age: 4540.0, name: "Sentient/Cognitive Life" },
+    'ai': { age: 4540.0, name: "Post-Biological AI" },
+    'cyborg': { age: 4540.0, name: "Cyborg Hybrids" },
+    'noosphere': { age: 4540.0, name: "Planetary AI Noosphere" },
+    'gaia_hivemind': { age: 4540.0, name: "Gaia Hivemind" },
+    
+    // Ammonia Line
+    'ammonic_soup': { age: 600.0, name: "Prebiotic Chemistry" },
+    'ammonic_proto': { age: 800.0, name: "Simple Prokaryotes" },
+    'ammonic_multi': { age: 3700.0, name: "Multicellularity" },
+    'silico_flora': { age: 4100.0, name: "Photosynthetic Flora" },
+    'cryo_fauna': { age: 4000.0, name: "Fauna Colonization" },
+    'crystalline_cognitive': { age: 4540.0, name: "Cognitive Species" },
+    'quantum_lattices': { age: 4540.0, name: "Advanced Computing Systems" },
+    'cryo_hivemind': { age: 4540.0, name: "Global Hivemind Network" },
+
+    // Methane Line
+    'methane_soup': { age: 600.0, name: "Prebiotic Chemistry" },
+    'methane_proto': { age: 800.0, name: "Simple Prokaryotes" },
+    'methane_multi': { age: 3700.0, name: "Multicellularity" },
+    'cryo_organisms': { age: 4000.0, name: "Fauna Colonization" },
+    'cryo_polymer_network': { age: 4100.0, name: "Flora Colonization" },
+    'thinking_ocean': { age: 4540.0, name: "Global Hivemind Network" },
+    'cryo_colloid': { age: 4540.0, name: "Cognitive Species" }
+};
+
 export class GameUI {
     constructor() {
         // Cache DOM Elements - Sliders
@@ -387,57 +439,6 @@ export class GameUI {
         }
     }
 
-// Geological Earth ages (in Myr from planet formation) for singular biological milestones.
-const earthTimeline = {
-    // Water Line
-    'soup': { age: 600.0, name: "Prebiotic Soup" },
-    'membrane': { age: 700.0, name: "Membranes" },
-    'bacteria': { age: 800.0, name: "First Prokaryotes" },
-    'anaerobic': { age: 1000.0, name: "Anaerobic Archaea" },
-    'photosynthetic': { age: 1500.0, name: "Cyanobacteria" },
-    'nucleus': { age: 2100.0, name: "Cellular Nucleus" },
-    'mitochondria': { age: 2500.0, name: "Mitochondria Symbiosis" },
-    'eukaryotes': { age: 2700.0, name: "Eukaryotic Cells" },
-    'sexual': { age: 3300.0, name: "Sexual Reproduction" },
-    'multicellular': { age: 3700.0, name: "Multicellularity" },
-    'sponges': { age: 3900.0, name: "Marine Sponges" },
-    'meduses': { age: 3950.0, name: "Jellyfish & Meduses" },
-    'worms': { age: 3980.0, name: "Bilateral Worms" },
-    'fish': { age: 4000.0, name: "Early Vertebrate Fish" },
-    'mosses': { age: 4100.0, name: "Non-Vascular Mosses" },
-    'ferns': { age: 4150.0, name: "Vascular Ferns" },
-    'conifers': { age: 4250.0, name: "Gymnosperms" },
-    'angiosperms': { age: 4400.0, name: "Flowering Plants" },
-    'cambrian': { age: 4000.0, name: "Cambrian Explosion" },
-    'insects': { age: 4120.0, name: "Land Insects" },
-    'tetrapods': { age: 4180.0, name: "Tetrapods" },
-    'sauropsids': { age: 4300.0, name: "Dinosaurs/Sauropsids" },
-    'synapsids': { age: 4320.0, name: "Mammals/Synapsids" },
-    'cognitive': { age: 4540.0, name: "Sentient/Cognitive Life" },
-    'ai': { age: 4540.0, name: "Post-Biological AI" },
-    'cyborg': { age: 4540.0, name: "Cyborg Hybrids" },
-    'noosphere': { age: 4540.0, name: "Planetary AI Noosphere" },
-    'gaia_hivemind': { age: 4540.0, name: "Gaia Hivemind" },
-    
-    // Ammonia Line
-    'ammonic_soup': { age: 600.0, name: "Prebiotic Chemistry" },
-    'ammonic_proto': { age: 800.0, name: "Simple Prokaryotes" },
-    'ammonic_multi': { age: 3700.0, name: "Multicellularity" },
-    'silico_flora': { age: 4100.0, name: "Photosynthetic Flora" },
-    'cryo_fauna': { age: 4000.0, name: "Fauna Colonization" },
-    'crystalline_cognitive': { age: 4540.0, name: "Cognitive Species" },
-    'quantum_lattices': { age: 4540.0, name: "Advanced Computing Systems" },
-    'cryo_hivemind': { age: 4540.0, name: "Global Hivemind Network" },
-
-    // Methane Line
-    'methane_soup': { age: 600.0, name: "Prebiotic Chemistry" },
-    'methane_proto': { age: 800.0, name: "Simple Prokaryotes" },
-    'methane_multi': { age: 3700.0, name: "Multicellularity" },
-    'cryo_organisms': { age: 4000.0, name: "Fauna Colonization" },
-    'cryo_polymer_network': { age: 4100.0, name: "Flora Colonization" },
-    'thinking_ocean': { age: 4540.0, name: "Global Hivemind Network" },
-    'cryo_colloid': { age: 4540.0, name: "Cognitive Species" }
-};
 
     showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null, warningMeta = null, currentTokens = 0) {
         this.popupTitle.textContent = title;
