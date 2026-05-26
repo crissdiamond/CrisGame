@@ -1,3 +1,5 @@
+import { EVOLUTION_GRAPH } from './evolutionData.js';
+
 /**
  * Manages UI interactions, DOM updates, tab switches, threat alerts,
  * and the interactive evolution tree rendering.
@@ -342,31 +344,6 @@ export class GameUI {
         this.popupDossierToggleIcon = document.getElementById('popup-dossier-toggle-icon');
         
         this.activePopupWarningId = null;
-
-        // Future Metric Cards Cache
-        this.cyborgCard = document.getElementById('cyborg-card');
-        this.cyborgPop = document.getElementById('cyborg-pop');
-        this.cyborgProgress = document.getElementById('cyborg-progress');
-        this.noosphereCard = document.getElementById('noosphere-card');
-        this.noospherePop = document.getElementById('noosphere-pop');
-        this.noosphereProgress = document.getElementById('noosphere-progress');
-        this.gaiaCard = document.getElementById('gaia-card');
-        this.gaiaPop = document.getElementById('gaia-pop');
-        this.gaiaProgress = document.getElementById('gaia-progress');
-
-        this.quantumLatticeCard = document.getElementById('quantum-lattice-card');
-        this.quantumLatticePop = document.getElementById('quantum-lattice-pop');
-        this.quantumLatticeProgress = document.getElementById('quantum-lattice-progress');
-        this.cryoHivemindCard = document.getElementById('cryo-hivemind-card');
-        this.cryoHivemindPop = document.getElementById('cryo-hivemind-pop');
-        this.cryoHivemindProgress = document.getElementById('cryo-hivemind-progress');
-
-        this.thinkingOceanCard = document.getElementById('thinking-ocean-card');
-        this.thinkingOceanPop = document.getElementById('thinking-ocean-pop');
-        this.thinkingOceanProgress = document.getElementById('thinking-ocean-progress');
-        this.cryoColloidCard = document.getElementById('cryo-colloid-card');
-        this.cryoColloidPop = document.getElementById('cryo-colloid-pop');
-        this.cryoColloidProgress = document.getElementById('cryo-colloid-progress');
 
         // Setup Modal Elements
         this.setupModal = document.getElementById('setup-modal');
@@ -944,6 +921,26 @@ export class GameUI {
             }
         });
 
+        // Cladogram Popup Modal triggers
+        const btnOpenCladogram = document.getElementById('btn-open-cladogram');
+        const cladogramModal = document.getElementById('cladogram-modal');
+        const cladogramCloseBtn = document.getElementById('cladogram-close-btn');
+
+        if (btnOpenCladogram && cladogramModal) {
+            btnOpenCladogram.addEventListener('click', () => {
+                if (this.currentPlanet && this.currentBiology) {
+                    cladogramModal.style.display = 'flex';
+                    this.drawCladogramSVG(this.currentPlanet, this.currentBiology, handlers);
+                }
+            });
+        }
+
+        if (cladogramCloseBtn && cladogramModal) {
+            cladogramCloseBtn.addEventListener('click', () => {
+                cladogramModal.style.display = 'none';
+            });
+        }
+
         // Delegate threat deflection click
         this.threatList.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-deflect');
@@ -1288,64 +1285,58 @@ export class GameUI {
         this.activeBranchName.textContent = solvent.charAt(0).toUpperCase() + solvent.slice(1) + ' Line';
         
         let nodes = [];
-        if (solvent === 'water') {
-            nodes = [
-                { id: 'soup', name: 'Prebiotic Soup', pop: biology.organicSoup, cap: 100.0, unit: 'ppm', req: 'Water > 10%, Temp 10-90°C', nudgeId: null, cost: 0 },
-                { id: 'membrane', name: 'External Membrane', pop: biology.unlockedMembrane ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Organic Soup > 8 ppm', nudgeId: null, cost: 0 },
-                { id: 'bacteria', name: 'Prokaryotes (Bacteria)', pop: biology.unlockedBacteria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Membrane & Soup > 15 ppm', nudgeId: null, cost: 0 },
-                { id: 'anaerobic', name: 'Anoxygenic Chemotrophs', pop: biology.anaerobicPop, cap: 150.0, unit: 'M/mL', req: 'Bacterial emergence', nudgeId: null, cost: 0 },
-                { id: 'anoxygenic_photo', name: 'Anoxygenic Photosynthesizers', pop: biology.anoxygenicPhotoPop, cap: 180.0, unit: 'M/mL', req: 'Chemotrophs > 20 M/mL & Solar Radiance', nudgeId: null, cost: 0 },
-                { id: 'photosynthetic', name: 'Cyanobacteria', pop: biology.photosyntheticPop, cap: 200.0, unit: 'M/mL', req: 'Anoxygenic Photo > 15 M/mL & 100 Myr OEC Stability', nudgeId: null, cost: 0 },
-                { id: 'nucleus', name: 'Cellular Nucleus', pop: biology.unlockedNucleus ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Cyanobacteria > 15 M/mL', nudgeId: null, cost: 0 },
-                { id: 'mitochondria', name: 'Mitochondria Symbiosis', pop: biology.unlockedMitochondria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Nucleus & O₂ > 1.2% OR Nudge', nudgeId: 'endosymbiosis', nudgeName: 'Promote Endosymbiosis', cost: 60 },
-                { id: 'eukaryotes', name: 'Eukaryotic Cells', pop: biology.eukaryoticPop, cap: biology.unlockedSexualReproduction ? 180.0 : 120.0, unit: 'M/mL', req: 'Mitochondria Symbiosis', nudgeId: null, cost: 0 },
-                { id: 'sexual', name: 'Sexual Reproduction', pop: biology.unlockedSexualReproduction ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Eukaryotes > 20 M/mL', nudgeId: null, cost: 0 },
-                { id: 'multicellular', name: 'Multicellularity', pop: biology.multicellularPop, cap: 100.0, unit: 'Idx', req: 'Sexual Reprod & Eukaryotes > 45 M/mL', nudgeId: null, cost: 0 },
+        const graphNodes = EVOLUTION_GRAPH[solvent] || {};
+        for (const id in graphNodes) {
+            const graphNode = graphNodes[id];
+            
+            // Format requirements text
+            let reqText = '';
+            if (graphNode.reqs) {
+                const parts = [];
+                if (graphNode.reqs.waterCoverage) parts.push(`Water > ${graphNode.reqs.waterCoverage}%`);
+                if (graphNode.reqs.ammoniaCoverage) parts.push(`Ammonia > ${graphNode.reqs.ammoniaCoverage}%`);
+                if (graphNode.reqs.methaneCoverage) parts.push(`Methane > ${graphNode.reqs.methaneCoverage}%`);
+                if (graphNode.reqs.tempRange) parts.push(`Temp ${graphNode.reqs.tempRange[0]} to ${graphNode.reqs.tempRange[1]}°C`);
+                if (graphNode.reqs.minTemp) parts.push(`Temp >= ${graphNode.reqs.minTemp}°C`);
+                if (graphNode.reqs.maxTemp) parts.push(`Temp <= ${graphNode.reqs.maxTemp}°C`);
+                if (graphNode.reqs.minO2) parts.push(`O₂ >= ${graphNode.reqs.minO2}%`);
+                if (graphNode.reqs.ozone) parts.push(`Ozone >= ${(graphNode.reqs.ozone * 100).toFixed(0)}%`);
+                if (graphNode.reqs.magnetosphere) parts.push('Magnetosphere');
+                if (graphNode.reqs.solarRadiance) parts.push(`Solar Rad >= ${graphNode.reqs.solarRadiance}`);
+                if (graphNode.reqs.oecGate) parts.push('OEC Stability');
                 
-                // New water animals
-                { id: 'sponges', name: 'Marine Sponges', pop: biology.spongesPop, cap: 100.0, unit: 'Idx', req: 'Multicellularity > 20, O₂ > 10%', nudgeId: null, cost: 0 },
-                { id: 'meduses', name: 'Jellyfish & Meduses', pop: biology.medusesPop, cap: 100.0, unit: 'Idx', req: 'Sponges > 25, O₂ > 12%', nudgeId: null, cost: 0 },
-                { id: 'worms', name: 'Bilateral Water Worms', pop: biology.wormsPop, cap: 100.0, unit: 'Idx', req: 'Meduses > 30, O₂ > 14%', nudgeId: null, cost: 0 },
-                { id: 'fish', name: 'Early Vertebrate Fish', pop: biology.fishPop, cap: 100.0, unit: 'Idx', req: 'Worms > 30, O₂ > 15%', nudgeId: null, cost: 0 },
+                if (graphNode.reqs.popThreshold) {
+                    for (const [pId, val] of Object.entries(graphNode.reqs.popThreshold)) {
+                        const parentNode = graphNodes[pId];
+                        parts.push(`${parentNode ? parentNode.name : pId} > ${val}`);
+                    }
+                }
+                if (graphNode.reqs.synapsidOrSauropsidThreshold) parts.push(`Synapsids/Sauropsids >= ${graphNode.reqs.synapsidOrSauropsidThreshold}`);
+                if (graphNode.reqs.aiOrCyborgThreshold) parts.push(`AI/Cyborg >= ${graphNode.reqs.aiOrCyborgThreshold}`);
+                if (graphNode.reqs.cyborgOrMossesThreshold) parts.push('Cyborg > 45 OR Mosses > 60');
                 
-                // New soil plants vegetable line
-                { id: 'mosses', name: 'Non-Vascular Mosses', pop: biology.mossesPop, cap: 100.0, unit: 'Idx', req: 'Fish > 25, Magnetosphere & Ozone OR Nudge', nudgeId: 'vascular_tissue', nudgeName: 'Develop Vascular Tissue', cost: 75 },
-                { id: 'ferns', name: 'Vascular Ferns', pop: biology.fernsPop, cap: 100.0, unit: 'Idx', req: 'Mosses > 30, O₂ > 16%', nudgeId: null, cost: 0 },
-                { id: 'conifers', name: 'Gymnosperms (Conifers)', pop: biology.conifersPop, cap: 100.0, unit: 'Idx', req: 'Ferns > 30 OR Nudge', nudgeId: 'seed_evolution', nudgeName: 'Develop Seed Protection', cost: 90 },
-                { id: 'angiosperms', name: 'Flowering Plants', pop: biology.angiospermsPop, cap: 100.0, unit: 'Idx', req: 'Conifers > 30, O₂ > 18%', nudgeId: null, cost: 0 },
-                
-                { id: 'cambrian', name: 'Cambrian Marine Life', pop: biology.cambrianPop, cap: 100.0, unit: 'Idx', req: 'Worms > 20, O₂ > 15%', nudgeId: null, cost: 0 },
-                { id: 'insects', name: 'Land Insects', pop: biology.arthropodPop, cap: 100.0, unit: 'Idx', req: 'Mosses > 25%', nudgeId: null, cost: 0 },
-                { id: 'tetrapods', name: 'Tetrapods (Amphibia)', pop: biology.tetrapodPop, cap: 100.0, unit: 'Idx', req: 'Fish > 30, Mosses > 30', nudgeId: 'amniotic_egg', nudgeName: 'Synthesize Amniotic Egg', cost: 90 },
-                { id: 'sauropsids', name: 'Sauropsida (Dinosaurs)', pop: biology.sauropsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, Temp > 28°C OR Nudge', nudgeId: 'scales', nudgeName: 'Nudge Scale Shielding', cost: 90 },
-                { id: 'synapsids', name: 'Synapsida (Mammals)', pop: biology.synapsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, O₂ > 20% OR Nudge', nudgeId: 'endthermy', nudgeName: 'Nudge Endothermy (Hair)', cost: 110 },
-                { id: 'cognitive', name: 'Cognitive Species', pop: biology.cognitiveSpeciesPop, cap: 100.0, unit: 'Idx', req: 'Mammal/Dino > 45, O₂ > 19% OR Nudge', nudgeId: 'cognitive', nudgeName: 'Nudge Neural Networking', cost: 110 },
-                { id: 'ai', name: 'Post-Biological AI', pop: biology.technologicalAIPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 35, Magnetosphere OR Nudge', nudgeId: 'ai', nudgeName: 'Buy Singularity core', cost: 110 },
-                { id: 'cyborg', name: 'Cyborg Hybrids', pop: biology.cyborgPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 40, O₂ > 18% OR Nudge', nudgeId: 'cybernetic_implants', nudgeName: 'Promote Cybernetic Implants', cost: 130 },
-                { id: 'noosphere', name: 'Planetary Noosphere', pop: biology.noospherePop, cap: 100.0, unit: 'Idx', req: 'AI/Cyborg > 45, Magnetosphere OR Nudge', nudgeId: 'global_consciousness', nudgeName: 'Sync Planetary Cloud', cost: 150 },
-                { id: 'gaia_hivemind', name: 'Gaia Biosphere Hivemind', pop: biology.gaiaHivemindPop, cap: 100.0, unit: 'Idx', req: 'Cyborg > 45 OR Mosses > 60, O₂ > 20% OR Nudge', nudgeId: 'ecological_integration', nudgeName: 'Weave Mycelium Synapses', cost: 150 }
-            ];
-        } else if (solvent === 'ammonia') {
-            nodes = [
-                { id: 'ammonic_soup', name: 'Ammonic Soup', pop: biology.ammonicSoup, cap: 100.0, unit: 'ppm', req: 'Ammonia > 10%, Temp -80 to -30°C', nudgeId: null, cost: 0 },
-                { id: 'ammonic_proto', name: 'Ammonic Prokaryotes', pop: biology.ammonicProtoPop, cap: 120.0, unit: 'M/mL', req: 'Ammonic Soup > 10 ppm', nudgeId: null, cost: 0 },
-                { id: 'ammonic_multi', name: 'Ammonic Multicells', pop: biology.ammonicMultiPop, cap: 100.0, unit: 'Idx', req: 'Ammonic Proto > 35 M/mL', nudgeId: null, cost: 0 },
-                { id: 'silico_flora', name: 'Silico-Flora', pop: biology.silicoFloraPop, cap: 100.0, unit: 'Idx', req: 'Temp < -45°C OR Nudge', nudgeId: 'silicon_chains', nudgeName: 'Promote Silicon Chains', cost: 90 },
-                { id: 'cryo_fauna', name: 'Ammonic Megafauna', pop: biology.cryoFaunaPop, cap: 100.0, unit: 'Idx', req: 'Silico-Flora > 30', nudgeId: null, cost: 0 },
-                { id: 'crystalline_cognitive', name: 'Crystalline Cognitive Swarms', pop: biology.crystallineCognitivePop, cap: 80.0, unit: 'Idx', req: 'Megafauna > 35, Temp < -40°C OR Nudge', nudgeId: 'crystalline_cognitive', nudgeName: 'Ignite Crystalline Collective', cost: 110 },
-                { id: 'quantum_lattices', name: 'Quantum Lattices', pop: biology.quantumLatticePop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Temp < -50°C OR Nudge', nudgeId: 'quantum_alignment', nudgeName: 'Align Quantum Crystals', cost: 130 },
-                { id: 'cryo_hivemind', name: 'Cryo-Biosphere Hivemind', pop: biology.cryoHivemindPop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Silico-Flora > 45 OR Nudge', nudgeId: 'cryo_neural_webs', nudgeName: 'Glacier Neural Synapses', cost: 130 }
-            ];
-        } else if (solvent === 'methane') {
-            nodes = [
-                { id: 'methane_soup', name: 'Hydrocarbon Soup', pop: biology.methaneSoup, cap: 100.0, unit: 'ppm', req: 'Methane > 10%, Temp -185 to -135°C', nudgeId: null, cost: 0 },
-                { id: 'methane_proto', name: 'Cryo-Methanogen Prokaryotes', pop: biology.methaneProtoPop, cap: 100.0, unit: 'M/mL', req: 'Hydrocarbon Soup > 10 ppm', nudgeId: null, cost: 0 },
-                { id: 'methane_multi', name: 'Cryo-Multicells', pop: biology.methaneMultiPop, cap: 80.0, unit: 'Idx', req: 'Methanogens > 30 M/mL', nudgeId: null, cost: 0 },
-                { id: 'cryo_beasts', name: 'Cyto-Beasts', pop: biology.cryoOrganismsPop, cap: 70.0, unit: 'Idx', req: 'Stability OR Nudge', nudgeId: 'cryo_polymers', nudgeName: 'Synthesize Cryo-Polymers', cost: 90 },
-                { id: 'cryo_polymer_network', name: 'Cryo-Polymer Networks', pop: biology.cryoPolymerNetworkPop, cap: 60.0, unit: 'Idx', req: 'Cyto-beasts > 30, Stability OR Nudge', nudgeId: 'cryo_polymer_network', nudgeName: 'Boot Cryo-Singularity Lattices', cost: 110 },
-                { id: 'thinking_ocean', name: 'Thinking Methane Oceans', pop: biology.thinkingOceanPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Methane > 40% OR Nudge', nudgeId: 'colloidal_solids', nudgeName: 'Dissolve Computing Polymers', cost: 130 },
-                { id: 'cryo_colloids', name: 'Megastructure Cryo-Colloids', pop: biology.cryoColloidPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Beasts > 45 OR Nudge', nudgeId: 'macromolecular_assembly', nudgeName: 'Assemble Colloidal structures', cost: 130 }
-            ];
+                reqText = parts.join(', ');
+            }
+            if (!reqText) reqText = 'None';
+            
+            let popVal = biology.biomassMap[id] || 0.0;
+            let capVal = graphNode.cap || 100.0;
+            if (id === 'eukaryotes') {
+                capVal = biology.unlockedSexualReproduction ? 180.0 : 120.0;
+            }
+
+            nodes.push({
+                id: id,
+                name: graphNode.name,
+                pop: popVal,
+                cap: capVal,
+                unit: graphNode.unit || 'Idx',
+                req: reqText,
+                nudgeId: graphNode.nudge ? graphNode.nudge.id : null,
+                nudgeName: graphNode.nudge ? graphNode.nudge.name : '',
+                cost: graphNode.nudge ? graphNode.nudge.cost : 0,
+                isDeadEnd: graphNode.isDeadEnd
+            });
         }
 
         this.treeNodesList.innerHTML = '';
@@ -1428,9 +1419,13 @@ export class GameUI {
             }
         }
 
+        const speciesCount = biology.biodiversityMap[node.id] || 0;
+        
         this.nodeDetailsText.innerHTML = `
             <strong>Milestone Requirements:</strong> ${node.req}<br>
-            <strong>Current Population:</strong> ${node.pop.toFixed(2)} / ${node.cap.toFixed(0)}<br>
+            <strong>Current Population/Biomass:</strong> ${node.pop.toFixed(2)} / ${node.cap.toFixed(0)} ${node.unit}<br>
+            <strong>Active Species Count:</strong> <span style="color: var(--accent-cyan); font-weight: bold;">${Math.floor(speciesCount).toLocaleString()}</span> species<br>
+            ${node.isDeadEnd ? '<span style="color: #ef4444; font-weight: bold;">⚠️ Evolutionary Dead-End Trap: Capped at 100 species.</span><br>' : ''}
             ${node.nudgeId ? `<strong>Gene Upgrade Nudge:</strong> ${node.nudgeName} (Allows unlocking or speeds up development).` : 'No manual gene upgrades for this branch.'}
             <div style="margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
                 ${comparisonHTML}
@@ -1438,24 +1433,33 @@ export class GameUI {
         `;
 
         const mutagen = (this.currentEventSystem && typeof this.currentEventSystem.tokensBlue === 'number') ? this.currentEventSystem.tokensBlue : 0;
-        if (node.nudgeId && !biology.activeAdaptations.has(node.nudgeId)) {
+        
+        // Nudge boost check
+        const hasBoost = biology.pendingNudges[node.id] || (node.nudgeId && biology.pendingNudges[node.nudgeId]);
+        const remaining = hasBoost ? (biology.pendingNudges[node.id]?.remainingMyr || biology.pendingNudges[node.nudgeId]?.remainingMyr || 0.0) : 0.0;
+
+        if (node.nudgeId) {
             this.btnNudgeEvolution.style.display = 'block';
-            const canAfford = mutagen >= node.cost;
-            this.btnNudgeEvolution.disabled = !canAfford;
-            if (canAfford) {
-                this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptations [${node.cost}🔹]`;
+            
+            if (hasBoost) {
+                this.btnNudgeEvolution.textContent = `⚡ BOOST ACTIVE (${remaining.toFixed(1)} Myr)`;
+                this.btnNudgeEvolution.disabled = true;
                 this.btnNudgeEvolution.classList.remove('disabled');
             } else {
-                this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptations [${node.cost}🔹] (Need Mutagen)`;
-                this.btnNudgeEvolution.classList.add('disabled');
+                const isUnlocked = biology.unlockedMap[node.id];
+                const cost = node.cost;
+                const canAfford = mutagen >= cost;
+                this.btnNudgeEvolution.disabled = !canAfford;
+                this.btnNudgeEvolution.classList.toggle('disabled', !canAfford);
+                
+                if (isUnlocked) {
+                    this.btnNudgeEvolution.textContent = `🚀 Boost Speciation [${cost}🔹]`;
+                } else {
+                    this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptation [${cost}🔹]`;
+                }
             }
-            this.btnNudgeEvolution.setAttribute('data-nudge', node.nudgeId);
+            this.btnNudgeEvolution.setAttribute('data-nudge', node.id); 
             this.btnNudgeEvolution.setAttribute('data-cost', node.cost);
-        } else if (node.nudgeId && biology.activeAdaptations.has(node.nudgeId)) {
-            this.btnNudgeEvolution.style.display = 'block';
-            this.btnNudgeEvolution.textContent = "✅ ADAPTATION ACTIVE";
-            this.btnNudgeEvolution.disabled = true;
-            this.btnNudgeEvolution.classList.remove('disabled');
         } else {
             this.btnNudgeEvolution.style.display = 'none';
         }
@@ -1543,172 +1547,103 @@ export class GameUI {
         this.barO2.style.width = `${planet.o2}%`;
         this.gasO2Val.textContent = `${planet.o2.toFixed(1)}%`;
 
-        if (planet.activeSolvent === 'methane') {
-            this.ch4GasWrapper.style.display = 'flex';
-            this.h2GasWrapper.style.display = 'flex';
-            this.barCh4.style.width = `${planet.ch4}%`;
-            this.gasCh4Val.textContent = `${planet.ch4.toFixed(1)}%`;
-            this.barH2.style.width = `${planet.h2}%`;
-            this.gasH2Val.textContent = `${planet.h2.toFixed(1)}%`;
-        } else {
-            this.ch4GasWrapper.style.display = 'none';
-            this.h2GasWrapper.style.display = 'none';
+        // Show/hide metric group categories based on active solvent
+        if (this.waterMetrics) this.waterMetrics.style.display = planet.activeSolvent === 'water' ? 'block' : 'none';
+        if (this.ammoniaMetrics) this.ammoniaMetrics.style.display = planet.activeSolvent === 'ammonia' ? 'block' : 'none';
+        if (this.methaneMetrics) this.methaneMetrics.style.display = planet.activeSolvent === 'methane' ? 'block' : 'none';
+
+        // Hide all cards of other solvents
+        for (const solvent in EVOLUTION_GRAPH) {
+            if (solvent !== planet.activeSolvent) {
+                for (const nodeId in EVOLUTION_GRAPH[solvent]) {
+                    const card = document.getElementById(`${nodeId}-card`);
+                    if (card) card.style.display = 'none';
+                }
+            }
         }
 
-        // Show/hide metric group categories based on active solvent
-        if (planet.activeSolvent === 'water') {
-            this.waterMetrics.style.display = 'block';
-            this.ammoniaMetrics.style.display = 'none';
-            this.methaneMetrics.style.display = 'none';
+        // Update cards of the active solvent dynamically
+        const activeNodes = EVOLUTION_GRAPH[planet.activeSolvent];
+        for (const nodeId in activeNodes) {
+            const node = activeNodes[nodeId];
+
+            // Skip evolutionary advances — only show actual biomass populations
+            if (node.monitorable === false) {
+                const existingCard = document.getElementById(`${nodeId}-card`);
+                if (existingCard) existingCard.style.display = 'none';
+                continue;
+            }
+
+            const isUnlocked = biology.unlockedMap[nodeId];
+            const biomass = biology.biomassMap[nodeId] || 0.0;
+            const speciesCount = biology.biodiversityMap[nodeId] || 0;
             
-            // Progressive card visibility
-            this.soupCard.style.display = biology.unlockedSoup ? 'block' : 'none';
-            this.anaerobicCard.style.display = biology.unlockedAnaerobic ? 'block' : 'none';
-            this.photosyntheticCard.style.display = biology.unlockedPhotosynthetic ? 'block' : 'none';
-            this.eukaryoticCard.style.display = biology.unlockedEukaryotic ? 'block' : 'none';
-            this.multicellularCard.style.display = biology.unlockedMulticellular ? 'block' : 'none';
-            this.spongesCard.style.display = biology.unlockedSponges ? 'block' : 'none';
-            this.medusesCard.style.display = biology.unlockedMeduses ? 'block' : 'none';
-            this.wormsCard.style.display = biology.unlockedWorms ? 'block' : 'none';
-            this.fishCard.style.display = biology.unlockedFish ? 'block' : 'none';
-            this.mossesCard.style.display = biology.unlockedMosses ? 'block' : 'none';
-            this.fernsCard.style.display = biology.unlockedFerns ? 'block' : 'none';
-            this.conifersCard.style.display = biology.unlockedConifers ? 'block' : 'none';
-            this.angiospermsCard.style.display = biology.unlockedAngiosperms ? 'block' : 'none';
-            this.sauropsidCard.style.display = biology.unlockedSauropsid ? 'block' : 'none';
-            this.synapsidCard.style.display = biology.unlockedSynapsid ? 'block' : 'none';
+            // Get or create card element
+            let card = document.getElementById(`${nodeId}-card`);
+            if (!card) {
+                const parentContainer = document.getElementById(`${planet.activeSolvent}-metrics`);
+                if (parentContainer) {
+                    card = document.createElement('div');
+                    card.className = 'metric-card';
+                    card.id = `${nodeId}-card`;
+                    card.innerHTML = `
+                        <div class="metric-header">
+                            <span class="metric-name">${node.name}</span>
+                            <span class="metric-value" id="${nodeId}-density">0.00 ${node.unit}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar ${node.clade.toLowerCase()}" id="${nodeId}-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="metric-species-row" id="${nodeId}-species-row" style="font-size: 0.65rem; color: var(--text-secondary); text-align: right; margin-top: 0.25rem; display: flex; justify-content: space-between; font-family: var(--font-mono);">
+                            <span class="boost-indicator" id="${nodeId}-boost-indicator" style="color: var(--accent-cyan); display: none; font-weight: bold; text-shadow: 0 0 4px var(--accent-cyan);">⚡ BOOSTED</span>
+                            <span>Species: <strong id="${nodeId}-species-val" style="color: var(--text-primary);">0</strong></span>
+                        </div>
+                    `;
+                    parentContainer.appendChild(card);
+                }
+            }
             
-            this.soupDensity.textContent = `${biology.organicSoup.toFixed(2)} ppm`;
-            this.soupProgress.style.width = `${biology.organicSoup}%`;
-            this.anaerobicPop.textContent = `${biology.anaerobicPop.toFixed(2)} M/mL`;
-            this.anaerobicProgress.style.width = `${(biology.anaerobicPop / 150) * 100}%`;
-            this.photosyntheticPop.textContent = `${biology.photosyntheticPop.toFixed(2)} M/mL`;
-            this.photosyntheticProgress.style.width = `${(biology.photosyntheticPop / 200) * 100}%`;
-            const eukaryotesCap = biology.unlockedSexualReproduction ? 180 : 120;
-            this.eukaryoticPop.textContent = `${biology.eukaryoticPop.toFixed(2)} M/mL`;
-            this.eukaryoticProgress.style.width = `${(biology.eukaryoticPop / eukaryotesCap) * 100}%`;
-            this.multicellularPop.textContent = `${biology.multicellularPop.toFixed(2)} Index`;
-            this.multicellularProgress.style.width = `${biology.multicellularPop}%`;
-
-            // Sponges, Meduses, Worms, Fish updates
-            this.spongesPop.textContent = `${biology.spongesPop.toFixed(2)} Index`;
-            this.spongesProgress.style.width = `${biology.spongesPop}%`;
-            this.medusesPop.textContent = `${biology.medusesPop.toFixed(2)} Index`;
-            this.medusesProgress.style.width = `${biology.medusesPop}%`;
-            this.wormsPop.textContent = `${biology.wormsPop.toFixed(2)} Index`;
-            this.wormsProgress.style.width = `${biology.wormsPop}%`;
-            this.fishPop.textContent = `${biology.fishPop.toFixed(2)} Index`;
-            this.fishProgress.style.width = `${biology.fishPop}%`;
-
-            // Mosses, Ferns, Conifers, Flowers updates
-            this.mossesPop.textContent = `${biology.mossesPop.toFixed(2)} Index`;
-            this.mossesProgress.style.width = `${biology.mossesPop}%`;
-            this.fernsPop.textContent = `${biology.fernsPop.toFixed(2)} Index`;
-            this.fernsProgress.style.width = `${biology.fernsPop}%`;
-            this.conifersPop.textContent = `${biology.conifersPop.toFixed(2)} Index`;
-            this.conifersProgress.style.width = `${biology.conifersPop}%`;
-            this.angiospermsPop.textContent = `${biology.angiospermsPop.toFixed(2)} Index`;
-            this.angiospermsProgress.style.width = `${biology.angiospermsPop}%`;
-
-            this.sauropsidPop.textContent = `${biology.sauropsidPop.toFixed(2)} Index`;
-            this.sauropsidProgress.style.width = `${biology.sauropsidPop}%`;
-            this.synapsidPop.textContent = `${biology.synapsidPop.toFixed(2)} Index`;
-            this.synapsidProgress.style.width = `${biology.synapsidPop}%`;
-
-            // Update future metrics cards
-            if (biology.unlockedCyborg) {
-                this.cyborgCard.style.display = 'block';
-                this.cyborgPop.textContent = `${biology.cyborgPop.toFixed(2)} Index`;
-                this.cyborgProgress.style.width = `${biology.cyborgPop}%`;
-            } else {
-                this.cyborgCard.style.display = 'none';
-            }
-            if (biology.unlockedNoosphere) {
-                this.noosphereCard.style.display = 'block';
-                this.noospherePop.textContent = `${biology.noospherePop.toFixed(2)} Index`;
-                this.noosphereProgress.style.width = `${biology.noospherePop}%`;
-            } else {
-                this.noosphereCard.style.display = 'none';
-            }
-            if (biology.unlockedGaiaHivemind) {
-                this.gaiaCard.style.display = 'block';
-                this.gaiaPop.textContent = `${biology.gaiaHivemindPop.toFixed(2)} Index`;
-                this.gaiaProgress.style.width = `${biology.gaiaHivemindPop}%`;
-            } else {
-                this.gaiaCard.style.display = 'none';
-            }
-        } else if (planet.activeSolvent === 'ammonia') {
-            this.waterMetrics.style.display = 'none';
-            this.ammoniaMetrics.style.display = 'block';
-            this.methaneMetrics.style.display = 'none';
-
-            // Progressive card visibility
-            this.ammoniaSoupCard.style.display = biology.unlockedAmmonicSoup ? 'block' : 'none';
-            this.ammoniaProtoCard.style.display = biology.unlockedAmmonicProto ? 'block' : 'none';
-            this.ammoniaMultiCard.style.display = biology.unlockedAmmonicMulti ? 'block' : 'none';
-            this.silicoFloraCard.style.display = biology.unlockedSilicoFlora ? 'block' : 'none';
-            this.cryoFaunaCard.style.display = biology.unlockedCryoFauna ? 'block' : 'none';
-
-            this.ammoniaSoupDensity.textContent = `${biology.ammonicSoup.toFixed(2)} ppm`;
-            this.ammoniaSoupProgress.style.width = `${biology.ammonicSoup}%`;
-            this.ammoniaProtoPop.textContent = `${biology.ammonicProtoPop.toFixed(2)} M/mL`;
-            this.ammoniaProtoProgress.style.width = `${(biology.ammonicProtoPop / 120) * 100}%`;
-            this.ammoniaMultiPop.textContent = `${biology.ammonicMultiPop.toFixed(2)} Index`;
-            this.ammoniaMultiProgress.style.width = `${biology.ammonicMultiPop}%`;
-            this.silicoFloraPop.textContent = `${biology.silicoFloraPop.toFixed(2)} Index`;
-            this.silicoFloraProgress.style.width = `${biology.silicoFloraPop}%`;
-            this.cryoFaunaPop.textContent = `${biology.cryoFaunaPop.toFixed(2)} Index`;
-            this.cryoFaunaProgress.style.width = `${biology.cryoFaunaPop}%`;
-
-            // Update future metrics cards
-            if (biology.unlockedQuantumLattice) {
-                this.quantumLatticeCard.style.display = 'block';
-                this.quantumLatticePop.textContent = `${biology.quantumLatticePop.toFixed(2)} Index`;
-                this.quantumLatticeProgress.style.width = `${biology.quantumLatticePop}%`;
-            } else {
-                this.quantumLatticeCard.style.display = 'none';
-            }
-            if (biology.unlockedCryoHivemind) {
-                this.cryoHivemindCard.style.display = 'block';
-                this.cryoHivemindPop.textContent = `${biology.cryoHivemindPop.toFixed(2)} Index`;
-                this.cryoHivemindProgress.style.width = `${biology.cryoHivemindPop}%`;
-            } else {
-                this.cryoHivemindCard.style.display = 'none';
-            }
-        } else if (planet.activeSolvent === 'methane') {
-            this.waterMetrics.style.display = 'none';
-            this.ammoniaMetrics.style.display = 'none';
-            this.methaneMetrics.style.display = 'block';
-
-            // Progressive card visibility
-            this.methaneSoupCard.style.display = biology.unlockedMethaneSoup ? 'block' : 'none';
-            this.methaneProtoCard.style.display = biology.unlockedMethaneProto ? 'block' : 'none';
-            this.methaneMultiCard.style.display = biology.unlockedMethaneMulti ? 'block' : 'none';
-            this.cryoOrganismsCard.style.display = biology.unlockedCryoOrganisms ? 'block' : 'none';
-
-            this.methaneSoupDensity.textContent = `${biology.methaneSoup.toFixed(2)} ppm`;
-            this.methaneSoupProgress.style.width = `${biology.methaneSoup}%`;
-            this.methaneProtoPop.textContent = `${biology.methaneProtoPop.toFixed(2)} M/mL`;
-            this.methaneProtoProgress.style.width = `${(biology.methaneProtoPop / 100) * 100}%`;
-            this.methaneMultiPop.textContent = `${biology.methaneMultiPop.toFixed(2)} Index`;
-            this.methaneMultiProgress.style.width = `${(biology.methaneMultiPop / 80) * 100}%`;
-            this.cryoOrganismsPop.textContent = `${biology.cryoOrganismsPop.toFixed(2)} Index`;
-            this.cryoOrganismsProgress.style.width = `${(biology.cryoOrganismsPop / 70) * 100}%`;
-
-            // Update future metrics cards
-            if (biology.unlockedThinkingOcean) {
-                this.thinkingOceanCard.style.display = 'block';
-                this.thinkingOceanPop.textContent = `${biology.thinkingOceanPop.toFixed(2)} Index`;
-                this.thinkingOceanProgress.style.width = `${biology.thinkingOceanPop}%`;
-            } else {
-                this.thinkingOceanCard.style.display = 'none';
-            }
-            if (biology.unlockedCryoColloid) {
-                this.cryoColloidCard.style.display = 'block';
-                this.cryoColloidPop.textContent = `${biology.cryoColloidPop.toFixed(2)} Index`;
-                this.cryoColloidProgress.style.width = `${biology.cryoColloidPop}%`;
-            } else {
-                this.cryoColloidCard.style.display = 'none';
+            if (card) {
+                card.style.display = isUnlocked ? 'block' : 'none';
+                
+                if (isUnlocked) {
+                    const densitySpan = document.getElementById(`${nodeId}-density`);
+                    const progressBar = document.getElementById(`${nodeId}-progress`);
+                    const speciesVal = document.getElementById(`${nodeId}-species-val`);
+                    const boostIndicator = document.getElementById(`${nodeId}-boost-indicator`);
+                    
+                    if (densitySpan) {
+                        densitySpan.textContent = `${biomass.toFixed(2)} ${node.unit}`;
+                    }
+                    if (progressBar) {
+                        // Apply custom carrying capacity bounds
+                        let cap = node.cap;
+                        if (nodeId === 'eukaryotes') {
+                            cap = biology.unlockedSexualReproduction ? 180 : 120;
+                        }
+                        const percent = Math.min(100, (biomass / cap) * 100);
+                        progressBar.style.width = `${percent}%`;
+                        
+                        // Check if mutagen boost is active on this node
+                        const hasBoost = biology.pendingNudges[nodeId] || (node.nudge && biology.pendingNudges[node.nudge.id]);
+                        if (hasBoost) {
+                            progressBar.style.boxShadow = '0 0 10px var(--accent-cyan)';
+                            progressBar.style.background = 'linear-gradient(90deg, var(--accent-cyan), #6366f1)';
+                            if (boostIndicator) {
+                                const remaining = (biology.pendingNudges[nodeId]?.remainingMyr || biology.pendingNudges[node.nudge?.id]?.remainingMyr || 0);
+                                boostIndicator.textContent = `⚡ BOOSTED (${remaining.toFixed(1)}M)`;
+                                boostIndicator.style.display = 'inline';
+                            }
+                        } else {
+                            progressBar.style.boxShadow = 'none';
+                            progressBar.style.background = ''; // reset to default
+                            if (boostIndicator) boostIndicator.style.display = 'none';
+                        }
+                    }
+                    if (speciesVal) {
+                        speciesVal.textContent = Math.floor(speciesCount).toLocaleString();
+                    }
+                }
             }
         }
 
@@ -2001,6 +1936,63 @@ export class GameUI {
     }
 
     /**
+     * Show a richer floating toast specifically for evolution boost activations.
+     * Does NOT pause the game — auto-dismisses after 5 seconds.
+     */
+    showBoostToast(nodeLabel, durationMyr, multiplier) {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:12px;';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: linear-gradient(135deg, rgba(20,20,45,0.97), rgba(10,10,30,0.97));
+            border: 1px solid rgba(250,204,21,0.5);
+            border-left: 4px solid #facc15;
+            color: var(--text-primary);
+            padding: 14px 18px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.6), 0 0 20px rgba(250,204,21,0.1);
+            font-family: var(--font-sans);
+            min-width: 320px;
+            max-width: 420px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+        `;
+        toast.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:1.5rem;line-height:1;">⚡</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.88rem;color:#facc15;letter-spacing:0.06em;margin-bottom:3px;">EVOLUTION BOOST ACTIVE</div>
+                    <div style="font-size:0.82rem;color:rgba(255,255,255,0.85);">
+                        <strong>${nodeLabel}</strong>: ×${multiplier} growth rate for <strong>${durationMyr} Myr</strong>
+                    </div>
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:4px;">Select node in Evolution Tree to track remaining time.</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 20);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-15px)';
+            setTimeout(() => toast.remove(), 360);
+        }, 5000);
+    }
+
+    /**
      * Cache game state objects for the interventions modal.
      * Does NOT re-render every frame — that would destroy buttons between
      * mousedown and mouseup and prevent click events from firing.
@@ -2091,5 +2083,360 @@ export class GameUI {
         if (this.currentViewModeLabel) {
             this.currentViewModeLabel.textContent = viewMode === 'macro' ? 'PLANET (MACRO)' : 'MICROSCOPIC (MICRO)';
         }
+    }
+
+    drawCladogramSVG(planet, biology, handlers) {
+        const svg = document.getElementById('cladogram-svg');
+        const connGroup = document.getElementById('cladogram-connections-group');
+        const nodeGroup = document.getElementById('cladogram-nodes-group');
+        if (!svg || !connGroup || !nodeGroup) return;
+
+        // Clear existing drawing
+        connGroup.innerHTML = '';
+        nodeGroup.innerHTML = '';
+
+        const solvent = planet.activeSolvent;
+        const graphNodes = EVOLUTION_GRAPH[solvent] || {};
+
+        // 1. Compute node depths
+        const depths = {};
+        function getDepth(nodeId) {
+            if (depths[nodeId] !== undefined) return depths[nodeId];
+            const node = graphNodes[nodeId];
+            if (!node || !node.parents || node.parents.length === 0) {
+                depths[nodeId] = 0;
+                return 0;
+            }
+            let maxParentDepth = -1;
+            for (const pId of node.parents) {
+                maxParentDepth = Math.max(maxParentDepth, getDepth(pId));
+            }
+            depths[nodeId] = maxParentDepth + 1;
+            return depths[nodeId];
+        }
+        for (const nodeId in graphNodes) {
+            getDepth(nodeId);
+        }
+
+        // 2. Group nodes by column (depth)
+        const columnNodes = {};
+        for (const nodeId in graphNodes) {
+            const depth = depths[nodeId];
+            if (!columnNodes[depth]) columnNodes[depth] = [];
+            columnNodes[depth].push(nodeId);
+        }
+
+        // 3. Compute static layout positions centered vertically
+        const positions = {};
+        const colWidth = 240;
+        const rowHeight = 90;
+        const baseCenterY = 320;
+
+        for (const depth in columnNodes) {
+            const colNodes = columnNodes[depth];
+            const totalHeight = (colNodes.length - 1) * rowHeight;
+            const startY = baseCenterY - totalHeight / 2;
+            colNodes.forEach((nodeId, idx) => {
+                positions[nodeId] = {
+                    x: 100 + depth * colWidth,
+                    y: startY + idx * rowHeight
+                };
+            });
+        }
+
+        // 4. Draw curved connection lines
+        for (const nodeId in graphNodes) {
+            const node = graphNodes[nodeId];
+            const pos = positions[nodeId];
+            const isChildUnlocked = biology.unlockedMap[nodeId];
+
+            if (node.parents && node.parents.length > 0) {
+                node.parents.forEach(pId => {
+                    const pPos = positions[pId];
+                    if (!pPos) return;
+
+                    const isParentUnlocked = biology.unlockedMap[pId];
+                    
+                    // Curved bezier connector path
+                    const cx1 = pPos.x + (pos.x - pPos.x) / 2;
+                    const cy1 = pPos.y;
+                    const cx2 = pPos.x + (pos.x - pPos.x) / 2;
+                    const cy2 = pos.y;
+                    const pathData = `M ${pPos.x} ${pPos.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${pos.x} ${pos.y}`;
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('fill', 'none');
+
+                    // Connection styling based on unlock status
+                    if (isParentUnlocked && isChildUnlocked) {
+                        path.setAttribute('stroke', 'var(--accent-cyan)');
+                        path.setAttribute('stroke-width', '3.0');
+                        path.setAttribute('filter', 'drop-shadow(0 0 3px var(--accent-cyan))');
+                        path.style.opacity = '0.85';
+                    } else if (isParentUnlocked) {
+                        path.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
+                        path.setAttribute('stroke-width', '2.0');
+                        path.setAttribute('stroke-dasharray', '5,5');
+                        path.style.opacity = '0.5';
+                    } else {
+                        path.setAttribute('stroke', 'rgba(255, 255, 255, 0.08)');
+                        path.setAttribute('stroke-width', '1.5');
+                        path.style.opacity = '0.3';
+                    }
+
+                    // If it is a merger event, color it with purple highlight
+                    if (node.parents.length > 1) {
+                        if (isParentUnlocked && isChildUnlocked) {
+                            path.setAttribute('stroke', 'rgba(168, 85, 247, 0.85)'); // purple for mergers
+                            path.setAttribute('filter', 'drop-shadow(0 0 4px rgba(168, 85, 247, 0.85))');
+                        }
+                    }
+
+                    connGroup.appendChild(path);
+                });
+            }
+        }
+
+        // 5. Draw node pills
+        for (const id in graphNodes) {
+            const node = graphNodes[id];
+            const pos = positions[id];
+            const isUnlocked = biology.unlockedMap[id];
+            const biomass = biology.biomassMap[id] || 0.0;
+            const speciesCount = biology.biodiversityMap[id] || 0;
+
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'cladogram-node-element');
+            g.setAttribute('transform', `translate(${pos.x - 90}, ${pos.y - 25})`);
+            g.style.cursor = 'pointer';
+
+            // Rect shape
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '180');
+            rect.setAttribute('height', '50');
+            rect.setAttribute('rx', '8');
+            rect.setAttribute('ry', '8');
+            rect.setAttribute('fill', 'rgba(18, 22, 35, 0.9)');
+
+            // Node border and text styling based on status
+            let strokeColor = 'rgba(255, 255, 255, 0.15)';
+            let titleColor = 'rgba(255, 255, 255, 0.4)';
+            let popColor = 'rgba(255, 255, 255, 0.2)';
+            let specColor = 'rgba(255, 255, 255, 0.15)';
+            
+            if (isUnlocked) {
+                if (biomass < 0.05 && node.isDeadEnd) {
+                    strokeColor = '#6b7280'; // Stagnant dead-end
+                    titleColor = '#9ca3af';
+                    popColor = '#6b7280';
+                    specColor = '#4b5563';
+                } else if (biomass < 0.05) {
+                    strokeColor = '#ef4444'; // Extinct
+                    titleColor = '#ef4444';
+                    popColor = 'rgba(239, 68, 68, 0.5)';
+                    specColor = 'rgba(239, 68, 68, 0.3)';
+                } else {
+                    strokeColor = 'var(--accent-cyan)';
+                    titleColor = 'var(--text-primary)';
+                    popColor = 'var(--text-secondary)';
+                    specColor = 'var(--accent-cyan)';
+                }
+            }
+
+            if (this.selectedNodeId === id) {
+                strokeColor = '#ec4899'; // Selected pink highlight
+                rect.setAttribute('stroke-width', '2.5');
+                rect.setAttribute('filter', 'drop-shadow(0 0 5px #ec4899)');
+            } else {
+                rect.setAttribute('stroke-width', '1.5');
+                if (isUnlocked && biomass >= 0.05 && !node.isDeadEnd) {
+                    rect.setAttribute('filter', 'drop-shadow(0 0 3px var(--accent-cyan))');
+                }
+            }
+
+            rect.setAttribute('stroke', strokeColor);
+            g.appendChild(rect);
+
+            // Title
+            const textTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textTitle.setAttribute('x', '10');
+            textTitle.setAttribute('y', '18');
+            textTitle.setAttribute('fill', titleColor);
+            textTitle.setAttribute('font-size', '10.5');
+            textTitle.setAttribute('font-weight', 'bold');
+            textTitle.setAttribute('font-family', 'var(--font-sans)');
+            textTitle.textContent = node.name;
+            g.appendChild(textTitle);
+
+            // Population/Biomass density
+            const textPop = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textPop.setAttribute('x', '10');
+            textPop.setAttribute('y', '32');
+            textPop.setAttribute('fill', popColor);
+            textPop.setAttribute('font-size', '9');
+            textPop.setAttribute('font-family', 'var(--font-mono)');
+            textPop.textContent = `${biomass.toFixed(2)} ${node.unit || 'Idx'}`;
+            g.appendChild(textPop);
+
+            // Species Count (Biodiversity)
+            const textSpec = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textSpec.setAttribute('x', '10');
+            textSpec.setAttribute('y', '43');
+            textSpec.setAttribute('fill', specColor);
+            textSpec.setAttribute('font-size', '8.5');
+            textSpec.setAttribute('font-family', 'var(--font-mono)');
+            textSpec.textContent = isUnlocked ? `S: ${Math.floor(speciesCount).toLocaleString()} species` : 'S: 0 species';
+            g.appendChild(textSpec);
+
+            // Click interaction
+            g.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Format requirements text
+                let reqText = '';
+                if (node.reqs) {
+                    const parts = [];
+                    if (node.reqs.waterCoverage) parts.push(`Water > ${node.reqs.waterCoverage}%`);
+                    if (node.reqs.ammoniaCoverage) parts.push(`Ammonia > ${node.reqs.ammoniaCoverage}%`);
+                    if (node.reqs.methaneCoverage) parts.push(`Methane > ${node.reqs.methaneCoverage}%`);
+                    if (node.reqs.tempRange) parts.push(`Temp ${node.reqs.tempRange[0]} to ${node.reqs.tempRange[1]}°C`);
+                    if (node.reqs.minTemp) parts.push(`Temp >= ${node.reqs.minTemp}°C`);
+                    if (node.reqs.maxTemp) parts.push(`Temp <= ${node.reqs.maxTemp}°C`);
+                    if (node.reqs.minO2) parts.push(`O₂ >= ${node.reqs.minO2}%`);
+                    if (node.reqs.ozone) parts.push(`Ozone >= ${(node.reqs.ozone * 100).toFixed(0)}%`);
+                    if (node.reqs.magnetosphere) parts.push('Magnetosphere');
+                    if (node.reqs.solarRadiance) parts.push(`Solar Rad >= ${node.reqs.solarRadiance}`);
+                    if (node.reqs.oecGate) parts.push('OEC Stability');
+                    
+                    if (node.reqs.popThreshold) {
+                        for (const [pId, val] of Object.entries(node.reqs.popThreshold)) {
+                            const parentNode = graphNodes[pId];
+                            parts.push(`${parentNode ? parentNode.name : pId} > ${val}`);
+                        }
+                    }
+                    if (node.reqs.synapsidOrSauropsidThreshold) parts.push(`Synapsids/Sauropsids >= ${node.reqs.synapsidOrSauropsidThreshold}`);
+                    if (node.reqs.aiOrCyborgThreshold) parts.push(`AI/Cyborg >= ${node.reqs.aiOrCyborgThreshold}`);
+                    if (node.reqs.cyborgOrMossesThreshold) parts.push('Cyborg > 45 OR Mosses > 60');
+                    
+                    reqText = parts.join(', ');
+                }
+                if (!reqText) reqText = 'None';
+
+                let capVal = node.cap || 100.0;
+                if (id === 'eukaryotes') {
+                    capVal = biology.unlockedSexualReproduction ? 180.0 : 120.0;
+                }
+
+                const uiNode = {
+                    id: id,
+                    name: node.name,
+                    pop: biomass,
+                    cap: capVal,
+                    unit: node.unit || 'Idx',
+                    req: reqText,
+                    nudgeId: node.nudge ? node.nudge.id : null,
+                    nudgeName: node.nudge ? node.nudge.name : '',
+                    cost: node.nudge ? node.nudge.cost : 0,
+                    isDeadEnd: node.isDeadEnd
+                };
+
+                this.selectedNodeId = id;
+                this.renderSelectedNodeDetails(uiNode, biology);
+                
+                // Redraw cladogram to show selection border
+                this.drawCladogramSVG(planet, biology, handlers);
+            });
+
+            nodeGroup.appendChild(g);
+        }
+
+        // Setup pan & zoom listeners if not already bound
+        if (!this.cladogramZoomBound) {
+            this.cladogramZoomBound = true;
+            this.setupCladogramPanZoom();
+        }
+    }
+
+    setupCladogramPanZoom() {
+        const svg = document.getElementById('cladogram-svg');
+        const zoomGroup = document.getElementById('cladogram-zoom-group');
+        if (!svg || !zoomGroup) return;
+
+        let scale = 0.85;
+        let translateX = 40;
+        let translateY = 100;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        function updateTransform() {
+            zoomGroup.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
+        }
+
+        // Apply initial transform
+        updateTransform();
+
+        // Drag to pan
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.cladogram-node-element')) return;
+            isDragging = true;
+            svg.style.cursor = 'grabbing';
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                svg.style.cursor = 'grab';
+            }
+        });
+
+        // Scroll to zoom
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = 1.1;
+            const mouseX = e.clientX - svg.getBoundingClientRect().left;
+            const mouseY = e.clientY - svg.getBoundingClientRect().top;
+            
+            const zoomGroupX = (mouseX - translateX) / scale;
+            const zoomGroupY = (mouseY - translateY) / scale;
+            
+            if (e.deltaY < 0) {
+                scale = Math.min(3.0, scale * zoomFactor);
+            } else {
+                scale = Math.max(0.4, scale / zoomFactor);
+            }
+            
+            translateX = mouseX - zoomGroupX * scale;
+            translateY = mouseY - zoomGroupY * scale;
+            updateTransform();
+        }, { passive: false });
+
+        // Controls button zoom
+        document.getElementById('cladogram-zoom-in')?.addEventListener('click', () => {
+            scale = Math.min(3.0, scale * 1.25);
+            updateTransform();
+        });
+
+        document.getElementById('cladogram-zoom-out')?.addEventListener('click', () => {
+            scale = Math.max(0.4, scale / 1.25);
+            updateTransform();
+        });
+
+        document.getElementById('cladogram-zoom-reset')?.addEventListener('click', () => {
+            scale = 0.85;
+            translateX = 40;
+            translateY = 100;
+            updateTransform();
+        });
     }
 }

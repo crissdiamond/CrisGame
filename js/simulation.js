@@ -1,3 +1,5 @@
+import { EVOLUTION_GRAPH } from './evolutionData.js';
+
 /**
  * Handles the biological progression calculations for three solvent systems:
  * 1. Water Line: Primordial Soup -> Anaerobic -> Photosynthetic -> Eukaryotic -> Multicellular -> Cambrian -> Land Plants -> Arthropods -> Tetrapods -> Sauropsids (Dinosaurs) & Synapsids (Mammals)
@@ -23,110 +25,152 @@ function clamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
 export class BiologySimulation {
     constructor() {
-        // --- Water Line Populations ---
-        this.organicSoup = 0.0;             // Concentration in ppm (0 to 100)
-        this.anaerobicPop = 0.0;            // M cells/mL
-        this.photosyntheticPop = 0.0;       // M cells/mL
-        this.eukaryoticPop = 0.0;           // M cells/mL
-        this.multicellularPop = 0.0;        // Complexity Index (0 to 100)
+        // --- Core Graph State Maps ---
+        this.biomassMap = {};
+        this.biodiversityMap = {};
+        this.unlockedMap = {};
 
-        // New intermediate water animals
-        this.spongesPop = 0.0;
-        this.medusesPop = 0.0;
-        this.wormsPop = 0.0;
-        this.fishPop = 0.0;
+        // Initialize maps from EVOLUTION_GRAPH
+        for (const solvent in EVOLUTION_GRAPH) {
+            for (const nodeId in EVOLUTION_GRAPH[solvent]) {
+                this.biomassMap[nodeId] = 0.0;
+                this.biodiversityMap[nodeId] = 0;
+                this.unlockedMap[nodeId] = false;
+            }
+        }
 
-        // New vegetable soil lines
-        this.mossesPop = 0.0;
-        this.fernsPop = 0.0;
-        this.conifersPop = 0.0;
-        this.angiospermsPop = 0.0;
+        // Define dynamic properties with getters and setters for backward-compatibility
+        const popMappings = {
+            organicSoup: 'soup',
+            membranePop: 'membrane',
+            bacteriaPop: 'bacteria',
+            anaerobicPop: 'anaerobic',
+            anoxygenicPhotoPop: 'anoxygenic_photo',
+            photosyntheticPop: 'photosynthetic',
+            nucleusPop: 'nucleus',
+            mitochondriaPop: 'mitochondria',
+            eukaryoticPop: 'eukaryotes',
+            sexualPop: 'sexual',
+            multicellularPop: 'multicellular',
+            algaePop: 'algae',
+            spongesPop: 'sponges',
+            medusesPop: 'meduses',
+            wormsPop: 'worms',
+            fishPop: 'fish',
+            cambrianPop: 'cambrian',
+            mossesPop: 'mosses',
+            fernsPop: 'ferns',
+            conifersPop: 'conifers',
+            angiospermsPop: 'angiosperms',
+            arthropodPop: 'insects',
+            tetrapodPop: 'tetrapods',
+            sauropsidPop: 'sauropsids',
+            synapsidPop: 'synapsids',
+            cognitiveSpeciesPop: 'cognitive',
+            cyborgPop: 'cyborg',
+            technologicalAIPop: 'ai',
+            noospherePop: 'noosphere',
+            gaiaHivemindPop: 'gaia_hivemind',
 
-        this.cambrianPop = 0.0;             // Marine Invertebrates Index
-        this.landPlantsPop = 0.0;           // Land Flora Index (composite)
-        this.arthropodPop = 0.0;            // Land Insects Index
-        this.tetrapodPop = 0.0;             // Tetrapods Index
-        this.sauropsidPop = 0.0;            // Dinosaurs/Reptiles Index
-        this.synapsidPop = 0.0;             // Mammals/Synapsids Index
-        this.cognitiveSpeciesPop = 0.0;     // Cognitive Species Index
-        this.technologicalAIPop = 0.0;      // Silicon AI Index
-        this.cyborgPop = 0.0;               // Cyborg Hybrids Index
-        this.noospherePop = 0.0;            // Planetary AI Noosphere Index
-        this.gaiaHivemindPop = 0.0;         // Biosphere Gaia Hivemind Index
+            ammonicSoup: 'ammonic_soup',
+            ammonicProtoPop: 'ammonic_proto',
+            ammonicMultiPop: 'ammonic_multi',
+            silicoFloraPop: 'silico_flora',
+            cryoFaunaPop: 'cryo_fauna',
+            crystallineCognitivePop: 'crystalline_cognitive',
+            quantumLatticePop: 'quantum_lattices',
+            cryoHivemindPop: 'cryo_hivemind',
 
-        // Unlocked Flags - Water Line
-        this.unlockedSoup = false;
-        this.unlockedMembrane = false;
-        this.unlockedBacteria = false;
-        this.unlockedAnaerobic = false;
-        this.unlockedPhotosynthetic = false;
-        this.unlockedNucleus = false;
-        this.unlockedMitochondria = false;
-        this.unlockedSexualReproduction = false;
-        this.unlockedEukaryotic = false;
-        this.unlockedMulticellular = false;
+            methaneSoup: 'methane_soup',
+            methaneProtoPop: 'methane_proto',
+            methaneMultiPop: 'methane_multi',
+            cryoOrganismsPop: 'cryo_organisms',
+            cryoPolymerNetworkPop: 'cryo_polymer_network',
+            thinkingOceanPop: 'thinking_ocean',
+            cryoColloidPop: 'cryo_colloid'
+        };
 
-        // New intermediate water unlocks
-        this.unlockedSponges = false;
-        this.unlockedMeduses = false;
-        this.unlockedWorms = false;
-        this.unlockedFish = false;
+        for (const [propName, nodeKey] of Object.entries(popMappings)) {
+            Object.defineProperty(this, propName, {
+                get: () => this.biomassMap[nodeKey] || 0,
+                set: (v) => { this.biomassMap[nodeKey] = v; },
+                configurable: true,
+                enumerable: true
+            });
+        }
 
-        // New vegetable soil unlocks
-        this.unlockedMosses = false;
-        this.unlockedFerns = false;
-        this.unlockedConifers = false;
-        this.unlockedAngiosperms = false;
+        const unlockMappings = {
+            unlockedSoup: 'soup',
+            unlockedMembrane: 'membrane',
+            unlockedBacteria: 'bacteria',
+            unlockedAnaerobic: 'anaerobic',
+            unlockedAnoxygenicPhoto: 'anoxygenic_photo',
+            unlockedPhotosynthetic: 'photosynthetic',
+            unlockedNucleus: 'nucleus',
+            unlockedMitochondria: 'mitochondria',
+            unlockedSexualReproduction: 'sexual',
+            unlockedEukaryotic: 'eukaryotes',
+            unlockedMulticellular: 'multicellular',
+            unlockedAlgae: 'algae',
+            unlockedSponges: 'sponges',
+            unlockedMeduses: 'meduses',
+            unlockedWorms: 'worms',
+            unlockedFish: 'fish',
+            unlockedCambrian: 'cambrian',
+            unlockedMosses: 'mosses',
+            unlockedFerns: 'ferns',
+            unlockedConifers: 'conifers',
+            unlockedAngiosperms: 'angiosperms',
+            unlockedArthropod: 'insects',
+            unlockedTetrapod: 'tetrapods',
+            unlockedSauropsid: 'sauropsids',
+            unlockedSynapsid: 'synapsids',
+            unlockedCognitive: 'cognitive',
+            unlockedTechnologicalAI: 'ai',
+            unlockedCyborg: 'cyborg',
+            unlockedNoosphere: 'noosphere',
+            unlockedGaiaHivemind: 'gaia_hivemind',
 
-        this.unlockedCambrian = false;
-        this.unlockedLandPlants = false;
-        this.unlockedArthropod = false;
-        this.unlockedTetrapod = false;
-        this.unlockedSauropsid = false;
-        this.unlockedSynapsid = false;
-        this.unlockedCognitive = false;
-        this.unlockedTechnologicalAI = false;
-        this.unlockedCyborg = false;
-        this.unlockedNoosphere = false;
-        this.unlockedGaiaHivemind = false;
+            unlockedAmmonicSoup: 'ammonic_soup',
+            unlockedAmmonicProto: 'ammonic_proto',
+            unlockedAmmonicMulti: 'ammonic_multi',
+            unlockedSilicoFlora: 'silico_flora',
+            unlockedCryoFauna: 'cryo_fauna',
+            unlockedCrystallineCognitive: 'crystalline_cognitive',
+            unlockedQuantumLattice: 'quantum_lattices',
+            unlockedCryoHivemind: 'cryo_hivemind',
 
-        // --- Ammonia Line Populations ---
-        this.ammonicSoup = 0.0;
-        this.ammonicProtoPop = 0.0;
-        this.ammonicMultiPop = 0.0;
-        this.silicoFloraPop = 0.0;
-        this.cryoFaunaPop = 0.0;
-        this.crystallineCognitivePop = 0.0;
-        this.quantumLatticePop = 0.0;       // Solid-State Quantum Lattices
-        this.cryoHivemindPop = 0.0;         // Cryo-Biosphere Hivemind
+            unlockedMethaneSoup: 'methane_soup',
+            unlockedMethaneProto: 'methane_proto',
+            unlockedMethaneMulti: 'methane_multi',
+            unlockedCryoOrganisms: 'cryo_organisms',
+            unlockedCryoPolymerNetwork: 'cryo_polymer_network',
+            unlockedThinkingOcean: 'thinking_ocean',
+            unlockedCryoColloid: 'cryo_colloid'
+        };
 
-        // Unlocked Flags - Ammonia Line
-        this.unlockedAmmonicSoup = false;
-        this.unlockedAmmonicProto = false;
-        this.unlockedAmmonicMulti = false;
-        this.unlockedSilicoFlora = false;
-        this.unlockedCryoFauna = false;
-        this.unlockedCrystallineCognitive = false;
-        this.unlockedQuantumLattice = false;
-        this.unlockedCryoHivemind = false;
+        for (const [propName, nodeKey] of Object.entries(unlockMappings)) {
+            Object.defineProperty(this, propName, {
+                get: () => !!this.unlockedMap[nodeKey],
+                set: (v) => { this.unlockedMap[nodeKey] = !!v; },
+                configurable: true,
+                enumerable: true
+            });
+        }
 
-        // --- Methane Line Populations ---
-        this.methaneSoup = 0.0;
-        this.methaneProtoPop = 0.0;
-        this.methaneMultiPop = 0.0;
-        this.cryoOrganismsPop = 0.0;
-        this.cryoPolymerNetworkPop = 0.0;
-        this.thinkingOceanPop = 0.0;        // Thinking Hydrocarbon Oceans
-        this.cryoColloidPop = 0.0;          // Megastructure Cryo-Colloids
+        Object.defineProperty(this, 'landPlantsPop', {
+            get: () => (this.biomassMap['mosses'] || 0) + (this.biomassMap['ferns'] || 0) + (this.biomassMap['conifers'] || 0) + (this.biomassMap['angiosperms'] || 0),
+            set: (v) => { this.biomassMap['mosses'] = v; },
+            configurable: true,
+            enumerable: true
+        });
 
-        // Unlocked Flags - Methane Line
-        this.unlockedMethaneSoup = false;
-        this.unlockedMethaneProto = false;
-        this.unlockedMethaneMulti = false;
-        this.unlockedCryoOrganisms = false;
-        this.unlockedCryoPolymerNetwork = false;
-        this.unlockedThinkingOcean = false;
-        this.unlockedCryoColloid = false;
+        Object.defineProperty(this, 'unlockedLandPlants', {
+            get: () => !!this.unlockedMap['mosses'],
+            set: (v) => { this.unlockedMap['mosses'] = !!v; },
+            configurable: true,
+            enumerable: true
+        });
 
         // --- Genetic Adaptations / Nudges (unlocked via tokens) ---
         this.activeAdaptations = new Set(); // e.g., 'endosymbiosis', 'vascular_tissue', 'amniotic_egg', 'endothermy', 'scales', 'silicon_chains', 'cryo_polymers', etc.
@@ -139,12 +183,6 @@ export class BiologySimulation {
         this.radiationResistance = 0.1;
         this.unlockAges = {};
 
-        // --- New Intermediate Species ---
-        this.chemoProkaryotePop = 0.0;
-        this.anoxygenicPhotoPop = 0.0;
-        this.unlockedChemoProkaryote = false;
-        this.unlockedAnoxygenicPhoto = false;
-
         // --- Stability Gate ---
         this.oecStabilityTimer = 100.0;
 
@@ -152,6 +190,10 @@ export class BiologySimulation {
         this.thermalResilienceLevel = 0;
         this.radiationDefenseLevel = 0;
         this.metabolicEfficiencyLevel = 0;
+
+        // --- Legacy/dummy attributes ---
+        this.chemoProkaryotePop = 0.0;
+        this.unlockedChemoProkaryote = false;
     }
 
     /**
@@ -170,6 +212,13 @@ export class BiologySimulation {
             entry.remainingMyr -= tickRate;
             if (entry.remainingMyr <= 0) delete this.pendingNudges[id];
         }
+    }
+
+    getNudgeGrowthMultiplier(nodeId, activeSolvent) {
+        const node = EVOLUTION_GRAPH[activeSolvent]?.[nodeId];
+        if (!node) return 1.0;
+        const hasNudge = this.pendingNudges[nodeId] || (node.nudge && this.pendingNudges[node.nudge.id]);
+        return hasNudge ? 3.0 : 1.0;
     }
 
     /**
@@ -247,12 +296,15 @@ export class BiologySimulation {
             const nodeId = transitionToNodeMap[transitionKey] || transitionKey;
             if (!this.unlockAges) this.unlockAges = {};
             this.unlockAges[nodeId] = planet.age;
+            this.unlockedMap[nodeId] = true;
 
             // Special double-unlock cases
             if (transitionKey === 'anaerobic') {
                 this.unlockAges['bacteria'] = planet.age;
+                this.unlockedMap['bacteria'] = true;
             } else if (transitionKey === 'endosymbiosis') {
                 this.unlockAges['eukaryotes'] = planet.age;
+                this.unlockedMap['eukaryotes'] = true;
             }
         }
 
@@ -360,12 +412,35 @@ export class BiologySimulation {
                     const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
                     // Apply upgrade factors: thermal resilience multiplier
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
-                    const growthRate = 1.3 * totalViability * nutrientFactor * traitMult;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('anaerobic', planet.activeSolvent);
+                    const growthRate = 1.3 * totalViability * nutrientFactor * traitMult * nudgeMult;
                     const dPop = growthRate * this.anaerobicPop * (1 - this.anaerobicPop / 150.0) * tickRate;
                     this.anaerobicPop = Math.max(0.01, this.anaerobicPop + dPop);
                     this.organicSoup = Math.max(0, this.organicSoup - this.anaerobicPop * 0.15 * effDecayMult * tickRate);
                 } else {
                     this.anaerobicPop = Math.max(0, this.anaerobicPop - this.anaerobicPop * 0.4 * effDecayMult * tickRate);
+                }
+            }
+
+            // Prokaryotes (Bacteria)
+            if (this.unlockedBacteria && this.bacteriaPop === 0) {
+                this.bacteriaPop = 0.1;
+            }
+            if (this.bacteriaPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 0, 45, 80);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 6.0);
+                const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
+                    const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
+                    const nudgeMult = this.getNudgeGrowthMultiplier('bacteria', planet.activeSolvent);
+                    const growthRate = 1.4 * totalViability * nutrientFactor * traitMult * nudgeMult;
+                    const dPop = growthRate * this.bacteriaPop * (1 - this.bacteriaPop / 100.0) * tickRate;
+                    this.bacteriaPop = Math.max(0.01, this.bacteriaPop + dPop);
+                    this.organicSoup = Math.max(0, this.organicSoup - this.bacteriaPop * 0.1 * effDecayMult * tickRate);
+                } else {
+                    this.bacteriaPop = Math.max(0, this.bacteriaPop - this.bacteriaPop * 0.4 * effDecayMult * tickRate);
                 }
             }
 
@@ -396,7 +471,8 @@ export class BiologySimulation {
                 if (totalViability > 0.05) {
                     const nutrientFactor = Math.min(1.0, this.organicSoup / 15.0);
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
-                    const growthRate = 1.1 * totalViability * nutrientFactor * co2Viability * traitMult;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('anoxygenic_photo', planet.activeSolvent);
+                    const growthRate = 1.1 * totalViability * nutrientFactor * co2Viability * traitMult * nudgeMult;
                     const dPop = growthRate * this.anoxygenicPhotoPop * (1 - this.anoxygenicPhotoPop / 180.0) * tickRate;
                     this.anoxygenicPhotoPop = Math.max(0.01, this.anoxygenicPhotoPop + dPop);
                     this.organicSoup = Math.max(0, this.organicSoup - this.anoxygenicPhotoPop * 0.08 * effDecayMult * tickRate);
@@ -450,7 +526,8 @@ export class BiologySimulation {
 
                 if (totalViability > 0.05) {
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
-                    const growthRate = 1.0 * totalViability * nitrogenViability * co2Viability * (0.3 + (planet.radiation / 5.0)) * traitMult;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('photosynthetic', planet.activeSolvent);
+                    const growthRate = 1.0 * totalViability * nitrogenViability * co2Viability * (0.3 + (planet.radiation / 5.0)) * traitMult * nudgeMult;
                     const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / 200.0) * tickRate;
                     this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
                 } else {
@@ -518,7 +595,8 @@ export class BiologySimulation {
                     const sexGrowthMult = this.unlockedSexualReproduction ? 1.25 : 1.0;
                     const eukaryotesCap = this.unlockedSexualReproduction ? 180.0 : 120.0;
 
-                    const growthRate = 0.8 * totalViability * sexGrowthMult;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('eukaryotes', planet.activeSolvent);
+                    const growthRate = 0.8 * totalViability * sexGrowthMult * nudgeMult;
                     const dPop = growthRate * this.eukaryoticPop * (1 - this.eukaryoticPop / eukaryotesCap) * tickRate;
                     this.eukaryoticPop = Math.max(0.01, this.eukaryoticPop + dPop);
                 } else {
@@ -567,7 +645,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const growthRate = 0.6 * totalViability;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('multicellular', planet.activeSolvent);
+                    const growthRate = 0.6 * totalViability * nudgeMult;
                     const dPop = growthRate * this.multicellularPop * (1 - this.multicellularPop / 100.0) * tickRate;
                     this.multicellularPop = Math.max(0.01, this.multicellularPop + dPop);
                 } else {
@@ -575,8 +654,43 @@ export class BiologySimulation {
                 }
             }
 
+            // Multicellular Algae (Plastid Endosymbiosis merger)
+            if (this.unlockedMulticellular && this.multicellularPop > 15.0 && planet.starLuminosity > 0.1 && !this.unlockedAlgae) {
+                const condMult = 1.0 + Math.min(2.0, planet.radiation * 0.5);
+                if (this.tryFire('algae', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.algaePop = 0.1;
+                    this.unlockedAlgae = true;
+                    events.push({
+                        title: "🍃 PLASTID ENDOSYMBIOSIS (ALGAE)",
+                        desc: "Photosynthetic marine eukaryotes emerge as algae beds.",
+                        scientificDetails: "Following primary endosymbiosis (engulfing of cyanobacteria), multicellular eukaryotes gain the capacity for photosynthesis, diversifying into red and green algae beds. This plastid merger allows eukaryotes to harness solar energy directly.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedAlgae'
+                    });
+                }
+            }
+
+            if (this.algaePop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 22, 45);
+                const radViability = Math.max(0, 1 - effRad / 4.0);
+                const co2Viability = clamp01(planet.co2 / 2.0);
+                const totalViability = tempViability * radViability * co2Viability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
+                    const nudgeMult = this.getNudgeGrowthMultiplier('algae', planet.activeSolvent);
+                    const growthRate = 0.75 * totalViability * traitMult * nudgeMult;
+                    const dPop = growthRate * this.algaePop * (1 - this.algaePop / 100.0) * tickRate;
+                    this.algaePop = Math.max(0.01, this.algaePop + dPop);
+                } else {
+                    this.algaePop = Math.max(0, this.algaePop - this.algaePop * 0.6 * effDecayMult * tickRate);
+                }
+            }
+
             // 1. Sponges
-            if (this.unlockedMulticellular && this.multicellularPop > 20.0 && !this.unlockedSponges) {
+            if (this.unlockedAlgae && this.algaePop > 20.0 && !this.unlockedSponges) {
                 if (this.tryFire('sponges', RARITY.NOTABLE, 1.0, tickRate, planet)) {
                     this.spongesPop = 0.1;
                     this.unlockedSponges = true;
@@ -599,7 +713,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.5 * totalViability * this.spongesPop * (1 - this.spongesPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('sponges', planet.activeSolvent);
+                    const dPop = 0.5 * totalViability * this.spongesPop * (1 - this.spongesPop / 100.0) * nudgeMult * tickRate;
                     this.spongesPop = Math.max(0.01, this.spongesPop + dPop);
                 } else {
                     this.spongesPop = Math.max(0, this.spongesPop - this.spongesPop * 0.6 * effDecayMult * tickRate);
@@ -689,7 +804,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * o2Viability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.45 * totalViability * this.fishPop * (1 - this.fishPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('fish', planet.activeSolvent);
+                    const dPop = 0.45 * totalViability * this.fishPop * (1 - this.fishPop / 100.0) * nudgeMult * tickRate;
                     this.fishPop = Math.max(0.01, this.fishPop + dPop);
                 } else {
                     this.fishPop = Math.max(0, this.fishPop - this.fishPop * 0.65 * effDecayMult * tickRate);
@@ -704,7 +820,7 @@ export class BiologySimulation {
                     events.push({
                         title: "🦀 CAMBRIAN EXPLOSION ACTIVE",
                         desc: "Massive biological radiation of ocean invertebrates (trilobites, mollusks, early arthropods).",
-                        scientificDetails: "Driven by rising atmospheric oxygen levels and the development of predator-prey dynamics, the Cambrian period triggers a rapid diversification of bilateral body plans. Mineralized shells, compound eyes, and early chordate structures emerge in the fossil record.",
+                        scientificDetails: "Driven by rising atmospheric oxygen levels and the development of predator-prey dynamics, the Cambrian period triggers a rapid diversification of biological body plans. Mineralized shells, compound eyes, and early chordate structures emerge in the fossil record.",
                         type: "success",
                         tier: RARITY.NOTABLE.name,
                         tokens: RARITY.NOTABLE.award,
@@ -720,7 +836,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.5 * totalViability * this.cambrianPop * (1 - this.cambrianPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cambrian', planet.activeSolvent);
+                    const dPop = 0.5 * totalViability * this.cambrianPop * (1 - this.cambrianPop / 100.0) * nudgeMult * tickRate;
                     this.cambrianPop = Math.max(0.01, this.cambrianPop + dPop);
                 } else {
                     this.cambrianPop = Math.max(0, this.cambrianPop - this.cambrianPop * 0.8 * effDecayMult * tickRate);
@@ -728,7 +845,7 @@ export class BiologySimulation {
             }
 
             // 6. Non-Vascular Mosses (starts land soil plants) — needs UV shield to plausibly colonize land.
-            if (this.unlockedFish && this.fishPop > 25.0 && planet.ozone > 0.5 && planet.hasMagnetosphere && !this.unlockedMosses) {
+            if (this.unlockedAlgae && this.algaePop > 25.0 && planet.ozone > 0.5 && planet.hasMagnetosphere && !this.unlockedMosses) {
                 const condMult = 1.0 + 1.5 * clamp01((planet.ozone - 0.5) / 0.4);
                 if (this.tryFire('vascular_tissue', RARITY.NOTABLE, condMult, tickRate, planet)) {
                     this.mossesPop = 0.1;
@@ -752,7 +869,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('mosses', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * nudgeMult * tickRate;
                     this.mossesPop = Math.max(0.01, this.mossesPop + dPop);
                 } else {
                     this.mossesPop = Math.max(0, this.mossesPop - this.mossesPop * 0.6 * effDecayMult * tickRate);
@@ -783,7 +901,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('ferns', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * nudgeMult * tickRate;
                     this.fernsPop = Math.max(0.01, this.fernsPop + dPop);
                 } else {
                     this.fernsPop = Math.max(0, this.fernsPop - this.fernsPop * 0.55 * effDecayMult * tickRate);
@@ -814,7 +933,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('conifers', planet.activeSolvent);
+                    const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * nudgeMult * tickRate;
                     this.conifersPop = Math.max(0.01, this.conifersPop + dPop);
                 } else {
                     this.conifersPop = Math.max(0, this.conifersPop - this.conifersPop * 0.5 * effDecayMult * tickRate);
@@ -845,7 +965,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('angiosperms', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * nudgeMult * tickRate;
                     this.angiospermsPop = Math.max(0.01, this.angiospermsPop + dPop);
                 } else {
                     this.angiospermsPop = Math.max(0, this.angiospermsPop - this.angiospermsPop * 0.6 * effDecayMult * tickRate);
@@ -881,7 +1002,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * foodViability * radViability * sizeScale;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.5 * totalViability * this.arthropodPop * (1 - this.arthropodPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('insects', planet.activeSolvent);
+                    const dPop = 0.5 * totalViability * this.arthropodPop * (1 - this.arthropodPop / 100.0) * nudgeMult * tickRate;
                     this.arthropodPop = Math.max(0.01, this.arthropodPop + dPop);
                 } else {
                     this.arthropodPop = Math.max(0, this.arthropodPop - this.arthropodPop * 0.7 * effDecayMult * tickRate);
@@ -916,7 +1038,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * plantViability * o2Viability * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.45 * totalViability * this.tetrapodPop * (1 - this.tetrapodPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('tetrapods', planet.activeSolvent);
+                    const dPop = 0.45 * totalViability * this.tetrapodPop * (1 - this.tetrapodPop / 100.0) * nudgeMult * tickRate;
                     this.tetrapodPop = Math.max(0.01, this.tetrapodPop + dPop);
                 } else {
                     this.tetrapodPop = Math.max(0, this.tetrapodPop - this.tetrapodPop * 0.8 * effDecayMult * tickRate);
@@ -974,7 +1097,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * plantViability * scaleBoost * competitionFactor;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.sauropsidPop * (1 - this.sauropsidPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('sauropsids', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.sauropsidPop * (1 - this.sauropsidPop / 100.0) * nudgeMult * tickRate;
                     this.sauropsidPop = Math.max(0.01, this.sauropsidPop + dPop);
                 } else {
                     this.sauropsidPop = Math.max(0, this.sauropsidPop - this.sauropsidPop * 0.8 * effDecayMult * tickRate);
@@ -992,7 +1116,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * plantViability * o2Requirement * endothermyBoost * competitionFactor;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.synapsidPop * (1 - this.synapsidPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('synapsids', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.synapsidPop * (1 - this.synapsidPop / 100.0) * nudgeMult * tickRate;
                     this.synapsidPop = Math.max(0.01, this.synapsidPop + dPop);
                 } else {
                     this.synapsidPop = Math.max(0, this.synapsidPop - this.synapsidPop * 0.8 * effDecayMult * tickRate);
@@ -1024,7 +1149,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.35 * totalViability * this.cognitiveSpeciesPop * (1 - this.cognitiveSpeciesPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cognitive', planet.activeSolvent);
+                    const dPop = 0.35 * totalViability * this.cognitiveSpeciesPop * (1 - this.cognitiveSpeciesPop / 100.0) * nudgeMult * tickRate;
                     this.cognitiveSpeciesPop = Math.max(0.01, this.cognitiveSpeciesPop + dPop);
                 } else {
                     this.cognitiveSpeciesPop = Math.max(0, this.cognitiveSpeciesPop - this.cognitiveSpeciesPop * 0.7 * effDecayMult * tickRate);
@@ -1055,7 +1181,8 @@ export class BiologySimulation {
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.3 * totalViability * this.technologicalAIPop * (1 - this.technologicalAIPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('ai', planet.activeSolvent);
+                    const dPop = 0.3 * totalViability * this.technologicalAIPop * (1 - this.technologicalAIPop / 100.0) * nudgeMult * tickRate;
                     this.technologicalAIPop = Math.max(0.01, this.technologicalAIPop + dPop);
                 } else {
                     // AI decays if magnetic field is lost and radiation is high
@@ -1087,7 +1214,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.35 * totalViability * this.cyborgPop * (1 - this.cyborgPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cyborg', planet.activeSolvent);
+                    const dPop = 0.35 * totalViability * this.cyborgPop * (1 - this.cyborgPop / 100.0) * nudgeMult * tickRate;
                     this.cyborgPop = Math.max(0.01, this.cyborgPop + dPop);
                 } else {
                     this.cyborgPop = Math.max(0, this.cyborgPop - this.cyborgPop * 0.6 * effDecayMult * tickRate);
@@ -1117,7 +1245,8 @@ export class BiologySimulation {
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.noospherePop * (1 - this.noospherePop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('noosphere', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * this.noospherePop * (1 - this.noospherePop / 100.0) * nudgeMult * tickRate;
                     this.noospherePop = Math.max(0.01, this.noospherePop + dPop);
                 } else {
                     this.noospherePop = Math.max(0, this.noospherePop - this.noospherePop * 0.5 * effDecayMult * tickRate);
@@ -1149,7 +1278,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * moistureViability * radViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.gaiaHivemindPop * (1 - this.gaiaHivemindPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('gaia_hivemind', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * this.gaiaHivemindPop * (1 - this.gaiaHivemindPop / 100.0) * nudgeMult * tickRate;
                     this.gaiaHivemindPop = Math.max(0.01, this.gaiaHivemindPop + dPop);
                 } else {
                     this.gaiaHivemindPop = Math.max(0, this.gaiaHivemindPop - this.gaiaHivemindPop * 0.4 * effDecayMult * tickRate);
@@ -1160,14 +1290,14 @@ export class BiologySimulation {
             let o2ProdRaw = 0;
             if (this.gaiaHivemindPop > 0) {
                 if (planet.co2 > 1.0) {
-                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15) * co2Viability;
+                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.algaePop * 0.08 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15) * co2Viability;
                 } else if (planet.o2 > 22.0) {
-                    o2ProdRaw = Math.max(0, ((this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2) * co2Viability);
+                    o2ProdRaw = Math.max(0, ((this.photosyntheticPop * 0.06 + this.algaePop * 0.08 + this.landPlantsPop * 0.12) - this.gaiaHivemindPop * 0.2) * co2Viability);
                 } else {
-                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) * co2Viability;
+                    o2ProdRaw = (this.photosyntheticPop * 0.06 + this.algaePop * 0.08 + this.landPlantsPop * 0.12) * co2Viability;
                 }
             } else {
-                o2ProdRaw = (this.photosyntheticPop * 0.06 + this.landPlantsPop * 0.12) * co2Viability;
+                o2ProdRaw = (this.photosyntheticPop * 0.06 + this.algaePop * 0.08 + this.landPlantsPop * 0.12) * co2Viability;
             }
 
             // Aerobic respiration from consumers (sponges, meduses, worms, fish, cambrian invertebrates, synapsids, sauropsids, cognitive species)
@@ -1175,7 +1305,7 @@ export class BiologySimulation {
                                 this.cambrianPop * 0.02 + this.sauropsidPop * 0.05 + this.synapsidPop * 0.06 + this.cognitiveSpeciesPop * 0.06;
 
             // Total living biomass for decomposition
-            const totalBiomass = this.photosyntheticPop + this.landPlantsPop + this.spongesPop + this.medusesPop + 
+            const totalBiomass = this.photosyntheticPop + this.algaePop + this.landPlantsPop + this.spongesPop + this.medusesPop + 
                                  this.wormsPop + this.fishPop + this.cambrianPop + this.sauropsidPop + 
                                  this.synapsidPop + this.cognitiveSpeciesPop + this.noospherePop + this.gaiaHivemindPop;
             
@@ -1281,7 +1411,8 @@ export class BiologySimulation {
 
                 if (totalViability > 0.05) {
                     const nutrientFactor = Math.min(1.0, this.ammonicSoup / 20.0);
-                    const dPop = 1.0 * totalViability * nutrientFactor * this.ammonicProtoPop * (1 - this.ammonicProtoPop / 120.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('ammonic_proto', planet.activeSolvent);
+                    const dPop = 1.0 * totalViability * nutrientFactor * this.ammonicProtoPop * (1 - this.ammonicProtoPop / 120.0) * nudgeMult * tickRate;
                     this.ammonicProtoPop = Math.max(0.01, this.ammonicProtoPop + dPop);
                     this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicProtoPop * 0.1 * tickRate);
                 } else {
@@ -1312,7 +1443,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * radViability * (planet.ammoniaCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.5 * totalViability * this.ammonicMultiPop * (1 - this.ammonicMultiPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('ammonic_multi', planet.activeSolvent);
+                    const dPop = 0.5 * totalViability * this.ammonicMultiPop * (1 - this.ammonicMultiPop / 100.0) * nudgeMult * tickRate;
                     this.ammonicMultiPop = Math.max(0.01, this.ammonicMultiPop + dPop);
                 } else {
                     this.ammonicMultiPop = Math.max(0, this.ammonicMultiPop - this.ammonicMultiPop * 0.6 * effDecayMult * tickRate);
@@ -1342,7 +1474,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * landViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.45 * totalViability * this.silicoFloraPop * (1 - this.silicoFloraPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('silico_flora', planet.activeSolvent);
+                    const dPop = 0.45 * totalViability * this.silicoFloraPop * (1 - this.silicoFloraPop / 100.0) * nudgeMult * tickRate;
                     this.silicoFloraPop = Math.max(0.01, this.silicoFloraPop + dPop);
                 } else {
                     this.silicoFloraPop = Math.max(0, this.silicoFloraPop - this.silicoFloraPop * 0.5 * effDecayMult * tickRate);
@@ -1372,7 +1505,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * plantFood;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.4 * totalViability * this.cryoFaunaPop * (1 - this.cryoFaunaPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cryo_fauna', planet.activeSolvent);
+                    const dPop = 0.4 * totalViability * this.cryoFaunaPop * (1 - this.cryoFaunaPop / 100.0) * nudgeMult * tickRate;
                     this.cryoFaunaPop = Math.max(0.01, this.cryoFaunaPop + dPop);
                 } else {
                     this.cryoFaunaPop = Math.max(0, this.cryoFaunaPop - this.cryoFaunaPop * 0.7 * effDecayMult * tickRate);
@@ -1401,7 +1535,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * Math.min(1.0, this.cryoFaunaPop / 20.0);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.3 * totalViability * this.crystallineCognitivePop * (1 - this.crystallineCognitivePop / 80.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('crystalline_cognitive', planet.activeSolvent);
+                    const dPop = 0.3 * totalViability * nudgeMult * this.crystallineCognitivePop * (1 - this.crystallineCognitivePop / 80.0) * tickRate;
                     this.crystallineCognitivePop = Math.max(0.01, this.crystallineCognitivePop + dPop);
                 } else {
                     this.crystallineCognitivePop = Math.max(0, this.crystallineCognitivePop - this.crystallineCognitivePop * 0.5 * effDecayMult * tickRate);
@@ -1431,7 +1566,8 @@ export class BiologySimulation {
                 const totalViability = tempViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.quantumLatticePop * (1 - this.quantumLatticePop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('quantum_lattices', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * nudgeMult * this.quantumLatticePop * (1 - this.quantumLatticePop / 100.0) * tickRate;
                     this.quantumLatticePop = Math.max(0.01, this.quantumLatticePop + dPop);
                 } else {
                     this.quantumLatticePop = Math.max(0, this.quantumLatticePop - this.quantumLatticePop * 0.7 * effDecayMult * tickRate);
@@ -1461,7 +1597,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * ammoniaViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.cryoHivemindPop * (1 - this.cryoHivemindPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cryo_hivemind', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * nudgeMult * this.cryoHivemindPop * (1 - this.cryoHivemindPop / 100.0) * tickRate;
                     this.cryoHivemindPop = Math.max(0.01, this.cryoHivemindPop + dPop);
                 } else {
                     this.cryoHivemindPop = Math.max(0, this.cryoHivemindPop - this.cryoHivemindPop * 0.4 * effDecayMult * tickRate);
@@ -1545,7 +1682,8 @@ export class BiologySimulation {
 
                 if (totalViability > 0.05) {
                     const nutrientFactor = Math.min(1.0, this.methaneSoup / 20.0);
-                    const dPop = 0.9 * totalViability * nutrientFactor * this.methaneProtoPop * (1 - this.methaneProtoPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('methane_proto', planet.activeSolvent);
+                    const dPop = 0.9 * totalViability * nutrientFactor * nudgeMult * this.methaneProtoPop * (1 - this.methaneProtoPop / 100.0) * tickRate;
                     this.methaneProtoPop = Math.max(0.01, this.methaneProtoPop + dPop);
                     this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneProtoPop * 0.08 * tickRate);
                 } else {
@@ -1575,7 +1713,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * (planet.methaneCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.45 * totalViability * this.methaneMultiPop * (1 - this.methaneMultiPop / 80.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('methane_multi', planet.activeSolvent);
+                    const dPop = 0.45 * totalViability * nudgeMult * this.methaneMultiPop * (1 - this.methaneMultiPop / 80.0) * tickRate;
                     this.methaneMultiPop = Math.max(0.01, this.methaneMultiPop + dPop);
                 } else {
                     this.methaneMultiPop = Math.max(0, this.methaneMultiPop - this.methaneMultiPop * 0.6 * effDecayMult * tickRate);
@@ -1605,7 +1744,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * landViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.35 * totalViability * this.cryoOrganismsPop * (1 - this.cryoOrganismsPop / 70.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cryo_organisms', planet.activeSolvent);
+                    const dPop = 0.35 * totalViability * nudgeMult * this.cryoOrganismsPop * (1 - this.cryoOrganismsPop / 70.0) * tickRate;
                     this.cryoOrganismsPop = Math.max(0.01, this.cryoOrganismsPop + dPop);
                 } else {
                     this.cryoOrganismsPop = Math.max(0, this.cryoOrganismsPop - this.cryoOrganismsPop * 0.7 * effDecayMult * tickRate);
@@ -1634,7 +1774,8 @@ export class BiologySimulation {
                 const totalViability = tempViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.cryoPolymerNetworkPop * (1 - this.cryoPolymerNetworkPop / 60.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cryo_polymer_network', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * nudgeMult * this.cryoPolymerNetworkPop * (1 - this.cryoPolymerNetworkPop / 60.0) * tickRate;
                     this.cryoPolymerNetworkPop = Math.max(0.01, this.cryoPolymerNetworkPop + dPop);
                 } else {
                     this.cryoPolymerNetworkPop = Math.max(0, this.cryoPolymerNetworkPop - this.cryoPolymerNetworkPop * 0.6 * effDecayMult * tickRate);
@@ -1664,7 +1805,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * coverageViability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.2 * totalViability * this.thinkingOceanPop * (1 - this.thinkingOceanPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('thinking_ocean', planet.activeSolvent);
+                    const dPop = 0.2 * totalViability * nudgeMult * this.thinkingOceanPop * (1 - this.thinkingOceanPop / 100.0) * tickRate;
                     this.thinkingOceanPop = Math.max(0.01, this.thinkingOceanPop + dPop);
                 } else {
                     this.thinkingOceanPop = Math.max(0, this.thinkingOceanPop - this.thinkingOceanPop * 0.6 * effDecayMult * tickRate);
@@ -1694,7 +1836,8 @@ export class BiologySimulation {
                 const totalViability = tempViability * h2Viability;
 
                 if (totalViability > 0.05) {
-                    const dPop = 0.25 * totalViability * this.cryoColloidPop * (1 - this.cryoColloidPop / 100.0) * tickRate;
+                    const nudgeMult = this.getNudgeGrowthMultiplier('cryo_colloid', planet.activeSolvent);
+                    const dPop = 0.25 * totalViability * nudgeMult * this.cryoColloidPop * (1 - this.cryoColloidPop / 100.0) * tickRate;
                     this.cryoColloidPop = Math.max(0.01, this.cryoColloidPop + dPop);
                 } else {
                     this.cryoColloidPop = Math.max(0, this.cryoColloidPop - this.cryoColloidPop * 0.5 * effDecayMult * tickRate);
@@ -1739,6 +1882,40 @@ export class BiologySimulation {
         if (planet.radiation > 0.5 && (this.anaerobicPop > 5.0 || this.ammonicProtoPop > 5.0 || this.methaneProtoPop > 5.0)) {
             const adaptationRate = 0.003 * Math.min(3.0, planet.radiation) * tickRate;
             this.radiationResistance = Math.min(0.9, this.radiationResistance + adaptationRate);
+        }
+
+        // Update species-count (biodiversity) map for all clades of the active solvent
+        const activeNodes = EVOLUTION_GRAPH[planet.activeSolvent];
+        if (activeNodes) {
+            for (const nodeId in activeNodes) {
+                const node = activeNodes[nodeId];
+                if (!this.unlockedMap[nodeId]) {
+                    this.biodiversityMap[nodeId] = 0;
+                    continue;
+                }
+                const biomass = this.biomassMap[nodeId] || 0.0;
+                const currentSpecies = this.biodiversityMap[nodeId] || 0;
+                
+                if (biomass < 0.05) {
+                    // Decay to extinction
+                    const decay = Math.max(1, Math.floor(currentSpecies * 0.25 * tickRate));
+                    this.biodiversityMap[nodeId] = Math.max(0, currentSpecies - decay);
+                } else {
+                    // Growth based on biomass and mutagen speed boosters
+                    const targetSpecies = Math.floor(biomass * 1.5);
+                    const delta = targetSpecies - currentSpecies;
+                    const speed = 0.1 * tickRate * this.getNudgeGrowthMultiplier(nodeId, planet.activeSolvent);
+                    
+                    let nextSpecies = currentSpecies + delta * speed;
+                    if (nextSpecies < 1) nextSpecies = 1;
+                    
+                    // Dead-end trap cap
+                    if (node.isDeadEnd) {
+                        nextSpecies = Math.min(100, nextSpecies);
+                    }
+                    this.biodiversityMap[nodeId] = Math.round(nextSpecies);
+                }
+            }
         }
 
         return {

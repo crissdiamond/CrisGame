@@ -617,13 +617,13 @@ export class EventSystem {
         this.tokensBlue -= cost;
         biology.applyAdaptation(adaptationId);
         biology.pendingNudges[adaptationId] = {
-            multiplier: 20,
+            multiplier: 3.0,
             remainingMyr: 5.0
         };
         const label = adaptationId.replace(/_/g, ' ').toUpperCase();
         return {
             success: true,
-            msg: `Selection pressure applied: ${label} — breakthrough odds boosted ×20 for next 5 Myr.`
+            msg: `Selection pressure applied: ${label} — breakthrough odds boosted ×3 for next 5 Myr.`
         };
     }
 

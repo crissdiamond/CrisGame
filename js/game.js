@@ -125,8 +125,12 @@ export class GameController {
                     const res = this.eventSystem.nudgeEvolution(nudge.id, nudge.cost, this.biology);
                     if (res.success) {
                         this.ui.logEvent("EVOLUTION NUDGED", res.msg, "success");
+                        // Show a non-blocking boost popup
+                        const nodeLabel = nudge.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        this.ui.showBoostToast(nodeLabel, 5, 3);
                     } else {
                         this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");
+                        this.ui.showToast(res.msg, "hazard");
                     }
                     return res;
                 }
@@ -520,6 +524,9 @@ export class GameController {
                     orbitalPerturbationActive: this.planet.orbitalPerturbationActive
                 },
                 biology: {
+                    biomassMap: this.biology.biomassMap,
+                    biodiversityMap: this.biology.biodiversityMap,
+                    unlockedMap: this.biology.unlockedMap,
                     organicSoup: this.biology.organicSoup,
                     anaerobicPop: this.biology.anaerobicPop,
                     photosyntheticPop: this.biology.photosyntheticPop,
@@ -714,8 +721,34 @@ export class GameController {
                 if (key === 'activeAdaptations') {
                     this.biology.activeAdaptations = new Set(data.biology.activeAdaptations);
                 } else {
+                    if ((key === 'biomassMap' || key === 'biodiversityMap' || key === 'unlockedMap') && !data.biology[key]) {
+                        continue;
+                    }
                     this.biology[key] = data.biology[key];
                 }
+            }
+            // Migration for older saves: rebuild maps if missing
+            if (!this.biology.biomassMap || Object.keys(this.biology.biomassMap).length === 0) {
+                this.biology.biomassMap = {};
+                this.biology.unlockedMap = {};
+                
+                // Setters on the class will have already run and written flat fields into the maps
+                // so we just make sure everything is initialized
+            }
+            if (!this.biology.biodiversityMap || Object.keys(this.biology.biodiversityMap).length === 0) {
+                this.biology.biodiversityMap = {};
+                // Import target to populate
+                import('./evolutionData.js').then(({ EVOLUTION_GRAPH }) => {
+                    for (const solvent in EVOLUTION_GRAPH) {
+                        for (const nodeId in EVOLUTION_GRAPH[solvent]) {
+                            if (this.biology.unlockedMap[nodeId]) {
+                                this.biology.biodiversityMap[nodeId] = Math.max(1, Math.floor((this.biology.biomassMap[nodeId] || 0) * 1.5));
+                            } else {
+                                this.biology.biodiversityMap[nodeId] = 0;
+                            }
+                        }
+                    }
+                }).catch(() => {});
             }
             if (!this.biology.unlockAges) {
                 this.biology.unlockAges = {};

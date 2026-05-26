@@ -409,18 +409,6 @@
                                 <div class="metric-header"><span class="metric-name">Synapsida (Mammals)</span><span class="metric-value" id="synapsid-pop">0.00 Index</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar synapsid" id="synapsid-progress" style="width: 0%"></div></div>
                             </div>
-                            <div class="metric-card" id="cyborg-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Cyborg Hybrids</span><span class="metric-value" id="cyborg-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="cyborg-progress" style="width: 0%; background: linear-gradient(90deg, #10b981, #06b6d4);"></div></div>
-                            </div>
-                            <div class="metric-card" id="noosphere-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Planetary Noosphere</span><span class="metric-value" id="noosphere-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="noosphere-progress" style="width: 0%; background: linear-gradient(90deg, #f59e0b, #06b6d4);"></div></div>
-                            </div>
-                            <div class="metric-card" id="gaia-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Gaia Biosphere Hivemind</span><span class="metric-value" id="gaia-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="gaia-progress" style="width: 0%; background: linear-gradient(90deg, #10b981, #ec4899);"></div></div>
-                            </div>
                         </div>
 
                         <!-- Ammonia Solvent Biomass -->
@@ -445,14 +433,6 @@
                                 <div class="metric-header"><span class="metric-name">Cryo-Fauna Megafauna</span><span class="metric-value" id="cryo-fauna-pop">0.00 Index</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar sauropsid" id="cryo-fauna-progress" style="width: 0%"></div></div>
                             </div>
-                            <div class="metric-card" id="quantum-lattice-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Quantum Crystal Lattices</span><span class="metric-value" id="quantum-lattice-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="quantum-lattice-progress" style="width: 0%; background: linear-gradient(90deg, #06b6d4, #6366f1);"></div></div>
-                            </div>
-                            <div class="metric-card" id="cryo-hivemind-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Cryo-Biosphere Hivemind</span><span class="metric-value" id="cryo-hivemind-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="cryo-hivemind-progress" style="width: 0%; background: linear-gradient(90deg, #a78bfa, #4338ca);"></div></div>
-                            </div>
                         </div>
 
                         <!-- Methane Solvent Biomass -->
@@ -473,14 +453,6 @@
                                 <div class="metric-header"><span class="metric-name">Cyto-Beasts</span><span class="metric-value" id="cryo-organisms-pop">0.00 Index</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar synapsid" id="cryo-organisms-progress" style="width: 0%"></div></div>
                             </div>
-                            <div class="metric-card" id="thinking-ocean-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Thinking Methane Oceans</span><span class="metric-value" id="thinking-ocean-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="thinking-ocean-progress" style="width: 0%; background: linear-gradient(90deg, #ea580c, #f59e0b);"></div></div>
-                            </div>
-                            <div class="metric-card" id="cryo-colloid-card" style="display:none;">
-                                <div class="metric-header"><span class="metric-name">Megastructure Cryo-Colloids</span><span class="metric-value" id="cryo-colloid-pop">0.00 Index</span></div>
-                                <div class="progress-bar-container"><div class="progress-bar" id="cryo-colloid-progress" style="width: 0%; background: linear-gradient(90deg, #b45309, #d97706);"></div></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -492,6 +464,8 @@
                             <span class="branch-label">Active Branch:</span>
                             <span id="active-branch-name" class="branch-highlight">Water Line</span>
                         </div>
+                        
+                        <button id="btn-open-cladogram" class="btn btn-action" style="width: 100%; margin-bottom: 0.75rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(79, 70, 229, 0.2)); border: 1px solid var(--accent-cyan); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.15);">🌳 OPEN INTERACTIVE CLADOGRAM MAP</button>
                         
                         <!-- Dynamic node tree grid -->
                         <div class="tree-nodes-list" id="tree-nodes-list">
@@ -707,6 +681,44 @@
             <p class="setup-subtitle">Trigger cosmic anomalies or planetary engineering events to guide evolution.</p>
             <div class="interventions-grid-list" id="interventions-grid-list">
                 <!-- Dynamically populated in JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CLADOGRAM POPUP MODAL -->
+    <div id="cladogram-modal" class="popup-overlay" style="display: none; justify-content: center; align-items: center;">
+        <div class="popup-content cladogram-content glass-card" style="width: 90vw; max-width: 1200px; height: 85vh; max-height: 800px; display: flex; flex-direction: column; padding: 1.5rem; border: 1px solid rgba(6, 182, 212, 0.4); box-shadow: 0 12px 40px rgba(6, 182, 212, 0.25);">
+            <span class="popup-close" id="cladogram-close-btn" style="z-index: 10;">&times;</span>
+            <div class="cladogram-header" style="text-align: left; margin-bottom: 0.5rem;">
+                <h2 id="cladogram-title" style="margin: 0; font-size: 1.6rem; background: linear-gradient(to right, var(--text-primary), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🌳 Phylogenetic Cladogram Visualizer</h2>
+                <p class="setup-subtitle" style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Interactive speciation branches, endosymbiosis mergers, and evolutionary pathways.</p>
+            </div>
+            
+            <!-- SVG Viewport with Pan & Zoom controls -->
+            <div class="cladogram-viewport-container" style="flex: 1; position: relative; background: rgba(5, 7, 12, 0.6); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden; margin-top: 0.5rem; display: flex;">
+                <!-- Pan & Zoom Control Buttons -->
+                <div class="viewport-controls" style="position: absolute; top: 1rem; left: 1rem; display: flex; gap: 0.5rem; z-index: 5;">
+                    <button id="cladogram-zoom-in" class="btn btn-action" style="padding: 0.4rem 0.8rem; margin: 0; min-width: auto; font-weight: bold; background: rgba(18, 22, 35, 0.8); border: 1px solid rgba(255,255,255,0.1);">➕</button>
+                    <button id="cladogram-zoom-out" class="btn btn-action" style="padding: 0.4rem 0.8rem; margin: 0; min-width: auto; font-weight: bold; background: rgba(18, 22, 35, 0.8); border: 1px solid rgba(255,255,255,0.1);">➖</button>
+                    <button id="cladogram-zoom-reset" class="btn btn-action" style="padding: 0.4rem 0.8rem; margin: 0; min-width: auto; font-size: 0.75rem; background: rgba(18, 22, 35, 0.8); border: 1px solid rgba(255,255,255,0.1);">RESET</button>
+                </div>
+                
+                <svg id="cladogram-svg" width="100%" height="100%" style="cursor: grab; display: block; user-select: none;">
+                    <!-- Group for zoom/pan transform -->
+                    <g id="cladogram-zoom-group">
+                        <g id="cladogram-connections-group"></g>
+                        <g id="cladogram-nodes-group"></g>
+                    </g>
+                </svg>
+            </div>
+            
+            <!-- Quick help legend -->
+            <div class="cladogram-legend" style="display: flex; gap: 1.5rem; margin-top: 0.75rem; font-size: 0.75rem; justify-content: center; font-family: var(--font-mono); color: var(--text-secondary);">
+                <span><em style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-cyan); margin-right: 4px; box-shadow: 0 0 6px var(--accent-cyan);"></em>Active Clade</span>
+                <span><em style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); margin-right: 4px;"></em>Locked Clade</span>
+                <span><em style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-red); margin-right: 4px;"></em>Extinct Clade</span>
+                <span><em style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #6b7280; margin-right: 4px;"></em>Dead-end Trap</span>
+                <span>🖱️ Drag to pan | Scroll or use +/- to zoom | Click node to select</span>
             </div>
         </div>
     </div>
