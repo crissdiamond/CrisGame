@@ -244,68 +244,44 @@
 
                     <!-- CLIMATE TAB -->
                     <div class="strip-tab-content active" id="strip-content-climate">
-                        <!-- Temperature Gauge -->
-                        <div class="climate-gauge-card">
-                            <div class="gauge-header">
-                                <span class="gauge-icon">🌡️</span>
-                                <span class="gauge-label">TEMPERATURE</span>
-                                <span class="gauge-value" id="gauge-temp-val">25°C</span>
-                            </div>
-                            <div class="gauge-track-wrapper">
+                        <div class="strip-climate-grid">
+                            <!-- Temperature Gauge -->
+                            <div class="climate-bar-wrapper">
+                                <span class="climate-label">🌡️ TEMP</span>
                                 <div class="gauge-track">
                                     <div class="gauge-zone" id="gauge-temp-zone"></div>
                                     <div class="gauge-fill" id="gauge-temp-fill" style="width:64%"></div>
                                     <div class="gauge-thumb" id="gauge-temp-thumb" style="left:64%"></div>
                                 </div>
-                                <div class="gauge-track-labels">
-                                    <span>-200°C (Cryo)</span>
-                                    <span>150°C (Boiling)</span>
-                                </div>
+                                <span class="gauge-value" id="gauge-temp-val">25°C</span>
+                                <!-- Keep zone label hidden in DOM for JS updates -->
+                                <span id="gauge-temp-zone-label" style="display:none"></span>
                             </div>
-                            <div class="gauge-zone-label" id="gauge-temp-zone-label">— Water Zone (0–100°C) —</div>
-                        </div>
-                        <!-- Solvent Coverage Gauge -->
-                        <div class="climate-gauge-card">
-                            <div class="gauge-header">
-                                <span class="gauge-icon" id="gauge-solvent-icon">💧</span>
-                                <span class="gauge-label"><span id="gauge-solvent-label">WATER</span> COVERAGE</span>
-                                <span class="gauge-value" id="gauge-water-val">30%</span>
-                            </div>
-                            <div class="gauge-track-wrapper">
+                            <!-- Solvent Coverage Gauge -->
+                            <div class="climate-bar-wrapper">
+                                <span class="climate-label">
+                                    <span id="gauge-solvent-icon">💧</span> <span id="gauge-solvent-label">WATER</span>
+                                </span>
                                 <div class="gauge-track">
                                     <div class="gauge-zone" id="gauge-water-zone" style="left:10%; width:80%"></div>
                                     <div class="gauge-fill gauge-fill-water" id="gauge-water-fill" style="width:30%"></div>
                                     <div class="gauge-thumb" id="gauge-water-thumb" style="left:30%"></div>
                                 </div>
-                                <div class="gauge-track-labels">
-                                    <span>Arid (0%)</span>
-                                    <span>Oceanic (100%)</span>
-                                </div>
+                                <span class="gauge-value" id="gauge-water-val">30%</span>
                             </div>
-                            <div class="gauge-zone-label">— Habitable: 10–90% coverage —</div>
-                        </div>
-                        <!-- Radiation Gauge -->
-                        <div class="climate-gauge-card">
-                            <div class="gauge-header">
-                                <span class="gauge-icon">☢️</span>
-                                <span class="gauge-label">COSMIC RADIATION</span>
-                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-                                    <span class="gauge-value" id="gauge-rad-space-val" title="Space radiation">Space: 3.5</span>
-                                    <span class="gauge-value gauge-value-surf" id="gauge-rad-surf-val" title="Surface radiation">Surf: 0.9</span>
-                                </div>
-                            </div>
-                            <div class="gauge-track-wrapper">
+                            <!-- Radiation Gauge -->
+                            <div class="climate-bar-wrapper">
+                                <span class="climate-label">☢️ RAD</span>
                                 <div class="gauge-track">
                                     <div class="gauge-zone" id="gauge-rad-zone" style="left:0%; width:25%"></div>
                                     <div class="gauge-fill gauge-fill-rad" id="gauge-rad-fill" style="width:35%"></div>
                                     <div class="gauge-thumb" id="gauge-rad-thumb" style="left:35%"></div>
                                 </div>
-                                <div class="gauge-track-labels">
-                                    <span>Shielded (0)</span>
-                                    <span>Extreme (10)</span>
+                                <div class="climate-value-double">
+                                    <span class="gauge-value" id="gauge-rad-space-val" title="Space radiation">Space: 3.5</span>
+                                    <span class="gauge-value gauge-value-surf" id="gauge-rad-surf-val" title="Surface radiation">Surf: 0.9</span>
                                 </div>
                             </div>
-                            <div class="gauge-zone-label">— Safe zone: &lt; 2.5 rad/s surface —</div>
                         </div>
                     </div>
 
