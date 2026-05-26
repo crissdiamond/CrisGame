@@ -1287,6 +1287,75 @@ export class GameUI {
     }
 
     /**
+     * Shows a temporary, non-blocking toast notification on screen.
+     */
+    showToast(message, type = 'success') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.position = 'fixed';
+            container.style.bottom = '24px';
+            container.style.right = '24px';
+            container.style.zIndex = '10000';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '12px';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        
+        toast.style.background = 'rgba(15, 23, 42, 0.9)';
+        toast.style.backdropFilter = 'blur(8px)';
+        toast.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        toast.style.color = 'var(--text-primary)';
+        toast.style.padding = '0.75rem 1.25rem';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5)';
+        toast.style.fontSize = '0.85rem';
+        toast.style.fontFamily = 'var(--font-sans)';
+        toast.style.fontWeight = '600';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '10px';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(15px)';
+        toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+
+        let icon = '🎉';
+        if (type === 'success') {
+            toast.style.borderLeft = '4px solid var(--accent-green)';
+            icon = '💾';
+        } else if (type === 'hazard' || type === 'error') {
+            toast.style.borderLeft = '4px solid var(--accent-red)';
+            icon = '⚠️';
+        } else if (type === 'info') {
+            toast.style.borderLeft = '4px solid var(--accent-cyan)';
+            icon = 'ℹ️';
+        }
+
+        toast.innerHTML = `<span style="font-size: 1.1rem; display: flex; align-items: center;">${icon}</span> <span>${message}</span>`;
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 20);
+
+        // Auto remove
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-15px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    /**
      * Cache game state objects for the interventions modal.
      * Does NOT re-render every frame — that would destroy buttons between
      * mousedown and mouseup and prevent click events from firing.

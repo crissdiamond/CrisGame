@@ -69,13 +69,13 @@
 - **Metabolic Saturation Kinetics**: Biological cycles (nitrogen fixation, methanogenesis, and ammonic photosynthesis) scale with atmospheric gas concentration via Michaelis-Menten kinetics, preventing absolute depletion.
 
 ### 3. Interface & Quality of Life
-- **Save & Load System**: Full local storage save/load persistence that restores all physical, biological, event, timeline history, and scrollable terminal log HTML states.
+- **Save & Load System**: Full local storage save/load persistence that restores all physical, biological, event, timeline history, and scrollable terminal log HTML states. Includes responsive toast popups for immediate feedback upon saving or loading.
 - **Interactive Viewport View Toggle**: Click anywhere on the viewport panel to transition between Planet View (Macro) and Microscopic View (Micro), with hover borders and a dynamic status badge.
 - **Biomass Graph & Color Alignment**: Restructured the environment history graph to dynamically color solvent lines based on active presets (Green/Water, Purple/Ammonia, Amber/Methane), changed N₂ history line to match the dashboard, and color-aligned all 20+ microscopic view particles to their 5 biomass categories.
 - **Auto-Pause & Dynamic Milestone Popups**: Milestone modal overlays automatically pause the simulation ticks and threat clocks, resuming automatically on close. Milestone popups dynamically display actual token rewards (+2, +5, +12, or +25) based on event rarity.
 - **Simulation Speed Controls**: Adjustable speed options (1x, 2x, 5x, 10x) with an automated safety lock that restricts simulation to 1x during active threat warnings to prevent panic. Speed settings are automatically restored once all warnings are resolved.
 - **Threat Warning Deflect Popups**: Automatic pauses and warning popups triggered upon first warning detection, allowing players to deflect the threat immediately from the modal or dismiss it.
-- **Earth Timeline Comparison Roadmap**: Integrated an Earth pacing comparison card on the Roadmap details panel. Displays real-world Earth equivalent timeline ages for all milestones (on Water and alternative biochemistry lines) and compares the planet's actual unlock ages, highlighting whether evolution is earlier (cyan), later (amber), or simultaneous (green).
+- **Always-Visible Pacing Comparison Timeline**: Added a dedicated pacing timeline card on the main dashboard above the tab controls. The component dynamically displays the planet's current age, the latest unlocked milestone, and an Earth comparison badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, or `BEHIND`) across all solvent types. Remapped names for cryo-beasts and cryo-colloids to support methane worlds.
 
 ---
 

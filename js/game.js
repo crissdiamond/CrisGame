@@ -522,9 +522,11 @@ class GameController {
             };
             localStorage.setItem('evoplanet_save', JSON.stringify(data));
             this.ui.logEvent("STATE ENCRYPTED", "Simulation progress saved successfully to local archives.", "success");
+            this.ui.showToast("Simulation progress saved successfully!", "success");
         } catch (err) {
             console.error("Save state failed:", err);
             this.ui.logEvent("SAVE FAILED", "Storage error encountered during serialization.", "hazard");
+            this.ui.showToast("Save progress failed!", "hazard");
         }
     }
 
@@ -533,6 +535,7 @@ class GameController {
             const raw = localStorage.getItem('evoplanet_save');
             if (!raw) {
                 this.ui.logEvent("RESTORE FAILED", "No saved state detected in local storage.", "hazard");
+                this.ui.showToast("No saved game state detected!", "hazard");
                 return;
             }
             const data = JSON.parse(raw);
@@ -652,9 +655,11 @@ class GameController {
             this.historyView.render();
 
             this.ui.logEvent("STATE RESTORED", "Simulation state successfully synchronized to local storage archive.", "success");
+            this.ui.showToast("Simulation progress loaded successfully!", "success");
         } catch (err) {
             console.error("Load state failed:", err);
             this.ui.logEvent("RECOVERY ERROR", "Saved file corrupted or incompatible.", "hazard");
+            this.ui.showToast("Load progress failed!", "hazard");
         }
     }
 }
