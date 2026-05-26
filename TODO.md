@@ -1,5 +1,267 @@
 # TODO
 
+## Prioritised TODO Backlog
+
+### P0 — Fix before adding more features
+
+#### 1. Confirm and standardise project folder structure
+- Ensure `index.html` references match the actual repository layout.
+- Recommended structure:
+  - `index.html`
+  - `server.py`
+  - `css/style.css`
+  - `js/game.js`
+  - `js/planet.js`
+  - `js/simulation.js`
+  - `js/events.js`
+  - `js/evolutionData.js`
+  - `js/ui.js`
+  - `js/visualization.js`
+  - `js/history.js`
+  - `js/historyView.js`
+- Acceptance criteria:
+  - Running `python server.py` serves the app without 404 errors for CSS or JS files.
+  - Browser console is clean on first load.
+  - All module imports resolve correctly.
+
+#### 2. Make `evolutionData.js` the single source of truth for evolution metadata
+- Remove duplicated nudge, node, branch, and cost definitions from controller/UI logic where possible.
+- Derive evolution node names, nudge IDs, parent relationships, costs, monitorability, and descriptions from `EVOLUTION_GRAPH`.
+- Acceptance criteria:
+  - Adding or changing an evolution node only requires updating `evolutionData.js`, unless new behaviour is genuinely required.
+  - No second hard-coded nudge map exists in `game.js`.
+  - UI labels and simulation IDs are generated consistently from the graph.
+
+#### 3. Add graph integrity validation
+- Create a lightweight development validation script for `EVOLUTION_GRAPH`.
+- Check that:
+  - every parent ID exists;
+  - every node has a valid `id`, `name`, `clade`, `parents`, `popKey`, `cap`, `unit`, `reqs`, and `details`;
+  - every `popKey` maps correctly to a biology property or biomass map key;
+  - all nudge IDs referenced by nodes are valid and unique;
+  - there are no accidental cycles in the DAG.
+- Acceptance criteria:
+  - A single command can validate the evolution graph.
+  - Invalid graph changes fail loudly during development.
+
+#### 4. Fix naming inconsistencies across graph, UI, controller, and simulation
+- Review aliases such as `cryo_beasts` vs `cryo_organisms`, `ai` vs `technologicalAI`, `insects` vs `arthropod`, and any other graph/UI naming drift.
+- Introduce a deliberate alias/display-name layer if needed.
+- Acceptance criteria:
+  - Internal IDs are stable and machine-oriented.
+  - Display labels are separate and user-friendly.
+  - Save/load uses stable internal IDs only.
+
+---
+
+### P1 — Stabilise the core game loop
+
+#### 5. Add basic runtime smoke tests
+- Add a simple test or script that loads core modules and instantiates:
+  - `Planet`;
+  - `BiologySimulation`;
+  - `EventSystem`;
+  - `HistoryRecorder`.
+- Acceptance criteria:
+  - The smoke test confirms core modules can be imported without browser DOM dependencies.
+  - The simulation can advance for a small number of ticks without throwing errors.
+
+#### 6. Add save/load migration and validation
+- Save structured state, not raw or fragile UI representations where avoidable.
+- Add a `saveVersion` field.
+- Validate loaded state before applying it.
+- Add migration shims for saves created before the DAG refactor.
+- Acceptance criteria:
+  - Old saves do not crash the app.
+  - Invalid saves show a clear warning.
+  - Save/load restores planet, biology, event, token, history, and timeline state consistently.
+
+#### 7. Replace saved `scienceLogHTML` with structured log entries
+- Store log entries as structured data:
+  - timestamp / simulation age;
+  - title;
+  - message;
+  - type;
+  - optional scientific detail.
+- Render logs from data on load.
+- Acceptance criteria:
+  - Save files no longer depend on current HTML structure.
+  - Log styling can change without breaking old saves.
+
+#### 8. Add deterministic debug mode
+- Add an optional seeded random number generator for development.
+- Use it for event rolls, biological transition rolls, hotspot generation, and other random simulation behaviours.
+- Acceptance criteria:
+  - A given seed produces repeatable simulation outcomes.
+  - Debugging rare milestone or disaster bugs becomes practical.
+
+---
+
+### P2 — Refactor for maintainability
+
+#### 9. Split `GameUI` into focused view modules
+- Break the current UI layer into smaller modules, for example:
+  - `setupView.js`
+  - `dashboardView.js`
+  - `evolutionTreeView.js`
+  - `interventionsView.js`
+  - `toastView.js`
+  - `logView.js`
+- Acceptance criteria:
+  - Each view module owns a clear section of DOM.
+  - `GameUI` becomes an orchestrator/facade rather than a very large class.
+
+#### 10. Split `simulation.js` by biological domain
+- Separate water, ammonia, and methane evolution logic.
+- Extract shared mechanics such as growth curves, hazard rolls, transition gates, biomass decay, and biodiversity calculations.
+- Acceptance criteria:
+  - Adding a new solvent line does not require editing one very large simulation file.
+  - Shared transition mechanics are tested once and reused.
+
+#### 11. Split `events.js` into event registry and event engine
+- Move event definitions into data/registry files.
+- Keep warning lifecycle, deflection logic, and application mechanics in a smaller event engine.
+- Acceptance criteria:
+  - Adding a new hazard or intervention does not require editing core event lifecycle code.
+  - Event definitions are easier to scan and balance.
+
+#### 12. Reduce inline styles in `index.html`
+- Move token container and repeated visual styles into `style.css`.
+- Keep HTML focused on structure.
+- Acceptance criteria:
+  - Header token styling is CSS-driven.
+  - Theme changes do not require editing HTML.
+
+---
+
+### P3 — Improve player experience
+
+#### 13. Add a first-run onboarding flow
+- Add a short guided introduction explaining:
+  - the player objective;
+  - climate and solvent basics;
+  - tokens;
+  - interventions;
+  - threats;
+  - evolution milestones.
+- Acceptance criteria:
+  - A new player understands what to do in the first 2 minutes.
+  - Onboarding can be skipped and replayed.
+
+#### 14. Make active objectives visible and measurable
+- Implement one or more clear success targets, for example:
+  - reach stable multicellular life;
+  - sustain complex life for a fixed time;
+  - reach sentient life;
+  - maximise biodiversity before stellar decline.
+- Acceptance criteria:
+  - The dashboard always shows the active objective.
+  - The player can see progress and failure/recovery conditions.
+
+#### 15. Improve failure, extinction, and recovery clarity
+- Make population crashes, extinction pressure, and recovery phases more obvious.
+- Add severity labels and recovery progress indicators.
+- Acceptance criteria:
+  - A player can tell why a biosphere collapsed.
+  - The game suggests possible recovery levers without solving the game for the player.
+
+#### 16. Add developer/debug controls
+- Add an optional debug panel for local development:
+  - add tokens;
+  - force event;
+  - unlock node;
+  - advance time;
+  - print current planet/biology state;
+  - reset history.
+- Acceptance criteria:
+  - Debug tools are hidden from normal players.
+  - Testing rare branches does not require waiting through long simulations.
+
+---
+
+### P4 — Expand content after stabilisation
+
+#### 17. Complete the interactive SVG cladogram visualiser
+- Implement pan/drag navigation.
+- Add curved parent-child lines and merger nodes.
+- Add hover/click detail popups.
+- Show locked, unlocked, boosted, extinct, and thriving node states.
+- Acceptance criteria:
+  - The tree is readable across water, ammonia, and methane lines.
+  - The visualiser uses graph data rather than duplicate hard-coded layout rules where practical.
+
+#### 18. Add scenario presets and challenge modes
+- Expand starting presets such as:
+  - Frozen Ocean World;
+  - Dry Super-Earth;
+  - High Radiation Young Star;
+  - Volcanic Proto-Planet;
+  - Methane Cryoworld;
+  - Ammonia Twilight World.
+- Acceptance criteria:
+  - Each preset creates a meaningfully different strategy.
+  - Presets are data-driven and easy to add.
+
+#### 19. Balance token economy and intervention costs
+- Review Blue, Silver, and Gold token accrual and conversion rates.
+- Balance disaster deflection, genetic upgrades, and environmental interventions.
+- Acceptance criteria:
+  - Tokens create meaningful tradeoffs.
+  - No token tier becomes irrelevant or trivially abundant.
+
+#### 20. Add scientific glossary and explainability layer
+- Add a compact glossary for terms such as:
+  - eukaryogenesis;
+  - endosymbiosis;
+  - photolysis;
+  - geodynamo;
+  - silicate weathering;
+  - Michaelis-Menten kinetics;
+  - methanogenesis;
+  - azotosome.
+- Acceptance criteria:
+  - Scientific explanations are accessible without overwhelming gameplay.
+  - Players can inspect why a mechanic exists.
+
+---
+
+### P5 — Packaging and release readiness
+
+#### 21. Add repository documentation
+- Add or update:
+  - `README.md`;
+  - run instructions;
+  - project structure;
+  - gameplay overview;
+  - development notes;
+  - known limitations.
+- Acceptance criteria:
+  - A new developer can run the project locally in under 5 minutes.
+
+#### 22. Add lightweight linting/formatting
+- Add a formatter and linter suitable for vanilla JavaScript.
+- Keep configuration minimal.
+- Acceptance criteria:
+  - Formatting is consistent.
+  - Common JavaScript mistakes are caught early.
+
+#### 23. Add browser compatibility notes
+- Define supported browsers.
+- Test at least Chrome/Edge and Firefox.
+- Acceptance criteria:
+  - Known browser limitations are documented.
+  - Canvas, modules, local storage, and CSS features work in supported browsers.
+
+#### 24. Prepare a playable release build
+- Create a clean release folder or deployment process.
+- Remove debug-only console noise.
+- Confirm local storage, save/load, and assets work from the release location.
+- Acceptance criteria:
+  - The project can be shared as a playable static web app.
+  - The release has no broken paths or missing assets.
+
+---
+
 ## Roadmap Ideas
 
 ### 1. Add Clear Player Objectives
