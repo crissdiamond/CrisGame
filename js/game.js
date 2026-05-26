@@ -180,8 +180,10 @@ class GameController {
         try {
             if (localStorage.getItem('evoplanet_save')) {
                 this.ui.logEvent("LOCAL SCAN", "Saved state detected. Click 'Load' to restore previous configuration.", "success");
+                this.ui.setupLoadBtn.style.display = 'block';
             } else {
                 this.ui.logEvent("LOCAL SCAN", "No saved states found. Initialize a protoplanet to start.", "system");
+                this.ui.setupLoadBtn.style.display = 'none';
             }
         } catch (e) {
             // localStorage not available
@@ -327,6 +329,7 @@ class GameController {
                 version: 1.0,
                 timestamp: Date.now(),
                 userSpeed: this.userSpeed,
+                isPlaying: this.isPlaying,
                 planet: {
                     temperature: this.planet.temperature,
                     waterCoverage: this.planet.waterCoverage,
@@ -533,6 +536,13 @@ class GameController {
                 return;
             }
             const data = JSON.parse(raw);
+
+            if (typeof data.isPlaying === 'boolean') {
+                this.isPlaying = data.isPlaying;
+            } else {
+                this.isPlaying = true;
+            }
+            this.ui.setupModal.style.display = 'none';
 
             if (typeof data.userSpeed === 'number') {
                 this.userSpeed = data.userSpeed;

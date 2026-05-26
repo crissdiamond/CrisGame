@@ -237,6 +237,7 @@ export class GameUI {
 
         // Setup Modal Elements
         this.setupModal = document.getElementById('setup-modal');
+        this.setupLoadBtn = document.getElementById('setup-load-btn');
         this.setupStarClass = document.getElementById('setup-star-class');
         this.setupStarSize = document.getElementById('setup-star-size');
         this.setupStarSizeVal = document.getElementById('setup-star-size-val');
@@ -560,6 +561,11 @@ const earthTimeline = {
             };
             this.setupModal.style.display = 'none';
             handlers.onLaunch(config);
+        });
+
+        // Load configuration from setup modal
+        this.setupLoadBtn.addEventListener('click', () => {
+            handlers.onLoadState();
         });
 
         // Play/Pause
