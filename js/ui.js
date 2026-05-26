@@ -95,6 +95,11 @@ export class GameUI {
         this.interventionsGridList = document.getElementById('interventions-grid-list');
         this.handlers = null;
 
+        // Pacing Timeline Elements
+        this.pacingStatus = document.getElementById('pacing-status');
+        this.pacingPlayerFill = document.getElementById('pacing-player-fill');
+        this.pacingText = document.getElementById('pacing-text');
+
         // Water Cards
         this.soupCard = document.getElementById('soup-card');
         this.anaerobicCard = document.getElementById('anaerobic-card');
@@ -860,10 +865,19 @@ export class GameUI {
         this.nodeDetailsTitle.textContent = node.name;
         
         let comparisonHTML = "";
-        const earthMilestone = earthTimeline[node.id];
+        let earthMilestone = earthTimeline[node.id];
+        if (!earthMilestone) {
+            if (node.id === 'cryo_beasts') earthMilestone = earthTimeline['cryo_organisms'];
+            if (node.id === 'cryo_colloids') earthMilestone = earthTimeline['cryo_colloid'];
+        }
+
         if (earthMilestone) {
             const earthAge = earthMilestone.age;
-            const unlockAge = biology.unlockAges ? biology.unlockAges[node.id] : null;
+            let unlockAge = biology.unlockAges ? biology.unlockAges[node.id] : null;
+            if (unlockAge === undefined || unlockAge === null) {
+                if (node.id === 'cryo_beasts') unlockAge = biology.unlockAges['cryo_organisms'];
+                if (node.id === 'cryo_colloids') unlockAge = biology.unlockAges['cryo_colloid'];
+            }
             
             if (unlockAge !== undefined && unlockAge !== null) {
                 const diff = earthAge - unlockAge;
@@ -1164,6 +1178,112 @@ export class GameUI {
 
         // Render Evolution Tree nodes dynamically
         this.renderEvolutionTree(planet, biology);
+
+        // Update the always-visible pacing timeline
+        this.updatePacingTimeline(planet, biology);
+    }
+
+    /**
+     * Update the always-visible planetary pacing timeline comparison card.
+     */
+    updatePacingTimeline(planet, biology) {
+        const solvent = planet.activeSolvent;
+        
+        // Define sequence of milestones by solvent
+        const solventMilestones = {
+            water: [
+                'soup', 'membrane', 'bacteria', 'anaerobic', 'photosynthetic', 'nucleus', 'mitochondria', 
+                'eukaryotes', 'sexual', 'multicellular', 'sponges', 'meduses', 'worms', 'fish', 
+                'mosses', 'ferns', 'conifers', 'angiosperms', 'cambrian', 'insects', 'tetrapods', 
+                'sauropsids', 'synapsids', 'cognitive', 'ai', 'cyborg', 'noosphere', 'gaia_hivemind'
+            ],
+            ammonia: [
+                'ammonic_soup', 'ammonic_proto', 'ammonic_multi', 'silico_flora', 'cryo_fauna', 
+                'crystalline_cognitive', 'quantum_lattices', 'cryo_hivemind'
+            ],
+            methane: [
+                'methane_soup', 'methane_proto', 'methane_multi', 'cryo_beasts', 'cryo_polymer_network', 
+                'thinking_ocean', 'cryo_colloids'
+            ]
+        };
+
+        const milestones = solventMilestones[solvent] || [];
+        let latestUnlocked = null;
+        let latestUnlockAge = null;
+
+        // Helper to check unlock status with key fallbacks
+        const getUnlockAge = (nodeId) => {
+            if (!biology.unlockAges) return null;
+            let age = biology.unlockAges[nodeId];
+            if (age === undefined || age === null) {
+                // Methane line naming fallbacks
+                if (nodeId === 'cryo_beasts') age = biology.unlockAges['cryo_organisms'];
+                if (nodeId === 'cryo_colloids') age = biology.unlockAges['cryo_colloid'];
+            }
+            return age;
+        };
+
+        // Find the last unlocked milestone in sequence
+        for (let i = milestones.length - 1; i >= 0; i--) {
+            const mId = milestones[i];
+            const age = getUnlockAge(mId);
+            if (age !== null && age !== undefined) {
+                latestUnlocked = mId;
+                latestUnlockAge = age;
+                break;
+            }
+        }
+
+        // Determine pacing state
+        let statusText = "PRIMORDIAL";
+        let statusClass = "primordial";
+        let milestoneName = "Prebiotic Stage";
+
+        if (latestUnlocked) {
+            let earthMilestone = earthTimeline[latestUnlocked];
+            // Fallbacks for earthTimeline lookup
+            if (!earthMilestone) {
+                if (latestUnlocked === 'cryo_beasts') earthMilestone = earthTimeline['cryo_organisms'];
+                if (latestUnlocked === 'cryo_colloids') earthMilestone = earthTimeline['cryo_colloid'];
+            }
+
+            milestoneName = earthMilestone ? earthMilestone.name : latestUnlocked;
+            
+            if (earthMilestone) {
+                const earthAge = earthMilestone.age;
+                const diff = earthAge - latestUnlockAge;
+                if (Math.abs(diff) < 15.0) {
+                    statusText = "ON TRACK";
+                    statusClass = "on-track";
+                } else if (diff >= 15.0) {
+                    statusText = `AHEAD (+${diff.toFixed(0)}M)`;
+                    statusClass = "ahead";
+                } else {
+                    statusText = `BEHIND (${Math.abs(diff).toFixed(0)}M)`;
+                    statusClass = "behind";
+                }
+            } else {
+                statusText = "ON TRACK";
+                statusClass = "on-track";
+            }
+        }
+
+        // Update DOM Elements
+        if (this.pacingStatus) {
+            this.pacingStatus.className = `pacing-status-badge ${statusClass}`;
+            this.pacingStatus.textContent = statusText;
+        }
+
+        // Update fill bar progress based on planet age relative to 4540 Myr target
+        const maxAgeTarget = 4540.0;
+        const progressPct = Math.min(100, Math.max(0, (planet.age / maxAgeTarget) * 100));
+        if (this.pacingPlayerFill) {
+            this.pacingPlayerFill.style.width = `${progressPct}%`;
+        }
+
+        if (this.pacingText) {
+            this.pacingText.textContent = `Age: ${planet.age.toFixed(1)} / ${maxAgeTarget.toFixed(0)} Myr (${milestoneName})`;
+        }
     }
 
     /**

@@ -1834,3 +1834,97 @@ body {
     border-radius: 0 6px 6px 0;
 }
 
+/* Always-Visible Planetary Pacing Card */
+.pacing-timeline-card {
+    margin-bottom: 0.85rem;
+    padding: 0.75rem 0.85rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.pacing-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.pacing-status-badge {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.pacing-status-badge.primordial {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
+.pacing-status-badge.ahead {
+    background: rgba(6, 182, 212, 0.15);
+    color: var(--accent-cyan);
+    box-shadow: 0 0 6px rgba(6, 182, 212, 0.2);
+}
+
+.pacing-status-badge.on-track {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
+}
+
+.pacing-status-badge.behind {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.2);
+}
+
+.pacing-bar-container {
+    position: relative;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pacing-player-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.2));
+    border-right: 1px solid var(--accent-cyan);
+    transition: width 0.3s ease;
+}
+
+.pacing-text-overlay {
+    position: relative;
+    z-index: 2;
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.pacing-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+}
+
+
