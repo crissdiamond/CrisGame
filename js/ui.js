@@ -8,7 +8,8 @@ const earthTimeline = {
     'soup': { age: 600.0, name: "Prebiotic Soup" },
     'membrane': { age: 700.0, name: "Membranes" },
     'bacteria': { age: 800.0, name: "First Prokaryotes" },
-    'anaerobic': { age: 1000.0, name: "Anaerobic Archaea" },
+    'anaerobic': { age: 1000.0, name: "Anoxygenic Chemotrophs" },
+    'anoxygenic_photo': { age: 1200.0, name: "Anoxygenic Photosynthesizers" },
     'photosynthetic': { age: 1500.0, name: "Cyanobacteria" },
     'nucleus': { age: 2100.0, name: "Cellular Nucleus" },
     'mitochondria': { age: 2500.0, name: "Mitochondria Symbiosis" },
@@ -237,8 +238,32 @@ export class GameUI {
         // Tabs
         this.tabMetrics = document.getElementById('tab-metrics');
         this.tabRoadmap = document.getElementById('tab-roadmap');
+        this.tabTuning = document.getElementById('tab-tuning');
         this.tabContentMetrics = document.getElementById('tab-content-metrics');
         this.tabContentRoadmap = document.getElementById('tab-content-roadmap');
+        this.tabContentTuning = document.getElementById('tab-content-tuning');
+
+        // OEC stability gate UI elements
+        this.pacingGateWrapper = document.getElementById('pacing-gate-wrapper');
+        this.pacingGateTimer = document.getElementById('pacing-gate-timer');
+
+        // Anoxygenic photosynthesizer biomass elements
+        this.anoxygenicPhotoCard = document.getElementById('anoxygenic-photo-card');
+        this.anoxygenicPhotoPop = document.getElementById('anoxygenic-photo-pop');
+        this.anoxygenicPhotoProgress = document.getElementById('anoxygenic-photo-progress');
+
+        // Gene tuning interface elements
+        this.thermalResilienceLevelVal = document.getElementById('thermal-resilience-level-val');
+        this.thermalResilienceEffectVal = document.getElementById('thermal-resilience-effect-val');
+        this.btnUpgradeThermal = document.getElementById('btn-upgrade-thermal');
+
+        this.radiationDefenseLevelVal = document.getElementById('radiation-defense-level-val');
+        this.radiationDefenseEffectVal = document.getElementById('radiation-defense-effect-val');
+        this.btnUpgradeRadiation = document.getElementById('btn-upgrade-radiation');
+
+        this.metabolicEfficiencyLevelVal = document.getElementById('metabolic-efficiency-level-val');
+        this.metabolicEfficiencyEffectVal = document.getElementById('metabolic-efficiency-effect-val');
+        this.btnUpgradeMetabolic = document.getElementById('btn-upgrade-metabolic');
         
         // Evolution Tree UI
         this.treeNodesList = document.getElementById('tree-nodes-list');
@@ -324,6 +349,7 @@ export class GameUI {
         // Tab switching events
         this.tabMetrics.addEventListener('click', () => this.switchTab('metrics'));
         this.tabRoadmap.addEventListener('click', () => this.switchTab('roadmap'));
+        this.tabTuning.addEventListener('click', () => this.switchTab('tuning'));
 
         // Setup modal event listeners for realtime feedback
         this.setupStarClass.addEventListener('change', () => this.updateSetupTelemetry());
@@ -431,17 +457,13 @@ export class GameUI {
     }
 
     switchTab(tabId) {
-        if (tabId === 'metrics') {
-            this.tabMetrics.classList.add('active');
-            this.tabRoadmap.classList.remove('active');
-            this.tabContentMetrics.classList.add('active');
-            this.tabContentRoadmap.classList.remove('active');
-        } else {
-            this.tabRoadmap.classList.add('active');
-            this.tabMetrics.classList.remove('active');
-            this.tabContentRoadmap.classList.add('active');
-            this.tabContentMetrics.classList.remove('active');
-        }
+        this.tabMetrics.classList.toggle('active', tabId === 'metrics');
+        this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
+        this.tabTuning.classList.toggle('active', tabId === 'tuning');
+
+        this.tabContentMetrics.classList.toggle('active', tabId === 'metrics');
+        this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
+        this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
     }
 
 
@@ -630,6 +652,24 @@ export class GameUI {
                 }
             });
         });
+
+        // Bind biological adaptation tuning button clicks
+        const handleUpgrade = (traitType) => {
+            if (handlers.onUpgradeTrait) {
+                const res = handlers.onUpgradeTrait(traitType);
+                if (res.success) {
+                    this.logEvent("GENETIC UPGRADE", res.msg, "success");
+                    this.showToast(res.msg, "success");
+                } else {
+                    this.logEvent("UPGRADE DENIED", res.msg, "hazard");
+                    this.showToast(res.msg, "hazard");
+                }
+            }
+        };
+
+        this.btnUpgradeThermal.addEventListener('click', () => handleUpgrade('thermal'));
+        this.btnUpgradeRadiation.addEventListener('click', () => handleUpgrade('radiation'));
+        this.btnUpgradeMetabolic.addEventListener('click', () => handleUpgrade('metabolic'));
     }
 
     /**
@@ -775,8 +815,9 @@ export class GameUI {
                 { id: 'soup', name: 'Prebiotic Soup', pop: biology.organicSoup, cap: 100.0, unit: 'ppm', req: 'Water > 10%, Temp 10-90°C', nudgeId: null, cost: 0 },
                 { id: 'membrane', name: 'External Membrane', pop: biology.unlockedMembrane ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Organic Soup > 8 ppm', nudgeId: null, cost: 0 },
                 { id: 'bacteria', name: 'Prokaryotes (Bacteria)', pop: biology.unlockedBacteria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Membrane & Soup > 15 ppm', nudgeId: null, cost: 0 },
-                { id: 'anaerobic', name: 'Anaerobic Archea', pop: biology.anaerobicPop, cap: 150.0, unit: 'M/mL', req: 'Bacterial emergence', nudgeId: null, cost: 0 },
-                { id: 'photosynthetic', name: 'Cyanobacteria', pop: biology.photosyntheticPop, cap: 200.0, unit: 'M/mL', req: 'Bacteria > 25 M/mL', nudgeId: null, cost: 0 },
+                { id: 'anaerobic', name: 'Anoxygenic Chemotrophs', pop: biology.anaerobicPop, cap: 150.0, unit: 'M/mL', req: 'Bacterial emergence', nudgeId: null, cost: 0 },
+                { id: 'anoxygenic_photo', name: 'Anoxygenic Photosynthesizers', pop: biology.anoxygenicPhotoPop, cap: 180.0, unit: 'M/mL', req: 'Chemotrophs > 20 M/mL & Solar Radiance', nudgeId: null, cost: 0 },
+                { id: 'photosynthetic', name: 'Cyanobacteria', pop: biology.photosyntheticPop, cap: 200.0, unit: 'M/mL', req: 'Anoxygenic Photo > 15 M/mL & 100 Myr OEC Stability', nudgeId: null, cost: 0 },
                 { id: 'nucleus', name: 'Cellular Nucleus', pop: biology.unlockedNucleus ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Cyanobacteria > 15 M/mL', nudgeId: null, cost: 0 },
                 { id: 'mitochondria', name: 'Mitochondria Symbiosis', pop: biology.unlockedMitochondria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Nucleus & O₂ > 1.2% OR Nudge', nudgeId: 'endosymbiosis', nudgeName: 'Promote Endosymbiosis', cost: 8 },
                 { id: 'eukaryotes', name: 'Eukaryotic Cells', pop: biology.eukaryoticPop, cap: biology.unlockedSexualReproduction ? 180.0 : 120.0, unit: 'M/mL', req: 'Mitochondria Symbiosis', nudgeId: null, cost: 0 },
@@ -1176,6 +1217,75 @@ export class GameUI {
             }
         }
 
+        // 1. Update OEC stability gate countdown
+        const showGate = (
+            planet.activeSolvent === 'water' &&
+            biology.unlockedAnoxygenicPhoto &&
+            !biology.unlockedPhotosynthetic
+        );
+        if (showGate) {
+            this.pacingGateWrapper.style.display = 'block';
+            this.pacingGateTimer.textContent = `${Math.max(0.0, biology.oecStabilityTimer).toFixed(1)} / 100.0 Myr`;
+            
+            const effRad = planet.getEffectiveRadiation() * Math.max(0.2, 1.0 - (biology.radiationDefenseLevel || 0) * 0.15);
+            const isStable = (
+                planet.temperature >= 15.0 && planet.temperature <= 55.0 &&
+                planet.waterCoverage >= 20.0 &&
+                effRad <= 3.0
+            );
+            if (isStable) {
+                this.pacingGateTimer.style.color = '#00f2fe';
+                this.pacingGateWrapper.style.animation = 'pulse-light 2s infinite';
+            } else {
+                this.pacingGateTimer.style.color = '#ef4444';
+                this.pacingGateWrapper.style.animation = 'none';
+            }
+        } else {
+            this.pacingGateWrapper.style.display = 'none';
+        }
+
+        // 2. Update Genetic Tuning panel values and buttons
+        if (this.tabContentTuning && this.tabContentTuning.classList.contains('active')) {
+            // Thermal Resilience
+            const thermalLvl = biology.thermalResilienceLevel || 0;
+            this.thermalResilienceLevelVal.textContent = `Lvl ${thermalLvl} / 5`;
+            this.thermalResilienceEffectVal.textContent = `±${thermalLvl * 2}°C`;
+            if (thermalLvl >= 5) {
+                this.btnUpgradeThermal.textContent = "MAX UPGRADE";
+                this.btnUpgradeThermal.disabled = true;
+            } else {
+                const cost = 4 + thermalLvl * 3;
+                this.btnUpgradeThermal.textContent = `Upgrade: ${cost} Tokens`;
+                this.btnUpgradeThermal.disabled = false;
+            }
+
+            // Radiation Shielding
+            const radLvl = biology.radiationDefenseLevel || 0;
+            this.radiationDefenseLevelVal.textContent = `Lvl ${radLvl} / 5`;
+            this.radiationDefenseEffectVal.textContent = `-${radLvl * 15}%`;
+            if (radLvl >= 5) {
+                this.btnUpgradeRadiation.textContent = "MAX UPGRADE";
+                this.btnUpgradeRadiation.disabled = true;
+            } else {
+                const cost = 4 + radLvl * 3;
+                this.btnUpgradeRadiation.textContent = `Upgrade: ${cost} Tokens`;
+                this.btnUpgradeRadiation.disabled = false;
+            }
+
+            // Metabolic Efficiency
+            const metabLvl = biology.metabolicEfficiencyLevel || 0;
+            this.metabolicEfficiencyLevelVal.textContent = `Lvl ${metabLvl} / 5`;
+            this.metabolicEfficiencyEffectVal.textContent = `-${metabLvl * 15}%`;
+            if (metabLvl >= 5) {
+                this.btnUpgradeMetabolic.textContent = "MAX UPGRADE";
+                this.btnUpgradeMetabolic.disabled = true;
+            } else {
+                const cost = 4 + metabLvl * 3;
+                this.btnUpgradeMetabolic.textContent = `Upgrade: ${cost} Tokens`;
+                this.btnUpgradeMetabolic.disabled = false;
+            }
+        }
+
         // Render Evolution Tree nodes dynamically
         this.renderEvolutionTree(planet, biology);
 
@@ -1192,7 +1302,7 @@ export class GameUI {
         // Define sequence of milestones by solvent
         const solventMilestones = {
             water: [
-                'soup', 'membrane', 'bacteria', 'anaerobic', 'photosynthetic', 'nucleus', 'mitochondria', 
+                'soup', 'membrane', 'bacteria', 'anaerobic', 'anoxygenic_photo', 'photosynthetic', 'nucleus', 'mitochondria', 
                 'eukaryotes', 'sexual', 'multicellular', 'sponges', 'meduses', 'worms', 'fish', 
                 'mosses', 'ferns', 'conifers', 'angiosperms', 'cambrian', 'insects', 'tetrapods', 
                 'sauropsids', 'synapsids', 'cognitive', 'ai', 'cyborg', 'noosphere', 'gaia_hivemind'

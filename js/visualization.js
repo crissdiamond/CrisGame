@@ -34,6 +34,9 @@ export class GameVisualizer {
                 brightness: Math.random()
             });
         }
+
+        this.textParticles = [];
+        this.hotspots = [];
     }
 
     resize() {
@@ -562,9 +565,78 @@ export class GameVisualizer {
             this.drawMoonBody(ctx, moon.x, moon.y, moon.radius);
         }
 
-        // 9. Draw Incoming Warnings (e.g. Asteroids, passing stars)
-        // Check if there is an active warning for asteroid
-        // We look at planet.age or warning lists
+        // 10. Update and draw surface hotspots
+        this.hotspots = this.hotspots.filter(h => {
+            h.life -= 0.016;
+            return h.life > 0;
+        });
+        this.hotspots.forEach(h => {
+            const rotX = (this.rotationAngle + h.lon) % (Math.PI * 2);
+            if (Math.sin(rotX) >= -0.2) {
+                const posX = cx + Math.cos(rotX) * radius * Math.sqrt(1 - h.yFactor * h.yFactor);
+                const posY = cy + h.yFactor * radius;
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 242, 254, 0.85)';
+                ctx.lineWidth = 1.5;
+                const pulse = 4 + Math.sin(Date.now() * 0.008) * 2;
+                ctx.beginPath();
+                ctx.arc(posX, posY, pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(0, 242, 254, 0.3)';
+                ctx.beginPath();
+                ctx.arc(posX, posY, pulse + 4, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        });
+
+        // 11. Update and draw floating text particles
+        this.textParticles = this.textParticles.filter(p => {
+            p.y += p.ySpeed;
+            p.opacity -= 0.015;
+            p.life -= 0.016;
+            return p.life > 0 && p.opacity > 0;
+        });
+        this.textParticles.forEach(p => {
+            ctx.save();
+            ctx.fillStyle = p.color;
+            ctx.font = 'bold 13px "Outfit", "Inter", sans-serif';
+            ctx.globalAlpha = p.opacity;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 4;
+            ctx.textAlign = 'center';
+            ctx.fillText(p.text, p.x, p.y);
+            ctx.restore();
+        });
+    }
+
+    spawnHotspot(lon, yFactor, value) {
+        this.hotspots.push({
+            lon: lon,
+            yFactor: yFactor,
+            value: value,
+            life: 3.0
+        });
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const radius = Math.min(w, h) * 0.32;
+        
+        const rotX = (this.rotationAngle + lon) % (Math.PI * 2);
+        const posX = cx + Math.cos(rotX) * radius * Math.sqrt(1 - yFactor * yFactor);
+        const posY = cy + yFactor * radius;
+
+        this.textParticles.push({
+            x: posX,
+            y: posY - 5,
+            text: `+${value} EVO`,
+            opacity: 1.0,
+            color: '#00f2fe',
+            ySpeed: -0.7,
+            life: 1.5
+        });
     }
 
     getMoonGeometry(cx, cy, planetRadius, w, h) {

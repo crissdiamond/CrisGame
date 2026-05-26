@@ -138,6 +138,20 @@ export class BiologySimulation {
         // General Mutation / Adaptation Level
         this.radiationResistance = 0.1;
         this.unlockAges = {};
+
+        // --- New Intermediate Species ---
+        this.chemoProkaryotePop = 0.0;
+        this.anoxygenicPhotoPop = 0.0;
+        this.unlockedChemoProkaryote = false;
+        this.unlockedAnoxygenicPhoto = false;
+
+        // --- Stability Gate ---
+        this.oecStabilityTimer = 100.0;
+
+        // --- Genetic Trait Upgrade Levels (0 to 5) ---
+        this.thermalResilienceLevel = 0;
+        this.radiationDefenseLevel = 0;
+        this.metabolicEfficiencyLevel = 0;
     }
 
     /**
@@ -185,6 +199,7 @@ export class BiologySimulation {
                 'soup': 'soup',
                 'membrane': 'membrane',
                 'anaerobic': 'anaerobic',
+                'anoxygenic_photo': 'anoxygenic_photo',
                 'photosynthesis': 'photosynthetic',
                 'nucleus': 'nucleus',
                 'endosymbiosis': 'mitochondria',
@@ -249,6 +264,9 @@ export class BiologySimulation {
      */
     update(tickRate, planet) {
         this._decayPendingNudges(tickRate);
+
+        const effRad = planet.getEffectiveRadiation() * Math.max(0.2, 1.0 - this.radiationDefenseLevel * 0.15);
+        const effDecayMult = Math.max(0.25, 1.0 - this.metabolicEfficiencyLevel * 0.15);
 
         const events = [];
         let o2Prod = 0;
@@ -335,24 +353,80 @@ export class BiologySimulation {
             if (this.anaerobicPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 0, 45, 80);
                 const o2Toxicity = Math.max(0.01, 1 - (planet.o2 / 25.0));
-                const radViability = Math.max(0, 1 - (planet.getEffectiveRadiation() * (1 - this.radiationResistance)) / 6.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 6.0);
                 const totalViability = tempViability * o2Toxicity * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
                     const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
-                    const growthRate = 1.3 * totalViability * nutrientFactor;
+                    // Apply upgrade factors: thermal resilience multiplier
+                    const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
+                    const growthRate = 1.3 * totalViability * nutrientFactor * traitMult;
                     const dPop = growthRate * this.anaerobicPop * (1 - this.anaerobicPop / 150.0) * tickRate;
                     this.anaerobicPop = Math.max(0.01, this.anaerobicPop + dPop);
-                    this.organicSoup = Math.max(0, this.organicSoup - this.anaerobicPop * 0.15 * tickRate);
+                    this.organicSoup = Math.max(0, this.organicSoup - this.anaerobicPop * 0.15 * effDecayMult * tickRate);
                 } else {
-                    this.anaerobicPop = Math.max(0, this.anaerobicPop - this.anaerobicPop * 0.4 * tickRate);
+                    this.anaerobicPop = Math.max(0, this.anaerobicPop - this.anaerobicPop * 0.4 * effDecayMult * tickRate);
+                }
+            }
+
+            // Anoxygenic Photosynthesizers (consumes CO2 and soup, does NOT release O2)
+            if (this.unlockedBacteria && this.anaerobicPop > 20.0 && !this.unlockedAnoxygenicPhoto) {
+                // Needs some starlight radiation
+                const condMult = 1.0 + Math.min(2.0, planet.radiation * 0.5);
+                if (this.tryFire('anoxygenic_photo', RARITY.NOTABLE, condMult, tickRate, planet)) {
+                    this.anoxygenicPhotoPop = 0.1;
+                    this.unlockedAnoxygenicPhoto = true;
+                    events.push({
+                        title: "🌞 ANOXYGENIC PHOTOSYNTHESIS UNLOCKED",
+                        desc: "Early cells develop bacteriochlorophyll to capture starlight energy, using sulfur/iron rather than water.",
+                        scientificDetails: "Anoxygenic phototrophs utilize simple reaction centers to harvest photons, driving cyclic electron transfer to generate ATP. Using hydrogen sulfide (H2S) or ferrous iron (Fe2+) as electron donors, they synthesize carbon without venting oxygen.",
+                        type: "success",
+                        tier: RARITY.NOTABLE.name,
+                        tokens: RARITY.NOTABLE.award,
+                        unlockKey: 'unlockedAnoxygenicPhoto'
+                    });
+                }
+            }
+
+            if (this.anoxygenicPhotoPop > 0) {
+                const tempViability = this.getTempViability(planet.temperature, 5, 35, 70);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 5.0);
+                const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
+
+                if (totalViability > 0.05) {
+                    const nutrientFactor = Math.min(1.0, this.organicSoup / 15.0);
+                    const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
+                    const growthRate = 1.1 * totalViability * nutrientFactor * co2Viability * traitMult;
+                    const dPop = growthRate * this.anoxygenicPhotoPop * (1 - this.anoxygenicPhotoPop / 180.0) * tickRate;
+                    this.anoxygenicPhotoPop = Math.max(0.01, this.anoxygenicPhotoPop + dPop);
+                    this.organicSoup = Math.max(0, this.organicSoup - this.anoxygenicPhotoPop * 0.08 * effDecayMult * tickRate);
+                } else {
+                    this.anoxygenicPhotoPop = Math.max(0, this.anoxygenicPhotoPop - this.anoxygenicPhotoPop * 0.45 * effDecayMult * tickRate);
+                }
+            }
+
+            // OEC Stability Gate Logic (Water Line)
+            if (this.unlockedAnoxygenicPhoto && !this.unlockedPhotosynthetic) {
+                const isStable = (
+                    planet.temperature >= 15.0 && planet.temperature <= 55.0 &&
+                    planet.waterCoverage >= 20.0 &&
+                    effRad <= 3.0
+                );
+                
+                if (isStable) {
+                    this.oecStabilityTimer = Math.max(0.0, this.oecStabilityTimer - tickRate);
+                } else {
+                    this.oecStabilityTimer = 100.0;
+                }
+            } else {
+                if (!this.unlockedPhotosynthetic) {
+                    this.oecStabilityTimer = 100.0;
                 }
             }
 
             // Photosynthetic Bacteria (Cyanobacteria - consumes CO2, releases O2)
-            if (this.unlockedBacteria && this.anaerobicPop > 25.0 && !this.unlockedPhotosynthetic) {
-                // Radiation-driven mutation pressure is the natural condition richness here.
-                const radBoost = Math.min(3.0, planet.getEffectiveRadiation() * 0.6);
+            if (this.unlockedAnoxygenicPhoto && this.anoxygenicPhotoPop > 15.0 && this.oecStabilityTimer <= 0 && !this.unlockedPhotosynthetic) {
+                const radBoost = Math.min(3.0, effRad * 0.6);
                 const condMult = 1.0 + radBoost; // 1.0 .. 4.0
                 if (this.tryFire('photosynthesis', RARITY.MAJOR, condMult, tickRate, planet)) {
                     this.photosyntheticPop = 0.1;
@@ -371,15 +445,16 @@ export class BiologySimulation {
 
             if (this.photosyntheticPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 30, 60);
-                const radViability = Math.max(0, 1 - (planet.getEffectiveRadiation() * (1 - this.radiationResistance)) / 5.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 5.0);
                 const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const growthRate = 1.0 * totalViability * nitrogenViability * co2Viability * (0.3 + (planet.radiation / 5.0));
+                    const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
+                    const growthRate = 1.0 * totalViability * nitrogenViability * co2Viability * (0.3 + (planet.radiation / 5.0)) * traitMult;
                     const dPop = growthRate * this.photosyntheticPop * (1 - this.photosyntheticPop / 200.0) * tickRate;
                     this.photosyntheticPop = Math.max(0.01, this.photosyntheticPop + dPop);
                 } else {
-                    this.photosyntheticPop = Math.max(0, this.photosyntheticPop - this.photosyntheticPop * 0.5 * tickRate);
+                    this.photosyntheticPop = Math.max(0, this.photosyntheticPop - this.photosyntheticPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -434,7 +509,7 @@ export class BiologySimulation {
             if (this.eukaryoticPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 25, 50);
                 const o2Viability = Math.min(1.0, planet.o2 / 5.0);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 4.0);
+                const radViability = Math.max(0, 1 - effRad / 4.0);
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
@@ -447,7 +522,7 @@ export class BiologySimulation {
                     const dPop = growthRate * this.eukaryoticPop * (1 - this.eukaryoticPop / eukaryotesCap) * tickRate;
                     this.eukaryoticPop = Math.max(0.01, this.eukaryoticPop + dPop);
                 } else {
-                    this.eukaryoticPop = Math.max(0, this.eukaryoticPop - this.eukaryoticPop * 0.6 * tickRate);
+                    this.eukaryoticPop = Math.max(0, this.eukaryoticPop - this.eukaryoticPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -487,7 +562,7 @@ export class BiologySimulation {
 
             if (this.multicellularPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 22, 42);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 3.0);
+                const radViability = Math.max(0, 1 - effRad / 3.0);
                 const o2Viability = Math.min(1.0, planet.o2 / 12.0);
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
@@ -496,7 +571,7 @@ export class BiologySimulation {
                     const dPop = growthRate * this.multicellularPop * (1 - this.multicellularPop / 100.0) * tickRate;
                     this.multicellularPop = Math.max(0.01, this.multicellularPop + dPop);
                 } else {
-                    this.multicellularPop = Math.max(0, this.multicellularPop - this.multicellularPop * 0.7 * tickRate);
+                    this.multicellularPop = Math.max(0, this.multicellularPop - this.multicellularPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -519,7 +594,7 @@ export class BiologySimulation {
 
             if (this.spongesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 22, 40);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.8);
+                const radViability = Math.max(0, 1 - effRad / 2.8);
                 const o2Viability = Math.min(1.0, planet.o2 / 10.0);
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
@@ -527,7 +602,7 @@ export class BiologySimulation {
                     const dPop = 0.5 * totalViability * this.spongesPop * (1 - this.spongesPop / 100.0) * tickRate;
                     this.spongesPop = Math.max(0.01, this.spongesPop + dPop);
                 } else {
-                    this.spongesPop = Math.max(0, this.spongesPop - this.spongesPop * 0.6 * tickRate);
+                    this.spongesPop = Math.max(0, this.spongesPop - this.spongesPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -557,7 +632,7 @@ export class BiologySimulation {
                     const dPop = 0.45 * totalViability * this.medusesPop * (1 - this.medusesPop / 100.0) * tickRate;
                     this.medusesPop = Math.max(0.01, this.medusesPop + dPop);
                 } else {
-                    this.medusesPop = Math.max(0, this.medusesPop - this.medusesPop * 0.7 * tickRate);
+                    this.medusesPop = Math.max(0, this.medusesPop - this.medusesPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -587,7 +662,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.wormsPop * (1 - this.wormsPop / 100.0) * tickRate;
                     this.wormsPop = Math.max(0.01, this.wormsPop + dPop);
                 } else {
-                    this.wormsPop = Math.max(0, this.wormsPop - this.wormsPop * 0.7 * tickRate);
+                    this.wormsPop = Math.max(0, this.wormsPop - this.wormsPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -617,7 +692,7 @@ export class BiologySimulation {
                     const dPop = 0.45 * totalViability * this.fishPop * (1 - this.fishPop / 100.0) * tickRate;
                     this.fishPop = Math.max(0.01, this.fishPop + dPop);
                 } else {
-                    this.fishPop = Math.max(0, this.fishPop - this.fishPop * 0.65 * tickRate);
+                    this.fishPop = Math.max(0, this.fishPop - this.fishPop * 0.65 * effDecayMult * tickRate);
                 }
             }
 
@@ -641,14 +716,14 @@ export class BiologySimulation {
             if (this.cambrianPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 8, 20, 38);
                 const o2Viability = Math.min(1.0, planet.o2 / 18.0);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const radViability = Math.max(0, 1 - effRad / 2.5);
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
                     const dPop = 0.5 * totalViability * this.cambrianPop * (1 - this.cambrianPop / 100.0) * tickRate;
                     this.cambrianPop = Math.max(0.01, this.cambrianPop + dPop);
                 } else {
-                    this.cambrianPop = Math.max(0, this.cambrianPop - this.cambrianPop * 0.8 * tickRate);
+                    this.cambrianPop = Math.max(0, this.cambrianPop - this.cambrianPop * 0.8 * effDecayMult * tickRate);
                 }
             }
 
@@ -672,7 +747,7 @@ export class BiologySimulation {
 
             if (this.mossesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 0, 20, 38);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const radViability = Math.max(0, 1 - effRad / 2.0);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -680,7 +755,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.mossesPop * (1 - this.mossesPop / 100.0) * tickRate;
                     this.mossesPop = Math.max(0.01, this.mossesPop + dPop);
                 } else {
-                    this.mossesPop = Math.max(0, this.mossesPop - this.mossesPop * 0.6 * tickRate);
+                    this.mossesPop = Math.max(0, this.mossesPop - this.mossesPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -703,7 +778,7 @@ export class BiologySimulation {
 
             if (this.fernsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 2, 22, 40);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
+                const radViability = Math.max(0, 1 - effRad / 2.2);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -711,7 +786,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.fernsPop * (1 - this.fernsPop / 100.0) * tickRate;
                     this.fernsPop = Math.max(0.01, this.fernsPop + dPop);
                 } else {
-                    this.fernsPop = Math.max(0, this.fernsPop - this.fernsPop * 0.55 * tickRate);
+                    this.fernsPop = Math.max(0, this.fernsPop - this.fernsPop * 0.55 * effDecayMult * tickRate);
                 }
             }
 
@@ -734,7 +809,7 @@ export class BiologySimulation {
 
             if (this.conifersPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -10, 18, 36);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const radViability = Math.max(0, 1 - effRad / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -742,7 +817,7 @@ export class BiologySimulation {
                     const dPop = 0.35 * totalViability * this.conifersPop * (1 - this.conifersPop / 100.0) * tickRate;
                     this.conifersPop = Math.max(0.01, this.conifersPop + dPop);
                 } else {
-                    this.conifersPop = Math.max(0, this.conifersPop - this.conifersPop * 0.5 * tickRate);
+                    this.conifersPop = Math.max(0, this.conifersPop - this.conifersPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -765,7 +840,7 @@ export class BiologySimulation {
 
             if (this.angiospermsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 42);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.5);
+                const radViability = Math.max(0, 1 - effRad / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -773,7 +848,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.angiospermsPop * (1 - this.angiospermsPop / 100.0) * tickRate;
                     this.angiospermsPop = Math.max(0.01, this.angiospermsPop + dPop);
                 } else {
-                    this.angiospermsPop = Math.max(0, this.angiospermsPop - this.angiospermsPop * 0.6 * tickRate);
+                    this.angiospermsPop = Math.max(0, this.angiospermsPop - this.angiospermsPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -801,7 +876,7 @@ export class BiologySimulation {
             if (this.arthropodPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 24, 42);
                 const foodViability = Math.min(1.0, this.mossesPop / 20.0);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.2);
+                const radViability = Math.max(0, 1 - effRad / 2.2);
                 const sizeScale = planet.o2 > 25.0 ? 1.5 : 1.0;
                 const totalViability = tempViability * foodViability * radViability * sizeScale;
 
@@ -809,7 +884,7 @@ export class BiologySimulation {
                     const dPop = 0.5 * totalViability * this.arthropodPop * (1 - this.arthropodPop / 100.0) * tickRate;
                     this.arthropodPop = Math.max(0.01, this.arthropodPop + dPop);
                 } else {
-                    this.arthropodPop = Math.max(0, this.arthropodPop - this.arthropodPop * 0.7 * tickRate);
+                    this.arthropodPop = Math.max(0, this.arthropodPop - this.arthropodPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -837,14 +912,14 @@ export class BiologySimulation {
                 const tempViability = this.getTempViability(planet.temperature, 8, 22, 38);
                 const plantViability = Math.min(1.0, this.mossesPop / 30.0);
                 const o2Viability = planet.o2 >= 15.0 ? 1.0 : planet.o2 / 15.0;
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const radViability = Math.max(0, 1 - effRad / 2.0);
                 const totalViability = tempViability * plantViability * o2Viability * radViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.45 * totalViability * this.tetrapodPop * (1 - this.tetrapodPop / 100.0) * tickRate;
                     this.tetrapodPop = Math.max(0.01, this.tetrapodPop + dPop);
                 } else {
-                    this.tetrapodPop = Math.max(0, this.tetrapodPop - this.tetrapodPop * 0.8 * tickRate);
+                    this.tetrapodPop = Math.max(0, this.tetrapodPop - this.tetrapodPop * 0.8 * effDecayMult * tickRate);
                 }
             }
 
@@ -902,7 +977,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.sauropsidPop * (1 - this.sauropsidPop / 100.0) * tickRate;
                     this.sauropsidPop = Math.max(0.01, this.sauropsidPop + dPop);
                 } else {
-                    this.sauropsidPop = Math.max(0, this.sauropsidPop - this.sauropsidPop * 0.8 * tickRate);
+                    this.sauropsidPop = Math.max(0, this.sauropsidPop - this.sauropsidPop * 0.8 * effDecayMult * tickRate);
                 }
             }
 
@@ -920,7 +995,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.synapsidPop * (1 - this.synapsidPop / 100.0) * tickRate;
                     this.synapsidPop = Math.max(0.01, this.synapsidPop + dPop);
                 } else {
-                    this.synapsidPop = Math.max(0, this.synapsidPop - this.synapsidPop * 0.8 * tickRate);
+                    this.synapsidPop = Math.max(0, this.synapsidPop - this.synapsidPop * 0.8 * effDecayMult * tickRate);
                 }
             }
 
@@ -945,14 +1020,14 @@ export class BiologySimulation {
             if (this.cognitiveSpeciesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 20, 35);
                 const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 30.0);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 2.0);
+                const radViability = Math.max(0, 1 - effRad / 2.0);
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.35 * totalViability * this.cognitiveSpeciesPop * (1 - this.cognitiveSpeciesPop / 100.0) * tickRate;
                     this.cognitiveSpeciesPop = Math.max(0.01, this.cognitiveSpeciesPop + dPop);
                 } else {
-                    this.cognitiveSpeciesPop = Math.max(0, this.cognitiveSpeciesPop - this.cognitiveSpeciesPop * 0.7 * tickRate);
+                    this.cognitiveSpeciesPop = Math.max(0, this.cognitiveSpeciesPop - this.cognitiveSpeciesPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -976,7 +1051,7 @@ export class BiologySimulation {
             if (this.technologicalAIPop > 0) {
                 // AI does not require oxygen or food, but requires stable magnetic field to shield microprocessors!
                 const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
-                const radViability = Math.max(0.1, 1 - planet.getEffectiveRadiation() / 4.0); // radiation harms circuitry
+                const radViability = Math.max(0.1, 1 - effRad / 4.0); // radiation harms circuitry
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
@@ -984,7 +1059,7 @@ export class BiologySimulation {
                     this.technologicalAIPop = Math.max(0.01, this.technologicalAIPop + dPop);
                 } else {
                     // AI decays if magnetic field is lost and radiation is high
-                    this.technologicalAIPop = Math.max(0, this.technologicalAIPop - this.technologicalAIPop * 0.5 * tickRate);
+                    this.technologicalAIPop = Math.max(0, this.technologicalAIPop - this.technologicalAIPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1008,14 +1083,14 @@ export class BiologySimulation {
             if (this.cyborgPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 20, 38);
                 const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 20.0 + 0.3); // partly machine, less reliant on food
-                const radViability = Math.max(0.1, 1 - planet.getEffectiveRadiation() / 3.0); // shielding makes them radiation resistant
+                const radViability = Math.max(0.1, 1 - effRad / 3.0); // shielding makes them radiation resistant
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.35 * totalViability * this.cyborgPop * (1 - this.cyborgPop / 100.0) * tickRate;
                     this.cyborgPop = Math.max(0.01, this.cyborgPop + dPop);
                 } else {
-                    this.cyborgPop = Math.max(0, this.cyborgPop - this.cyborgPop * 0.6 * tickRate);
+                    this.cyborgPop = Math.max(0, this.cyborgPop - this.cyborgPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -1038,14 +1113,14 @@ export class BiologySimulation {
 
             if (this.noospherePop > 0) {
                 const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.2;
-                const radViability = Math.max(0.05, 1 - planet.getEffectiveRadiation() / 5.0);
+                const radViability = Math.max(0.05, 1 - effRad / 5.0);
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
                     const dPop = 0.25 * totalViability * this.noospherePop * (1 - this.noospherePop / 100.0) * tickRate;
                     this.noospherePop = Math.max(0.01, this.noospherePop + dPop);
                 } else {
-                    this.noospherePop = Math.max(0, this.noospherePop - this.noospherePop * 0.5 * tickRate);
+                    this.noospherePop = Math.max(0, this.noospherePop - this.noospherePop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1077,7 +1152,7 @@ export class BiologySimulation {
                     const dPop = 0.25 * totalViability * this.gaiaHivemindPop * (1 - this.gaiaHivemindPop / 100.0) * tickRate;
                     this.gaiaHivemindPop = Math.max(0.01, this.gaiaHivemindPop + dPop);
                 } else {
-                    this.gaiaHivemindPop = Math.max(0, this.gaiaHivemindPop - this.gaiaHivemindPop * 0.4 * tickRate);
+                    this.gaiaHivemindPop = Math.max(0, this.gaiaHivemindPop - this.gaiaHivemindPop * 0.4 * effDecayMult * tickRate);
                 }
             }
 
@@ -1210,7 +1285,7 @@ export class BiologySimulation {
                     this.ammonicProtoPop = Math.max(0.01, this.ammonicProtoPop + dPop);
                     this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicProtoPop * 0.1 * tickRate);
                 } else {
-                    this.ammonicProtoPop = Math.max(0, this.ammonicProtoPop - this.ammonicProtoPop * 0.4 * tickRate);
+                    this.ammonicProtoPop = Math.max(0, this.ammonicProtoPop - this.ammonicProtoPop * 0.4 * effDecayMult * tickRate);
                 }
             }
 
@@ -1233,14 +1308,14 @@ export class BiologySimulation {
 
             if (this.ammonicMultiPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -78, -55, -33);
-                const radViability = Math.max(0, 1 - planet.getEffectiveRadiation() / 3.0);
+                const radViability = Math.max(0, 1 - effRad / 3.0);
                 const totalViability = tempViability * radViability * (planet.ammoniaCoverage / 100);
 
                 if (totalViability > 0.05) {
                     const dPop = 0.5 * totalViability * this.ammonicMultiPop * (1 - this.ammonicMultiPop / 100.0) * tickRate;
                     this.ammonicMultiPop = Math.max(0.01, this.ammonicMultiPop + dPop);
                 } else {
-                    this.ammonicMultiPop = Math.max(0, this.ammonicMultiPop - this.ammonicMultiPop * 0.6 * tickRate);
+                    this.ammonicMultiPop = Math.max(0, this.ammonicMultiPop - this.ammonicMultiPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -1270,7 +1345,7 @@ export class BiologySimulation {
                     const dPop = 0.45 * totalViability * this.silicoFloraPop * (1 - this.silicoFloraPop / 100.0) * tickRate;
                     this.silicoFloraPop = Math.max(0.01, this.silicoFloraPop + dPop);
                 } else {
-                    this.silicoFloraPop = Math.max(0, this.silicoFloraPop - this.silicoFloraPop * 0.5 * tickRate);
+                    this.silicoFloraPop = Math.max(0, this.silicoFloraPop - this.silicoFloraPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1300,7 +1375,7 @@ export class BiologySimulation {
                     const dPop = 0.4 * totalViability * this.cryoFaunaPop * (1 - this.cryoFaunaPop / 100.0) * tickRate;
                     this.cryoFaunaPop = Math.max(0.01, this.cryoFaunaPop + dPop);
                 } else {
-                    this.cryoFaunaPop = Math.max(0, this.cryoFaunaPop - this.cryoFaunaPop * 0.7 * tickRate);
+                    this.cryoFaunaPop = Math.max(0, this.cryoFaunaPop - this.cryoFaunaPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -1329,7 +1404,7 @@ export class BiologySimulation {
                     const dPop = 0.3 * totalViability * this.crystallineCognitivePop * (1 - this.crystallineCognitivePop / 80.0) * tickRate;
                     this.crystallineCognitivePop = Math.max(0.01, this.crystallineCognitivePop + dPop);
                 } else {
-                    this.crystallineCognitivePop = Math.max(0, this.crystallineCognitivePop - this.crystallineCognitivePop * 0.5 * tickRate);
+                    this.crystallineCognitivePop = Math.max(0, this.crystallineCognitivePop - this.crystallineCognitivePop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1359,7 +1434,7 @@ export class BiologySimulation {
                     const dPop = 0.25 * totalViability * this.quantumLatticePop * (1 - this.quantumLatticePop / 100.0) * tickRate;
                     this.quantumLatticePop = Math.max(0.01, this.quantumLatticePop + dPop);
                 } else {
-                    this.quantumLatticePop = Math.max(0, this.quantumLatticePop - this.quantumLatticePop * 0.7 * tickRate);
+                    this.quantumLatticePop = Math.max(0, this.quantumLatticePop - this.quantumLatticePop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -1389,7 +1464,7 @@ export class BiologySimulation {
                     const dPop = 0.25 * totalViability * this.cryoHivemindPop * (1 - this.cryoHivemindPop / 100.0) * tickRate;
                     this.cryoHivemindPop = Math.max(0.01, this.cryoHivemindPop + dPop);
                 } else {
-                    this.cryoHivemindPop = Math.max(0, this.cryoHivemindPop - this.cryoHivemindPop * 0.4 * tickRate);
+                    this.cryoHivemindPop = Math.max(0, this.cryoHivemindPop - this.cryoHivemindPop * 0.4 * effDecayMult * tickRate);
                 }
             }
 
@@ -1474,7 +1549,7 @@ export class BiologySimulation {
                     this.methaneProtoPop = Math.max(0.01, this.methaneProtoPop + dPop);
                     this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneProtoPop * 0.08 * tickRate);
                 } else {
-                    this.methaneProtoPop = Math.max(0, this.methaneProtoPop - this.methaneProtoPop * 0.5 * tickRate);
+                    this.methaneProtoPop = Math.max(0, this.methaneProtoPop - this.methaneProtoPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1503,7 +1578,7 @@ export class BiologySimulation {
                     const dPop = 0.45 * totalViability * this.methaneMultiPop * (1 - this.methaneMultiPop / 80.0) * tickRate;
                     this.methaneMultiPop = Math.max(0.01, this.methaneMultiPop + dPop);
                 } else {
-                    this.methaneMultiPop = Math.max(0, this.methaneMultiPop - this.methaneMultiPop * 0.6 * tickRate);
+                    this.methaneMultiPop = Math.max(0, this.methaneMultiPop - this.methaneMultiPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -1533,7 +1608,7 @@ export class BiologySimulation {
                     const dPop = 0.35 * totalViability * this.cryoOrganismsPop * (1 - this.cryoOrganismsPop / 70.0) * tickRate;
                     this.cryoOrganismsPop = Math.max(0.01, this.cryoOrganismsPop + dPop);
                 } else {
-                    this.cryoOrganismsPop = Math.max(0, this.cryoOrganismsPop - this.cryoOrganismsPop * 0.7 * tickRate);
+                    this.cryoOrganismsPop = Math.max(0, this.cryoOrganismsPop - this.cryoOrganismsPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -1562,7 +1637,7 @@ export class BiologySimulation {
                     const dPop = 0.25 * totalViability * this.cryoPolymerNetworkPop * (1 - this.cryoPolymerNetworkPop / 60.0) * tickRate;
                     this.cryoPolymerNetworkPop = Math.max(0.01, this.cryoPolymerNetworkPop + dPop);
                 } else {
-                    this.cryoPolymerNetworkPop = Math.max(0, this.cryoPolymerNetworkPop - this.cryoPolymerNetworkPop * 0.6 * tickRate);
+                    this.cryoPolymerNetworkPop = Math.max(0, this.cryoPolymerNetworkPop - this.cryoPolymerNetworkPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -1592,7 +1667,7 @@ export class BiologySimulation {
                     const dPop = 0.2 * totalViability * this.thinkingOceanPop * (1 - this.thinkingOceanPop / 100.0) * tickRate;
                     this.thinkingOceanPop = Math.max(0.01, this.thinkingOceanPop + dPop);
                 } else {
-                    this.thinkingOceanPop = Math.max(0, this.thinkingOceanPop - this.thinkingOceanPop * 0.6 * tickRate);
+                    this.thinkingOceanPop = Math.max(0, this.thinkingOceanPop - this.thinkingOceanPop * 0.6 * effDecayMult * tickRate);
                 }
             }
 
@@ -1622,7 +1697,7 @@ export class BiologySimulation {
                     const dPop = 0.25 * totalViability * this.cryoColloidPop * (1 - this.cryoColloidPop / 100.0) * tickRate;
                     this.cryoColloidPop = Math.max(0.01, this.cryoColloidPop + dPop);
                 } else {
-                    this.cryoColloidPop = Math.max(0, this.cryoColloidPop - this.cryoColloidPop * 0.5 * tickRate);
+                    this.cryoColloidPop = Math.max(0, this.cryoColloidPop - this.cryoColloidPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1677,13 +1752,16 @@ export class BiologySimulation {
      * Returns a float 0 to 1 based on an asymmetric bell curve
      */
     getTempViability(temp, min, optimal, max) {
-        if (temp <= min || temp >= max) return 0;
+        const offset = (this.thermalResilienceLevel || 0) * 2.0;
+        const adjustedMin = min - offset;
+        const adjustedMax = max + offset;
+        if (temp <= adjustedMin || temp >= adjustedMax) return 0;
         if (temp === optimal) return 1.0;
 
         if (temp < optimal) {
-            return (temp - min) / (optimal - min);
+            return (temp - adjustedMin) / (optimal - adjustedMin);
         } else {
-            return (max - temp) / (max - optimal);
+            return (adjustedMax - temp) / (adjustedMax - optimal);
         }
     }
 }

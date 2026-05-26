@@ -46,6 +46,11 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 
 ## 3. Core Simulation & Evolution Mechanics
 
+*   **Oxygenic Photosynthesis (OEC) Stability Gate**: Transitioning from anoxygenic photosynthesizers to cyanobacteria requires an environmental stability window of $100\text{ Myr}$. During this window, the planet must maintain temperature between $15\text{--}55^\circ\text{C}$, liquid solvent coverage $>20\%$, and effective surface radiation $<3.0\text{ rad/s}$. Any violation instantly resets the gate timer back to $100\text{ Myr}$.
+*   **Genetic Resilience Tuning**: Spend accumulated Evo-Tokens to permanently upgrade species traits, which are inherited across all active branches:
+    *   **Thermal Resilience**: Widens temperature survival ranges by $\pm 2^\circ\text{C}$ per level (max level 5).
+    *   **Radiation Shielding**: Lowers effective radiation exposure by $15\%$ per level (max level 5).
+    *   **Metabolic Efficiency**: Reduces biological decay and nutrient consumption by $15\%$ per level (max level 5).
 *   **Eukaryogenesis Boost**: Transitioning from prokaryotes to eukaryotes (via mitochondria endosymbiosis) unlocks meiotic sexual reproduction, providing a **1.25x** carrying capacity boost and a **30% speed boost** to all subsequent evolution rates.
 *   **Saturation Kinetics**: Biological gas exchanges (such as nitrogen fixation and methanogenesis) scale using Michaelis-Menten kinetics (e.g. $\frac{\text{Gas}}{\text{Gas} + K_m}$) to throttle rates and prevent absolute depletion of critical atmospheric components.
 *   **Evo-Tokens & Nudges**: Accumulate Evo-Tokens from biological milestones and use them to pay for genetic nudges (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.

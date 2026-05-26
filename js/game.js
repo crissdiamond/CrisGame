@@ -36,6 +36,10 @@ class GameController {
         // Time scale: 1 real second = 0.1 Million Years (Myr) * activeSpeed
         this.timeScale = 0.1; 
 
+        // Hotspot generation state
+        this.hotspotTimer = 0;
+        this.nextHotspotTime = 5 + Math.random() * 5;
+
         // Initialize bindings and setup initial state
         this.init();
     }
@@ -122,6 +126,44 @@ class GameController {
                     } else {
                         this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");
                     }
+                }
+            },
+
+            // Upgrade permanent genetic adaptation trait
+            onUpgradeTrait: (traitType) => {
+                let currentLevel = 0;
+                let traitField = "";
+                if (traitType === 'thermal') {
+                    currentLevel = this.biology.thermalResilienceLevel || 0;
+                    traitField = "thermalResilienceLevel";
+                } else if (traitType === 'radiation') {
+                    currentLevel = this.biology.radiationDefenseLevel || 0;
+                    traitField = "radiationDefenseLevel";
+                } else if (traitType === 'metabolic') {
+                    currentLevel = this.biology.metabolicEfficiencyLevel || 0;
+                    traitField = "metabolicEfficiencyLevel";
+                }
+                
+                if (currentLevel >= 5) {
+                    return { success: false, msg: `Your species' ${traitType} resilience has already reached maximum level.` };
+                }
+                
+                const cost = 4 + currentLevel * 3;
+                if (this.eventSystem.tokens >= cost) {
+                    this.eventSystem.tokens -= cost;
+                    this.biology[traitField] = currentLevel + 1;
+                    const names = {
+                        thermal: "Thermal Resilience",
+                        radiation: "Radiation Shielding",
+                        metabolic: "Metabolic Efficiency"
+                    };
+                    return { 
+                        success: true, 
+                        msg: `Successfully upgraded ${names[traitType]} to Level ${currentLevel + 1}!`, 
+                        newLevel: currentLevel + 1 
+                    };
+                } else {
+                    return { success: false, msg: `Insufficient Evo-Tokens. Upgrading ${traitType} requires ${cost} tokens.` };
                 }
             },
             
@@ -269,6 +311,23 @@ class GameController {
 
             // 4. Sample time-series history (real-time throttled inside the recorder)
             this.history.tick(dt, this.planet, this.biology);
+
+            // 5. Periodic Hotspot Spawning (every 5-10 seconds)
+            this.hotspotTimer += dt;
+            if (this.hotspotTimer >= this.nextHotspotTime) {
+                this.hotspotTimer = 0;
+                this.nextHotspotTime = 5 + Math.random() * 5;
+                if (this.planet.getHabitabilityScore() > 10) {
+                    const lon = Math.random() * Math.PI * 2;
+                    const yFactor = (Math.random() - 0.5) * 1.6; // between -0.8 and 0.8
+                    const value = Math.floor(Math.random() * 3) + 1; // 1..3 tokens
+                    
+                    this.visualizer.spawnHotspot(lon, yFactor, value);
+                    this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + value);
+                    
+                    this.ui.logEvent("BIOSPHERE HOTSPOT", `🧬 A genetic hotspot emerged, yielding +${value} Evo-Tokens.`, "success");
+                }
+            }
         }
 
         // 3. Render visuals (both macro and micro views update dynamically)
@@ -416,6 +475,15 @@ class GameController {
                     unlockedBacteria: this.biology.unlockedBacteria,
                     unlockedAnaerobic: this.biology.unlockedAnaerobic,
                     unlockedPhotosynthetic: this.biology.unlockedPhotosynthetic,
+                    
+                    chemoProkaryotePop: this.biology.chemoProkaryotePop,
+                    anoxygenicPhotoPop: this.biology.anoxygenicPhotoPop,
+                    unlockedChemoProkaryote: this.biology.unlockedChemoProkaryote,
+                    unlockedAnoxygenicPhoto: this.biology.unlockedAnoxygenicPhoto,
+                    oecStabilityTimer: this.biology.oecStabilityTimer,
+                    thermalResilienceLevel: this.biology.thermalResilienceLevel,
+                    radiationDefenseLevel: this.biology.radiationDefenseLevel,
+                    metabolicEfficiencyLevel: this.biology.metabolicEfficiencyLevel,
                     unlockedNucleus: this.biology.unlockedNucleus,
                     unlockedMitochondria: this.biology.unlockedMitochondria,
                     unlockedSexualReproduction: this.biology.unlockedSexualReproduction,

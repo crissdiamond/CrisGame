@@ -175,12 +175,16 @@
                         <span>3700M (Multicellular)</span>
                         <span>4540M (Sentient)</span>
                     </div>
+                    <div id="pacing-gate-wrapper" style="display: none; margin-top: 0.6rem; font-size: 0.7rem; color: var(--accent-cyan); font-family: var(--font-mono); text-align: center; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 0.4rem;">
+                        🧬 OEC GATE STABILITY: <span id="pacing-gate-timer">100.0 / 100.0 Myr</span>
+                    </div>
                 </div>
 
                 <!-- Tab Controls -->
                 <div class="tab-controls">
                     <button id="tab-metrics" class="tab-btn active">Biomass</button>
                     <button id="tab-roadmap" class="tab-btn">Evolution Tree</button>
+                    <button id="tab-tuning" class="tab-btn">Gene Tuning</button>
                 </div>
 
                 <!-- BIOMASS TAB CONTENT -->
@@ -207,8 +211,12 @@
                                 <div class="progress-bar-container"><div class="progress-bar" id="soup-progress" style="width: 0%"></div></div>
                             </div>
                             <div class="metric-card" id="anaerobic-card" style="display: none;">
-                                <div class="metric-header"><span class="metric-name">Anaerobic Archea</span><span class="metric-value" id="anaerobic-pop">0.00 M/mL</span></div>
+                                <div class="metric-header"><span class="metric-name">Anoxygenic Chemotrophs</span><span class="metric-value" id="anaerobic-pop">0.00 M/mL</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar anaerobic" id="anaerobic-progress" style="width: 0%"></div></div>
+                            </div>
+                            <div class="metric-card" id="anoxygenic-photo-card" style="display: none;">
+                                <div class="metric-header"><span class="metric-name">Anoxygenic Photosynthesizers</span><span class="metric-value" id="anoxygenic-photo-pop">0.00 M/mL</span></div>
+                                <div class="progress-bar-container"><div class="progress-bar anoxygenic-photo" id="anoxygenic-photo-progress" style="width: 0%; background: linear-gradient(90deg, #0f766e, #0d9488);"></div></div>
                             </div>
                             <div class="metric-card" id="photosynthetic-card" style="display: none;">
                                 <div class="metric-header"><span class="metric-name">Cyanobacteria</span><span class="metric-value" id="photosynthetic-pop">0.00 M/mL</span></div>
@@ -364,6 +372,52 @@
                             <h4 id="node-details-title">Evolution Details</h4>
                             <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
                             <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GENE TUNING TAB CONTENT -->
+                <div id="tab-content-tuning" class="tab-content">
+                    <div class="roadmap-tree-container">
+                        <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
+                            <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🧬 Biological Adaptation Tuning</h4>
+                            <p class="panel-desc" style="margin-bottom: 0.8rem; font-size: 0.75rem;">Spend Evo-Tokens to permanently upgrade core biological traits. These adaptations affect all current and future evolutionary branches on the planet.</p>
+                            
+                            <!-- Thermal Resilience -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">🌡️</span> Thermal Resilience</label>
+                                    <span class="control-value" id="thermal-resilience-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Widens species temperature survival bounds by ±2°C per level (current: <span id="thermal-resilience-effect-val">0°C</span>).
+                                </div>
+                                <button id="btn-upgrade-thermal" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
+
+                            <!-- Radiation Defense -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">☢️</span> Radiation Shielding</label>
+                                    <span class="control-value" id="radiation-defense-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Reduces cosmic/surface radiation exposure by 15% per level (current: <span id="radiation-defense-effect-val">0%</span>).
+                                </div>
+                                <button id="btn-upgrade-radiation" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
+
+                            <!-- Metabolic Efficiency -->
+                            <div class="control-group" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">⚡</span> Metabolic Efficiency</label>
+                                    <span class="control-value" id="metabolic-efficiency-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Decreases biological population decay and organic soup consumption by 15% per level (current: <span id="metabolic-efficiency-effect-val">0%</span>).
+                                </div>
+                                <button id="btn-upgrade-metabolic" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
                         </div>
                     </div>
                 </div>
