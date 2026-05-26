@@ -1,6 +1,5 @@
 # Tooling
 .antigravitycli/
-server.py
 ai_agent_instructions.md
 AGENT.md
 CLAUDE.md

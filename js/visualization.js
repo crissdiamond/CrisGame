@@ -110,7 +110,7 @@ export class GameVisualizer {
             if (biology.unlockedCryoOrganisms) targetCounts['cryo_organisms'] = Math.max(1, Math.min(5, Math.floor(biology.cryoOrganismsPop / 15)));
             if (biology.unlockedCryoPolymerNetwork) targetCounts['cryo_polymer_network'] = Math.max(1, Math.min(5, Math.floor(biology.cryoPolymerNetworkPop / 12)));
             if (biology.unlockedThinkingOcean) targetCounts['thinking_ocean'] = Math.max(1, Math.min(4, Math.floor(biology.thinkingOceanPop / 25)));
-            if (biology.unlockedCryoColloid) targetCounts['cryo_colloids'] = Math.max(1, Math.min(4, Math.floor(biology.cryoColloidPop / 25)));
+            if (biology.unlockedCryoColloid) targetCounts['cryo_colloid'] = Math.max(1, Math.min(4, Math.floor(biology.cryoColloidPop / 25)));
         }
 
         const allTypes = [
@@ -120,7 +120,7 @@ export class GameVisualizer {
             'ammonic_soup', 'ammonic_proto', 'ammonic_multi', 'silico_flora', 'cryo_fauna',
             'crystalline_cognitive', 'quantum_lattices', 'cryo_hivemind',
             'methane_soup', 'methane_proto', 'methane_multi', 'cryo_organisms',
-            'cryo_polymer_network', 'thinking_ocean', 'cryo_colloids'
+            'cryo_polymer_network', 'thinking_ocean', 'cryo_colloid'
         ];
 
         allTypes.forEach(type => {
@@ -144,7 +144,7 @@ export class GameVisualizer {
                         speed = 0.12 + Math.random() * 0.08;
                     } else if ([
                         'sponges', 'plants', 'silico_flora', 'quantum_lattices', 
-                        'cryo_polymer_network', 'thinking_ocean', 'cryo_colloids', 
+                        'cryo_polymer_network', 'thinking_ocean', 'cryo_colloid', 
                         'noosphere', 'gaia_hivemind', 'cryo_hivemind'
                     ].includes(type)) {
                         motionType = 'static';
@@ -1223,7 +1223,7 @@ export class GameVisualizer {
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-            } else if (p.type === 'cryo_colloids') {
+            } else if (p.type === 'cryo_colloid') {
                 ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
                 ctx.fillStyle = 'rgba(236, 72, 153, 0.4)'; // Pink (Sentient)
                 ctx.lineWidth = 1.8;

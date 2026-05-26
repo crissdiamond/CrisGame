@@ -5,6 +5,7 @@
 ### P0 — Fix before adding more features
 
 #### 1. Confirm and standardise project folder structure
+- Status: Completed 2026-05-26. Canonical layout is documented in `README.md`; `scripts/validate_structure.mjs` checks local `index.html` CSS/JS references and relative JS module imports.
 - Ensure `index.html` references match the actual repository layout.
 - Recommended structure:
   - `index.html`
@@ -25,6 +26,7 @@
   - All module imports resolve correctly.
 
 #### 2. Make `evolutionData.js` the single source of truth for evolution metadata
+- Status: Completed 2026-05-26. `game.js` now resolves nudges through `getEvolutionNudge`; transition-to-node mapping lives in `evolutionData.js`; stale methane UI/visualizer aliases were replaced with canonical graph IDs.
 - Remove duplicated nudge, node, branch, and cost definitions from controller/UI logic where possible.
 - Derive evolution node names, nudge IDs, parent relationships, costs, monitorability, and descriptions from `EVOLUTION_GRAPH`.
 - Acceptance criteria:

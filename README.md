@@ -114,16 +114,18 @@ CrisGame/
 ├── server.py            # Simple Python developmental server
 ├── css/
 │   └── style.css        # Glassmorphic and retro sci-fi panel styling
-└── js/
-    ├── game.js          # Controller loop, save/load state, game lifecycle
-    ├── planet.js        # Physical, geological, and atmospheric physics formulas
-    ├── simulation.js    # Biological growth, decay fluxes, and ecosystem formulas
-    ├── evolutionData.js # Phylogenetic DAG schemas for Water, Ammonia, and Methane lines
-    ├── ui.js            # DOM caches, pacing calculations, modal popups, and toast systems
-    ├── visualization.js # Canvas visualizers for planet macro / microscopic views
-    ├── history.js       # Background time-series metrics data recorder
-    ├── historyView.js   # Canvas drawing for historic telemetry graphs
-    └── events.js        # Event registry, disaster systems, and intervention mechanics
+├── js/
+│   ├── game.js          # Controller loop, save/load state, game lifecycle
+│   ├── planet.js        # Physical, geological, and atmospheric physics formulas
+│   ├── simulation.js    # Biological growth, decay fluxes, and ecosystem formulas
+│   ├── evolutionData.js # Phylogenetic DAG schemas for Water, Ammonia, and Methane lines
+│   ├── ui.js            # DOM caches, pacing calculations, modal popups, and toast systems
+│   ├── visualization.js # Canvas visualizers for planet macro / microscopic views
+│   ├── history.js       # Background time-series metrics data recorder
+│   ├── historyView.js   # Canvas drawing for historic telemetry graphs
+│   └── events.js        # Event registry, disaster systems, and intervention mechanics
+└── scripts/
+    └── validate_structure.mjs # Local CSS/JS path and module import validation
 ```
 
 ---
@@ -132,12 +134,15 @@ CrisGame/
 
 No compilers or heavy frameworks are required.
 1. Download or clone this directory.
-2. Open `index.html` in any modern web browser to start managing your planet!
-3. Alternatively, run a simple local server:
+2. Run the local server. The app uses JavaScript modules, so HTTP serving is the supported path:
    ```bash
    python3 server.py
    ```
-   and navigate to `http://localhost:8080`.
+   and navigate to the printed `localhost` URL. The default is `http://localhost:8080`; if that port is busy, the server uses the next available port.
+3. Validate local CSS/JS references after changing the folder structure:
+   ```bash
+   node scripts/validate_structure.mjs
+   ```
 
 ---
 

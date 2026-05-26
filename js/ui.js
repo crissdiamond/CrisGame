@@ -1376,18 +1376,10 @@ export class GameUI {
         
         let comparisonHTML = "";
         let earthMilestone = earthTimeline[node.id];
-        if (!earthMilestone) {
-            if (node.id === 'cryo_beasts') earthMilestone = earthTimeline['cryo_organisms'];
-            if (node.id === 'cryo_colloids') earthMilestone = earthTimeline['cryo_colloid'];
-        }
 
         if (earthMilestone) {
             const earthAge = earthMilestone.age;
             let unlockAge = biology.unlockAges ? biology.unlockAges[node.id] : null;
-            if (unlockAge === undefined || unlockAge === null) {
-                if (node.id === 'cryo_beasts') unlockAge = biology.unlockAges['cryo_organisms'];
-                if (node.id === 'cryo_colloids') unlockAge = biology.unlockAges['cryo_colloid'];
-            }
             
             if (unlockAge !== undefined && unlockAge !== null) {
                 const diff = earthAge - unlockAge;
@@ -1768,39 +1760,14 @@ export class GameUI {
      */
     updatePacingTimeline(planet, biology) {
         const solvent = planet.activeSolvent;
-        
-        // Define sequence of milestones by solvent
-        const solventMilestones = {
-            water: [
-                'soup', 'membrane', 'bacteria', 'anaerobic', 'anoxygenic_photo', 'photosynthetic', 'nucleus', 'mitochondria', 
-                'eukaryotes', 'sexual', 'multicellular', 'sponges', 'meduses', 'worms', 'fish', 
-                'mosses', 'ferns', 'conifers', 'angiosperms', 'cambrian', 'insects', 'tetrapods', 
-                'sauropsids', 'synapsids', 'cognitive', 'ai', 'cyborg', 'noosphere', 'gaia_hivemind'
-            ],
-            ammonia: [
-                'ammonic_soup', 'ammonic_proto', 'ammonic_multi', 'silico_flora', 'cryo_fauna', 
-                'crystalline_cognitive', 'quantum_lattices', 'cryo_hivemind'
-            ],
-            methane: [
-                'methane_soup', 'methane_proto', 'methane_multi', 'cryo_beasts', 'cryo_polymer_network', 
-                'thinking_ocean', 'cryo_colloids'
-            ]
-        };
 
-        const milestones = solventMilestones[solvent] || [];
+        const milestones = Object.keys(EVOLUTION_GRAPH[solvent] || {});
         let latestUnlocked = null;
         let latestUnlockAge = null;
 
-        // Helper to check unlock status with key fallbacks
         const getUnlockAge = (nodeId) => {
             if (!biology.unlockAges) return null;
-            let age = biology.unlockAges[nodeId];
-            if (age === undefined || age === null) {
-                // Methane line naming fallbacks
-                if (nodeId === 'cryo_beasts') age = biology.unlockAges['cryo_organisms'];
-                if (nodeId === 'cryo_colloids') age = biology.unlockAges['cryo_colloid'];
-            }
-            return age;
+            return biology.unlockAges[nodeId];
         };
 
         // Find the last unlocked milestone in sequence
@@ -1820,13 +1787,7 @@ export class GameUI {
         let milestoneName = "Prebiotic Stage";
 
         if (latestUnlocked) {
-            let earthMilestone = earthTimeline[latestUnlocked];
-            // Fallbacks for earthTimeline lookup
-            if (!earthMilestone) {
-                if (latestUnlocked === 'cryo_beasts') earthMilestone = earthTimeline['cryo_organisms'];
-                if (latestUnlocked === 'cryo_colloids') earthMilestone = earthTimeline['cryo_colloid'];
-            }
-
+            const earthMilestone = earthTimeline[latestUnlocked];
             milestoneName = earthMilestone ? earthMilestone.name : latestUnlocked;
             
             if (earthMilestone) {

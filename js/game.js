@@ -5,6 +5,7 @@ import { GameVisualizer } from './visualization.js';
 import { EventSystem } from './events.js';
 import { HistoryRecorder } from './history.js';
 import { HistoryView } from './historyView.js';
+import { getEvolutionNudge } from './evolutionData.js';
 
 export class GameController {
     constructor() {
@@ -48,29 +49,6 @@ export class GameController {
         // Synchronize UI values with starting values of the planet
         this.ui.syncSliders(this.planet);
         this.ui.setPlayState(this.isPlaying);
-
-        // Nudges definition map
-        const nudges = {
-            'mitochondria': { id: 'endosymbiosis', cost: 60 },
-            'mosses': { id: 'vascular_tissue', cost: 75 },
-            'conifers': { id: 'seed_evolution', cost: 90 },
-            'tetrapods': { id: 'amniotic_egg', cost: 90 },
-            'sauropsids': { id: 'scales', cost: 90 },
-            'synapsids': { id: 'endthermy', cost: 110 },
-            'cognitive': { id: 'cognitive', cost: 110 },
-            'ai': { id: 'technological_singularity', cost: 110 },
-            'cyborg': { id: 'cybernetic_implants', cost: 130 },
-            'noosphere': { id: 'global_consciousness', cost: 150 },
-            'gaia_hivemind': { id: 'ecological_integration', cost: 150 },
-            'silico_flora': { id: 'silicon_chains', cost: 90 },
-            'crystalline_cognitive': { id: 'crystalline_collective', cost: 110 },
-            'quantum_lattices': { id: 'quantum_alignment', cost: 130 },
-            'cryo_hivemind': { id: 'cryo_neural_webs', cost: 130 },
-            'cryo_beasts': { id: 'cryo_polymers', cost: 90 },
-            'cryo_polymer_network': { id: 'cryo_singularity', cost: 110 },
-            'thinking_ocean': { id: 'colloidal_solids', cost: 130 },
-            'cryo_colloids': { id: 'macromolecular_assembly', cost: 130 }
-        };
 
         // Bind UI triggers and controls
         this.ui.bindEvents({
@@ -120,13 +98,12 @@ export class GameController {
 
             // Nudge evolution
             onNudgeEvolution: (nodeId) => {
-                const nudge = nudges[nodeId];
+                const nudge = getEvolutionNudge(nodeId, this.planet.activeSolvent);
                 if (nudge) {
                     const res = this.eventSystem.nudgeEvolution(nudge.id, nudge.cost, this.biology);
                     if (res.success) {
                         this.ui.logEvent("EVOLUTION NUDGED", res.msg, "success");
-                        // Show a non-blocking boost popup
-                        const nodeLabel = nudge.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        const nodeLabel = nudge.name || nudge.nodeName;
                         this.ui.showBoostToast(nodeLabel, 5, 3);
                     } else {
                         this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");

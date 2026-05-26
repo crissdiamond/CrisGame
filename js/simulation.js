@@ -1,4 +1,4 @@
-import { EVOLUTION_GRAPH } from './evolutionData.js';
+import { EVOLUTION_GRAPH, getEvolutionNode, getNodeIdForTransition } from './evolutionData.js';
 
 /**
  * Handles the biological progression calculations for three solvent systems:
@@ -228,7 +228,9 @@ export class BiologySimulation {
     tryFire(transitionKey, rarity, conditionMult, tickRate, planet) {
         if (!(tickRate > 0)) return false;
         const solventMult = SOLVENT_RATE_FACTOR[planet.activeSolvent] ?? 1.0;
-        const nudge = this.pendingNudges[transitionKey];
+        const nodeId = getNodeIdForTransition(transitionKey);
+        const node = getEvolutionNode(nodeId, planet.activeSolvent);
+        const nudge = this.pendingNudges[transitionKey] || (node?.nudge && this.pendingNudges[node.nudge.id]);
         const nudgeMult = nudge ? nudge.multiplier : 1.0;
 
         let sexBoost = 1.0;
@@ -244,56 +246,6 @@ export class BiologySimulation {
         const success = Math.random() < p;
 
         if (success) {
-            const transitionToNodeMap = {
-                'soup': 'soup',
-                'membrane': 'membrane',
-                'anaerobic': 'anaerobic',
-                'anoxygenic_photo': 'anoxygenic_photo',
-                'photosynthesis': 'photosynthetic',
-                'nucleus': 'nucleus',
-                'endosymbiosis': 'mitochondria',
-                'sexual_reproduction': 'sexual',
-                'multicellular': 'multicellular',
-                'sponges': 'sponges',
-                'meduses': 'meduses',
-                'worms': 'worms',
-                'fish': 'fish',
-                'cambrian': 'cambrian',
-                'vascular_tissue': 'mosses',
-                'ferns': 'ferns',
-                'seed_evolution': 'conifers',
-                'angiosperms': 'angiosperms',
-                'arthropods': 'insects',
-                'tetrapods': 'tetrapods',
-                'scales': 'sauropsids',
-                'endthermy': 'synapsids',
-                'cognitive': 'cognitive',
-                'technological_singularity': 'ai',
-                'cybernetic_implants': 'cyborg',
-                'global_consciousness': 'noosphere',
-                'ecological_integration': 'gaia_hivemind',
-                
-                // Ammonia Line
-                'ammonic_soup': 'ammonic_soup',
-                'ammonic_proto': 'ammonic_proto',
-                'ammonic_multi': 'ammonic_multi',
-                'silicon_chains': 'silico_flora',
-                'cryo_fauna': 'cryo_fauna',
-                'crystalline_collective': 'crystalline_cognitive',
-                'quantum_alignment': 'quantum_lattices',
-                'cryo_neural_webs': 'cryo_hivemind',
-                
-                // Methane Line
-                'methane_soup': 'methane_soup',
-                'methane_proto': 'methane_proto',
-                'methane_multi': 'methane_multi',
-                'cryo_polymers': 'cryo_organisms',
-                'cryo_polymer_network': 'cryo_polymer_network',
-                'colloidal_solids': 'thinking_ocean',
-                'macromolecular_assembly': 'cryo_colloid'
-            };
-
-            const nodeId = transitionToNodeMap[transitionKey] || transitionKey;
             if (!this.unlockAges) this.unlockAges = {};
             this.unlockAges[nodeId] = planet.age;
             this.unlockedMap[nodeId] = true;

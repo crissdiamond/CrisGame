@@ -405,7 +405,7 @@ export const EVOLUTION_GRAPH = {
             cap: 100.0,
             unit: 'Idx',
             reqs: { popThreshold: { cognitive: 35.0 }, magnetosphere: true },
-            nudge: { id: 'ai', name: 'Buy Singularity core', cost: 110 },
+            nudge: { id: 'technological_singularity', name: 'Buy Singularity core', cost: 110 },
             details: {
                 desc: "Autonomous silicon matrices decouple computation from organic limitations.",
                 scientific: "Artificial General Intelligence triggers a self-improving recursion loop, building planetary computing stacks that bypass metabolic cellular constraints."
@@ -526,7 +526,7 @@ export const EVOLUTION_GRAPH = {
             cap: 80.0,
             unit: 'Idx',
             reqs: { popThreshold: { cryo_fauna: 35.0 }, maxTemp: -40.0 },
-            nudge: { id: 'crystalline_cognitive', name: 'Ignite Crystalline Collective', cost: 110 },
+            nudge: { id: 'crystalline_collective', name: 'Ignite Crystalline Collective', cost: 110 },
             details: {
                 desc: "Silicon crystal structures establish collective, cryo-conductive thoughts.",
                 scientific: "Harnessing low-temperature superconductive dynamics, crystalline networks communicate via electromagnetic fields, initiating swarm intelligence."
@@ -631,7 +631,7 @@ export const EVOLUTION_GRAPH = {
             cap: 100.0,
             unit: 'Idx',
             reqs: { popThreshold: { cryo_organisms: 30.0 } },
-            nudge: { id: 'cryo_polymers', name: 'Synthesize Cryo-Polymers', cost: 90 },
+            nudge: { id: 'cryo_polymer_network', name: 'Synthesize Cryo-Polymers', cost: 90 },
             details: {
                 desc: "Superconducting polymers construct expansive network lattices over shores.",
                 scientific: "Polymer-based webs capture low-energy radiation, establishing structural grids that bind cryo-organic compounds."
@@ -671,3 +671,84 @@ export const EVOLUTION_GRAPH = {
         }
     }
 };
+
+export const TRANSITION_TO_NODE_ID = {
+    // Water line
+    soup: 'soup',
+    membrane: 'membrane',
+    anaerobic: 'anaerobic',
+    anoxygenic_photo: 'anoxygenic_photo',
+    photosynthesis: 'photosynthetic',
+    nucleus: 'nucleus',
+    endosymbiosis: 'mitochondria',
+    sexual_reproduction: 'sexual',
+    multicellular: 'multicellular',
+    sponges: 'sponges',
+    meduses: 'meduses',
+    worms: 'worms',
+    fish: 'fish',
+    cambrian: 'cambrian',
+    vascular_tissue: 'mosses',
+    ferns: 'ferns',
+    seed_evolution: 'conifers',
+    angiosperms: 'angiosperms',
+    arthropods: 'insects',
+    tetrapods: 'tetrapods',
+    scales: 'sauropsids',
+    endthermy: 'synapsids',
+    cognitive: 'cognitive',
+    technological_singularity: 'ai',
+    cybernetic_implants: 'cyborg',
+    global_consciousness: 'noosphere',
+    ecological_integration: 'gaia_hivemind',
+
+    // Ammonia line
+    ammonic_soup: 'ammonic_soup',
+    ammonic_proto: 'ammonic_proto',
+    ammonic_multi: 'ammonic_multi',
+    silicon_chains: 'silico_flora',
+    cryo_fauna: 'cryo_fauna',
+    crystalline_collective: 'crystalline_cognitive',
+    quantum_alignment: 'quantum_lattices',
+    cryo_neural_webs: 'cryo_hivemind',
+
+    // Methane line
+    methane_soup: 'methane_soup',
+    methane_proto: 'methane_proto',
+    methane_multi: 'methane_multi',
+    cryo_polymers: 'cryo_organisms',
+    cryo_polymer_network: 'cryo_polymer_network',
+    colloidal_solids: 'thinking_ocean',
+    macromolecular_assembly: 'cryo_colloid'
+};
+
+export function getNodeIdForTransition(transitionKey) {
+    return TRANSITION_TO_NODE_ID[transitionKey] || transitionKey;
+}
+
+export function getEvolutionNode(nodeId, preferredSolvent = null) {
+    if (preferredSolvent && EVOLUTION_GRAPH[preferredSolvent]?.[nodeId]) {
+        return EVOLUTION_GRAPH[preferredSolvent][nodeId];
+    }
+
+    for (const nodes of Object.values(EVOLUTION_GRAPH)) {
+        if (nodes[nodeId]) {
+            return nodes[nodeId];
+        }
+    }
+
+    return null;
+}
+
+export function getEvolutionNudge(nodeId, preferredSolvent = null) {
+    const node = getEvolutionNode(nodeId, preferredSolvent);
+    if (!node?.nudge) {
+        return null;
+    }
+
+    return {
+        ...node.nudge,
+        nodeId: node.id,
+        nodeName: node.name
+    };
+}
