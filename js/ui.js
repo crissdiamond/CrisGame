@@ -514,12 +514,10 @@ export class GameUI {
     }
 
     switchTab(tabId) {
-        if (this.tabMetrics) this.tabMetrics.classList.toggle('active', tabId === 'metrics');
         if (this.tabRoadmap) this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
         if (this.tabTuning) this.tabTuning.classList.toggle('active', tabId === 'tuning');
         if (this.tabExchange) this.tabExchange.classList.toggle('active', tabId === 'exchange');
 
-        if (this.tabContentMetrics) this.tabContentMetrics.classList.toggle('active', tabId === 'metrics');
         if (this.tabContentRoadmap) this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
         if (this.tabContentTuning) this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
         if (this.tabContentExchange) this.tabContentExchange.classList.toggle('active', tabId === 'exchange');
@@ -532,6 +530,248 @@ export class GameUI {
         if (this.stripContentClimate) this.stripContentClimate.classList.toggle('active', tabId === 'climate');
         if (this.stripContentAtmosphere) this.stripContentAtmosphere.classList.toggle('active', tabId === 'atmosphere');
         if (this.stripContentPlanet) this.stripContentPlanet.classList.toggle('active', tabId === 'planet');
+    }
+
+    getApexLifeForm(biology, solvent) {
+        if (!biology) return null;
+        if (solvent === 'ammonia') {
+            if (biology.unlockedCryoHivemind) {
+                return {
+                    name: "Ammonic Cryo-Hivemind",
+                    details: "A stabilized network of cryogenic life coordinated via low-latency nitrogenous channels. Operating at sub-zero temperatures, it establishes global homeostatic feedback loops."
+                };
+            }
+            if (biology.unlockedQuantumLattice) {
+                return {
+                    name: "Coherent Quantum Lattice",
+                    details: "At temperatures below -50°C, biological semiconductor systems achieve stable quantum coherence. This lattice processes environmental calculations at massive parallel scales."
+                };
+            }
+            if (biology.unlockedCrystallineCognitive) {
+                return {
+                    name: "Crystalline Piezo-Cognitive",
+                    details: "Fauna utilizing piezoelectric silicon-oxygen structures to transmit and receive electrical signals. They achieve complex resonance patterns across frozen ammonia lakes."
+                };
+            }
+            if (biology.unlockedCryoFauna) {
+                return {
+                    name: "Ammonic Cryo-Fauna",
+                    details: "Speculative mobile fauna that circulate liquid ammonia instead of water. They utilize specialized catalyst enzymes to drive cryogenic metabolism and nitrogen excretion."
+                };
+            }
+            if (biology.unlockedSilicoFlora) {
+                return {
+                    name: "Glacial Silico-Flora",
+                    details: "Crystalline plants constructed with silicon-oxygen chains that remain fluid and flexible in extreme cold. They metabolize geothermal hydrogen sulfide and starlight."
+                };
+            }
+            if (biology.unlockedAmmonicMulti) {
+                return {
+                    name: "Ammonic Multicellular",
+                    details: "Coordinated aggregates of cryogenic prokaryotic cells. They leverage high-efficiency enzymes to overcome kinetic constraints on chemical reactions in sub-freezing conditions."
+                };
+            }
+            if (biology.unlockedAmmonicProto) {
+                return {
+                    name: "Ammonic Prokaryotes",
+                    details: "Unicellular life relying on liquid ammonia as their primary intracellular solvent. Their membranes incorporate lipids that remain active and fluid at -50°C."
+                };
+            }
+            if (biology.unlockedAmmonicSoup) {
+                return {
+                    name: "Ammonic Organic Soup",
+                    details: "Concentrated prebiotic compounds (amino acids and nitrogenous precursors) dissolved in liquid ammonia pools, serving as raw materials for cryo-biochemistry."
+                };
+            }
+            return {
+                name: "Prebiotic Ammonia Vents",
+                details: "Cryogenic chemical systems beginning to organize volatile nitrogen-based molecules around hydrothermal crust cracks."
+            };
+        } else if (solvent === 'methane') {
+            if (biology.unlockedCryoColloid) {
+                return {
+                    name: "Megastructure Cryo-Colloids",
+                    details: "Massive colloidal clusters of cryogenic organisms. Lacking warm blood, they coordinate respiration and energy sharing via convection currents."
+                };
+            }
+            if (biology.unlockedThinkingOcean) {
+                return {
+                    name: "Thinking Methane Oceans",
+                    details: "Organic sheets dissolved in liquid methane basins that function as wave-driven mechanical logic gates, turning entire oceans into slow cognitive media."
+                };
+            }
+            if (biology.unlockedCryoPolymerNetwork) {
+                return {
+                    name: "Polymer-Chain Networks",
+                    details: "Interconnected organic sheets that grow over tholin sand dunes, utilizing ambient electrical currents and wind vibration to transmit signals."
+                };
+            }
+            if (biology.unlockedCryoOrganisms) {
+                return {
+                    name: "Cyto-Beasts (Cryo-Organisms)",
+                    details: "Mobile organisms that graze on surface tholin deposits. They utilize high-energy acetylene as a metabolic fuel source, processed via cold-active enzymes."
+                };
+            }
+            if (biology.unlockedMethaneMulti) {
+                return {
+                    name: "Polymer-Chain Multicellular",
+                    details: "Chains of azotosome vesicles that have self-assembled into early macroscopic structures. They absorb dissolved atmospheric tholins across high surface areas."
+                };
+            }
+            if (biology.unlockedMethaneProto) {
+                return {
+                    name: "Azotosome Prokaryotes",
+                    details: "Unicellular life using nitrogen-based azotosome membranes that remain stable and flexible at 90 Kelvin, feeding on molecular hydrogen."
+                };
+            }
+            if (biology.unlockedMethaneSoup) {
+                return {
+                    name: "Methane Tholin Soup",
+                    details: "Prebiotic photolysis products (tholins, acetylene) deposited from the upper atmosphere into non-polar liquid methane basins, seeding hydrophobic vesicle assembly."
+                };
+            }
+            return {
+                name: "Hydrocarbon Basin Prebiotics",
+                details: "Photolytic tholin deposits accumulating in non-polar liquid methane, waiting for azotosome membrane assembly."
+            };
+        } else { // water
+            if (biology.unlockedGaiaHivemind) {
+                return {
+                    name: "Gaia Biosphere Hivemind",
+                    details: "A feedback-stabilized system of chemical signaling, mycelial networks, and atmospheric regulation. The global biomass actively optimizes planetary climate."
+                };
+            }
+            if (biology.unlockedNoosphere) {
+                return {
+                    name: "Planetary Noosphere",
+                    details: "A global thinking sphere integrating biological minds, digital grids, and silicon networks into a unified planet-scale cognitive system."
+                };
+            }
+            if (biology.unlockedCyborg) {
+                return {
+                    name: "Cyborg Hybrids",
+                    details: "Cybernetic integration linking silicon-neural interfaces directly to nerve fibers, bypassing slow biological Darwinian evolutionary bottlenecks."
+                };
+            }
+            if (biology.unlockedTechnologicalAI) {
+                return {
+                    name: "Technological AI",
+                    details: "Autonomous silicon-substrate neural architectures that mimic biological synapses but run at clock-rates 10,000 times faster, decoupling intelligence from carbon."
+                };
+            }
+            if (biology.unlockedCognitive) {
+                return {
+                    name: "Cognitive Species",
+                    details: "Extreme encephalization and neocortex enlargement support symbolic reasoning, language syntax, and manual tool usage to modify their own niche."
+                };
+            }
+            if (biology.unlockedSynapsid) {
+                return {
+                    name: "Synapsida (Mammals)",
+                    details: "Endothermic, highly active organisms with insulating hair and sweat glands. This constant thermal state enables rapid activity and mammalian brain expansion."
+                };
+            }
+            if (biology.unlockedSauropsid) {
+                return {
+                    name: "Sauropsida (Dinosaurs)",
+                    details: "Terrestrial vertebrates with dry, keratinous scales to shield moisture loss and water-efficient uric acid excretion, highly resilient to warm, arid climates."
+                };
+            }
+            if (biology.unlockedArthropod) {
+                return {
+                    name: "Terrestrial Arthropods",
+                    details: "Invertebrates with chitinous exoskeletons to prevent desiccation and tracheal tube networks to directly oxygenate tissues, enabling land gigantism."
+                };
+            }
+            if (biology.unlockedAngiosperms) {
+                return {
+                    name: "Angiosperms (Flowers)",
+                    details: "Enclosed seeds and petals that recruit insects for pollination and birds/mammals for seed dispersal, triggering explosive terrestrial biodiversity."
+                };
+            }
+            if (biology.unlockedConifers) {
+                return {
+                    name: "Gymnosperms (Conifers)",
+                    details: "Vascular plants bearing seeds locked in protective cones. They rely on wind-pollination, allowing them to populate cold, arid continental interiors."
+                };
+            }
+            if (biology.unlockedFerns) {
+                return {
+                    name: "Vascular Ferns",
+                    details: "Vascular tissue networks (xylem/phloem) that transport water vertically. They synthesize rigid lignin in cell walls, locking carbon into coal beds."
+                };
+            }
+            if (biology.unlockedMosses) {
+                return {
+                    name: "Non-Vascular Mosses",
+                    details: "Early land bryophytes with simple protective cuticles. Lacking vascular plumbing, they stay small and require thin water films for reproduction."
+                };
+            }
+            if (biology.unlockedFish) {
+                return {
+                    name: "Early Chordates & Fish",
+                    details: "Vascular chordates with jaw mechanics, bony/cartilaginous spines, and respiratory gills, dominating predatory cycles in the marine ecosystem."
+                };
+            }
+            if (biology.unlockedWorms) {
+                return {
+                    name: "Bilateral Water Worms",
+                    details: "Worms with cephalization (a defined head with sensory clusters) and triploblastic layers, enabling active, directed locomotion and burrowing."
+                };
+            }
+            if (biology.unlockedMeduses) {
+                return {
+                    name: "Cnidarians (Jellyfish)",
+                    details: "Organisms with radial symmetry, defined tissue layers, simple nerve nets, and stinging cells (nematocysts) to capture prey, initiating active macropredation."
+                };
+            }
+            if (biology.unlockedSponges) {
+                return {
+                    name: "Marine Sponges",
+                    details: "The earliest animal lineage. Lacking defined organs, they rely on flagellated choanocyte cells to pump and filter water for organic nutrients."
+                };
+            }
+            if (biology.unlockedMulticellular) {
+                return {
+                    name: "Multicellular Organisms",
+                    details: "Cellular aggregates utilizing cadherin adhesion proteins and chemical signaling to coordinate cell division of labor into distinct somatic tissues."
+                };
+            }
+            if (biology.unlockedEukaryotic) {
+                return {
+                    name: "Complex Eukaryotes",
+                    details: "Cells containing internal nuclei and endosymbiotic mitochondria that perform oxidative phosphorylation, generating 15x more ATP."
+                };
+            }
+            if (biology.unlockedPhotosynthetic) {
+                return {
+                    name: "Cyanobacteria",
+                    details: "Prokaryotes utilizing photosystem II and the oxygen-evolving complex to split water, releasing O2 gas as a byproduct and venting it to the atmosphere."
+                };
+            }
+            if (biology.unlockedAnaerobic) {
+                return {
+                    name: "Anaerobic Chemotrophs",
+                    details: "Prokaryotic unicells relying on simple anaerobic pathways in deep hydrothermal basins, consuming prebiotic organic soup."
+                };
+            }
+            if (biology.unlockedMembrane) {
+                return {
+                    name: "External Membranes",
+                    details: "Fatty acid vesicles that self-assemble into lipid bilayers, establishing protocells that isolate early replication loops from entropy."
+                };
+            }
+            if (biology.unlockedSoup) {
+                return {
+                    name: "Primordial Soup",
+                    details: "Accumulated amino acids, lipids, and nucleotide precursors synthesized via mineral catalysis and stellar UV radiolysis in warm water basins."
+                };
+            }
+            return {
+                name: "Prebiotic Basins",
+                details: "A warm water-rich world waiting for prebiotic chemical reactions to synthesize early organic soup compounds."
+            };
+        }
     }
 
 
@@ -944,7 +1184,7 @@ export class GameUI {
     /**
      * Render active threats/warnings list in threat control panel
      */
-    updateThreats(warnings, eventSystem = null) {
+    updateThreats(warnings, eventSystem = null, biology = null, planet = null) {
         const cards = this.threatList.querySelectorAll('.threat-card');
         const cardIds = Array.from(cards).map(card => {
             const btn = card.querySelector('.btn-deflect');
@@ -954,16 +1194,33 @@ export class GameUI {
 
         const hasChanged = cardIds.length !== warningIds.length || 
                            cardIds.some((id, idx) => id !== warningIds[idx]) ||
-                           this.threatList.querySelector('.no-threats-msg');
+                           this.threatList.querySelector('.no-threats-msg') ||
+                           this.threatList.querySelector('.intel-card');
 
         const gold = (eventSystem && typeof eventSystem.tokensGold === 'number') ? eventSystem.tokensGold : 0;
 
+        if (warnings.length === 0) {
+            const solvent = planet ? planet.activeSolvent : 'water';
+            const apex = this.getApexLifeForm(biology, solvent);
+            const currentSubjectEl = this.threatList.querySelector('.intel-subject');
+            const currentSubject = currentSubjectEl ? currentSubjectEl.textContent : '';
+            if (!currentSubjectEl || (apex && apex.name !== currentSubject)) {
+                this.threatList.innerHTML = apex ? `
+                    <div class="intel-card">
+                        <div class="intel-header">
+                            <span class="intel-title">🧬 BIOSPHERE INTEL</span>
+                            <span class="intel-subtitle">Current Apex Life</span>
+                        </div>
+                        <div class="intel-subject">${apex.name}</div>
+                        <div class="intel-body">${apex.details}</div>
+                    </div>
+                ` : '<div class="no-threats-msg">No active threats detected.</div>';
+            }
+            return;
+        }
+
         if (hasChanged) {
             this.threatList.innerHTML = '';
-            if (warnings.length === 0) {
-                this.threatList.innerHTML = '<div class="no-threats-msg">No active threats detected.</div>';
-                return;
-            }
 
             warnings.forEach(threat => {
                 const row = document.createElement('div');

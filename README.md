@@ -68,9 +68,13 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 
 The dashboard is divided into three vertical columns plus a full-width history panel below.
 
-### Left Panel — Threat Center
+### Left Panel — Command Center
 *   **Live Climate Pills**: Compact horizontal readouts for Temperature, Solvent Coverage, and Radiation that dynamically show current values and color-code zone status (in-zone, marginal, or out-of-zone) for quick status checks.
-*   **Threats List**: Displays all active planetary threats with countdown timers and Gold-token deflect buttons, expanding to fill the remaining vertical panel space.
+*   **Threats & Intel Box**: Displays active planetary threats with countdown timers and Gold-token deflect buttons. When no threats are active, this box dynamically converts into a **Biosphere Intel Card** that teaches the player about the current apex evolving life form in the simulation.
+*   **Action Tabs**: Provides direct curatorial controls below the warnings/intel box:
+    *   **Evolution Tree tab**: Branching roadmap with mutation progress and nudge-purchase buttons (using Blue tokens).
+    *   **Gene Tuning tab**: Trait upgrades (Thermal Resilience, Radiation Shielding, Metabolic Efficiency) using Silver tokens.
+    *   **Exchange tab**: Currency conversion interface (Blue → Silver, Silver → Gold).
 
 ### Center Panel — Planet Viewport & Telemetry Strip
 *   **Interactive Viewport**: Click anywhere on the canvas to toggle between **Planet View (Macro)** and **Microscopic Particle View (Micro)**.
@@ -84,12 +88,10 @@ The dashboard is divided into three vertical columns plus a full-width history p
     *   **🪐 Planet Info tab**: Six-cell grid showing Planet Age, Habitability, Solvent State, Magnetosphere, Ozone, and Star Luminosity.
 *   **Time-Series Sparklines** (full-width panel below): Historical trajectories for temperature, water/solvent coverage, surface radiation, habitability, O₂, CO₂, N₂, and biomass densities.
 
-### Right Panel — Biological Telemetry
-Four tabs dedicated to life science:
-*   **Biomass tab**: Progressive biomass cards that appear as each species is unlocked (water, ammonia, and methane branches).
-*   **Evolution Tree tab**: Full branching roadmap with Earth pacing comparison, progress bars, and nudge-purchase buttons.
-*   **Gene Tuning tab**: Upgrade Thermal Resilience, Radiation Shielding, and Metabolic Efficiency with Silver tokens.
-*   **Exchange tab**: Currency conversion interface (Blue → Silver, Silver → Gold).
+### Right Panel — Biosphere Monitor
+Dedicated entirely to tracking cellular progress:
+*   **Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic comparison badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
+*   **Biomass Monitor**: Scrollable lists of progressive biomass cards that appear as each species is unlocked across the Water, Ammonia, or Methane solvent lines. Housed directly in the panel for permanent, tab-free monitoring.
 
 ### Global Controls
 *   **Always-Visible Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).

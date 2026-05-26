@@ -54,9 +54,9 @@
         <!-- MAIN LAYOUT -->
         <main class="dashboard-grid">
             
-            <!-- LEFT PANEL: THREAT CENTER -->
+            <!-- LEFT PANEL: COMMAND CENTER (Actions & Interventions) -->
             <section class="panel glass-card" id="control-panel">
-                <h2 class="panel-title">Threat Center</h2>
+                <h2 class="panel-title">Command Center</h2>
 
                 <!-- Hidden sliders — kept for JS programmatic control only -->
                 <input type="range" id="temp-slider" min="-200" max="150" value="75" class="custom-slider" style="display:none;" aria-hidden="true">
@@ -94,6 +94,115 @@
                 <!-- THREATS -->
                 <div class="threat-list-box" id="threat-list">
                     <div class="no-threats-msg">No active threats detected.</div>
+                </div>
+
+                <!-- Tab Controls (moved from Right Panel) -->
+                <div class="tab-controls">
+                    <button id="tab-roadmap" class="tab-btn active">Evolution Tree</button>
+                    <button id="tab-tuning" class="tab-btn">Gene Tuning</button>
+                    <button id="tab-exchange" class="tab-btn">Exchange</button>
+                </div>
+
+                <!-- ROADMAP TAB CONTENT (EVOLUTION ROADMAP TREE) -->
+                <div id="tab-content-roadmap" class="tab-content active">
+                    <div class="roadmap-tree-container">
+                        <div class="tree-branch-selector">
+                            <span class="branch-label">Active Branch:</span>
+                            <span id="active-branch-name" class="branch-highlight">Water Line</span>
+                        </div>
+                        
+                        <!-- Dynamic node tree grid -->
+                        <div class="tree-nodes-list" id="tree-nodes-list">
+                            <!-- Populated in UI script based on current solvent -->
+                        </div>
+
+                        <!-- Details card for nudge -->
+                        <div class="node-details-card glass-card" id="node-details">
+                            <h4 id="node-details-title">Evolution Details</h4>
+                            <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
+                            <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GENE TUNING TAB CONTENT -->
+                <div id="tab-content-tuning" class="tab-content">
+                    <div class="roadmap-tree-container">
+                        <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
+                            <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🧬 Biological Adaptation Tuning</h4>
+                            <p class="panel-desc" style="margin-bottom: 0.8rem; font-size: 0.75rem;">Spend Evo-Tokens to permanently upgrade core biological traits. These adaptations affect all current and future evolutionary branches on the planet.</p>
+                            
+                            <!-- Thermal Resilience -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">🌡️</span> Thermal Resilience</label>
+                                    <span class="control-value" id="thermal-resilience-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Widens species temperature survival bounds by ±2°C per level (current: <span id="thermal-resilience-effect-val">0°C</span>).
+                                </div>
+                                <button id="btn-upgrade-thermal" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
+
+                            <!-- Radiation Defense -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">☢️</span> Radiation Shielding</label>
+                                    <span class="control-value" id="radiation-defense-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Reduces cosmic/surface radiation exposure by 15% per level (current: <span id="radiation-defense-effect-val">0%</span>).
+                                </div>
+                                <button id="btn-upgrade-radiation" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
+
+                            <!-- Metabolic Efficiency -->
+                            <div class="control-group" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header">
+                                    <label><span class="icon">⚡</span> Metabolic Efficiency</label>
+                                    <span class="control-value" id="metabolic-efficiency-level-val">Lvl 0 / 5</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+                                    Decreases biological population decay and organic soup consumption by 15% per level (current: <span id="metabolic-efficiency-effect-val">0%</span>).
+                                </div>
+                                <button id="btn-upgrade-metabolic" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOKEN EXCHANGE TAB CONTENT -->
+                <div id="tab-content-exchange" class="tab-content">
+                    <div class="roadmap-tree-container">
+                        <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
+                            <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🔄 Curatorial Token Exchange</h4>
+                            <p class="panel-desc" style="margin-bottom: 0.8rem; font-size: 0.75rem;">Convert surplus evolutionary progress into specialized curatorial tokens. Deflection shields require Gold tokens.</p>
+                            
+                            <!-- Blue -> Silver -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header" style="margin-bottom: 0.2rem;">
+                                    <label style="font-weight: bold; color: #93c5fd;"><span class="icon">🔹</span> Mutagen ➔ Silver Adapt</label>
+                                    <span class="control-value" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);">Rate: 50 to 1</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.4rem; line-height: 1.3;">
+                                    Exchange 50 Blue Mutagen Tokens to generate 1 Silver Adaptation/Engineering Token.
+                                </div>
+                                <button id="btn-convert-blue-silver" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem; background: linear-gradient(90deg, #3b82f6, #9ca3af); color: white; border: none; font-weight: bold;">Convert 50 Blue ➔ 1 Silver</button>
+                            </div>
+
+                            <!-- Silver -> Gold -->
+                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
+                                <div class="control-header" style="margin-bottom: 0.2rem;">
+                                    <label style="font-weight: bold; color: #fbbf24;"><span class="icon">⚙️</span> Silver Adapt ➔ Gold Shield</label>
+                                    <span class="control-value" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);">Rate: 50 to 1</span>
+                                </div>
+                                <div class="tuning-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.4rem; line-height: 1.3;">
+                                    Exchange 50 Silver Adaptation/Engineering Tokens to synthesize 1 Gold Deflection Shield Token.
+                                </div>
+                                <button id="btn-convert-silver-gold" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem; background: linear-gradient(90deg, #9ca3af, #fbbf24); color: black; border: none; font-weight: bold;">Convert 50 Silver ➔ 1 Gold</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </section>
@@ -262,14 +371,6 @@
                     </div>
                 </div>
 
-                <!-- Tab Controls -->
-                <div class="tab-controls">
-                    <button id="tab-metrics" class="tab-btn active">Biomass</button>
-                    <button id="tab-roadmap" class="tab-btn">Evolution Tree</button>
-                    <button id="tab-tuning" class="tab-btn">Gene Tuning</button>
-                    <button id="tab-exchange" class="tab-btn">Exchange</button>
-                </div>
-
                 <!-- BIOMASS TAB CONTENT -->
                 <div id="tab-content-metrics" class="tab-content active">
 
@@ -420,108 +521,6 @@
                             <div class="metric-card" id="cryo-colloid-card" style="display:none;">
                                 <div class="metric-header"><span class="metric-name">Megastructure Cryo-Colloids</span><span class="metric-value" id="cryo-colloid-pop">0.00 Index</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar" id="cryo-colloid-progress" style="width: 0%; background: linear-gradient(90deg, #b45309, #d97706);"></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ROADMAP TAB CONTENT (EVOLUTION ROADMAP TREE) -->
-                <div id="tab-content-roadmap" class="tab-content">
-                    <div class="roadmap-tree-container">
-                        <div class="tree-branch-selector">
-                            <span class="branch-label">Active Branch:</span>
-                            <span id="active-branch-name" class="branch-highlight">Water Line</span>
-                        </div>
-                        
-                        <!-- Dynamic node tree grid -->
-                        <div class="tree-nodes-list" id="tree-nodes-list">
-                            <!-- Populated in UI script based on current solvent -->
-                        </div>
-
-                        <!-- Details card for nudge -->
-                        <div class="node-details-card glass-card" id="node-details">
-                            <h4 id="node-details-title">Evolution Details</h4>
-                            <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
-                            <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GENE TUNING TAB CONTENT -->
-                <div id="tab-content-tuning" class="tab-content">
-                    <div class="roadmap-tree-container">
-                        <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
-                            <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🧬 Biological Adaptation Tuning</h4>
-                            <p class="panel-desc" style="margin-bottom: 0.8rem; font-size: 0.75rem;">Spend Evo-Tokens to permanently upgrade core biological traits. These adaptations affect all current and future evolutionary branches on the planet.</p>
-                            
-                            <!-- Thermal Resilience -->
-                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
-                                <div class="control-header">
-                                    <label><span class="icon">🌡️</span> Thermal Resilience</label>
-                                    <span class="control-value" id="thermal-resilience-level-val">Lvl 0 / 5</span>
-                                </div>
-                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
-                                    Widens species temperature survival bounds by ±2°C per level (current: <span id="thermal-resilience-effect-val">0°C</span>).
-                                </div>
-                                <button id="btn-upgrade-thermal" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
-                            </div>
-
-                            <!-- Radiation Defense -->
-                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
-                                <div class="control-header">
-                                    <label><span class="icon">☢️</span> Radiation Shielding</label>
-                                    <span class="control-value" id="radiation-defense-level-val">Lvl 0 / 5</span>
-                                </div>
-                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
-                                    Reduces cosmic/surface radiation exposure by 15% per level (current: <span id="radiation-defense-effect-val">0%</span>).
-                                </div>
-                                <button id="btn-upgrade-radiation" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
-                            </div>
-
-                            <!-- Metabolic Efficiency -->
-                            <div class="control-group" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
-                                <div class="control-header">
-                                    <label><span class="icon">⚡</span> Metabolic Efficiency</label>
-                                    <span class="control-value" id="metabolic-efficiency-level-val">Lvl 0 / 5</span>
-                                </div>
-                                <div class="tuning-desc" style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
-                                    Decreases biological population decay and organic soup consumption by 15% per level (current: <span id="metabolic-efficiency-effect-val">0%</span>).
-                                </div>
-                                <button id="btn-upgrade-metabolic" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem;">Upgrade: 4 Tokens</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TOKEN EXCHANGE TAB CONTENT -->
-                <div id="tab-content-exchange" class="tab-content">
-                    <div class="roadmap-tree-container">
-                        <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
-                            <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🔄 Curatorial Token Exchange</h4>
-                            <p class="panel-desc" style="margin-bottom: 0.8rem; font-size: 0.75rem;">Convert surplus evolutionary progress into specialized curatorial tokens. Deflection shields require Gold tokens.</p>
-                            
-                            <!-- Blue -> Silver -->
-                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
-                                <div class="control-header" style="margin-bottom: 0.2rem;">
-                                    <label style="font-weight: bold; color: #93c5fd;"><span class="icon">🔹</span> Mutagen ➔ Silver Adapt</label>
-                                    <span class="control-value" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);">Rate: 50 to 1</span>
-                                </div>
-                                <div class="tuning-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.4rem; line-height: 1.3;">
-                                    Exchange 50 Blue Mutagen Tokens to generate 1 Silver Adaptation/Engineering Token.
-                                </div>
-                                <button id="btn-convert-blue-silver" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem; background: linear-gradient(90deg, #3b82f6, #9ca3af); color: white; border: none; font-weight: bold;">Convert 50 Blue ➔ 1 Silver</button>
-                            </div>
-
-                            <!-- Silver -> Gold -->
-                            <div class="control-group" style="margin-bottom: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.6rem;">
-                                <div class="control-header" style="margin-bottom: 0.2rem;">
-                                    <label style="font-weight: bold; color: #fbbf24;"><span class="icon">⚙️</span> Silver Adapt ➔ Gold Shield</label>
-                                    <span class="control-value" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);">Rate: 50 to 1</span>
-                                </div>
-                                <div class="tuning-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.4rem; line-height: 1.3;">
-                                    Exchange 50 Silver Adaptation/Engineering Tokens to synthesize 1 Gold Deflection Shield Token.
-                                </div>
-                                <button id="btn-convert-silver-gold" class="btn btn-action" style="width: 100%; font-size: 0.75rem; padding: 0.35rem 0.5rem; background: linear-gradient(90deg, #9ca3af, #fbbf24); color: black; border: none; font-weight: bold;">Convert 50 Silver ➔ 1 Gold</button>
                             </div>
                         </div>
                     </div>

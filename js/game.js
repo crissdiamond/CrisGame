@@ -111,7 +111,7 @@ export class GameController {
                     this.ui.logEvent("THREAT AVERTED", res.msg, "success");
                     // Immediately refresh the threat panel so the card disappears now,
                     // not on the next animation frame (important when paused).
-                    this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem);
+                    this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem, this.biology, this.planet);
                 } else {
                     this.ui.logEvent("DEFLECTION FAILED", res.msg, "hazard");
                 }
@@ -416,7 +416,7 @@ export class GameController {
         this.historyView.render();
         
         // Update warnings panel
-        this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem);
+        this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem, this.biology, this.planet);
 
         // Update speed controls visually
         this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
