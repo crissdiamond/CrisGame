@@ -91,6 +91,37 @@ export class GameUI {
         this.tokenBalanceGold = document.getElementById('token-balance-gold');
         this.threatList = document.getElementById('threat-list');
 
+        // Gauge Elements (Planet Telemetry Strip — Climate Tab)
+        this.gaugeTempVal = document.getElementById('gauge-temp-val');
+        this.gaugeTempFill = document.getElementById('gauge-temp-fill');
+        this.gaugeTempThumb = document.getElementById('gauge-temp-thumb');
+        this.gaugeTempZone = document.getElementById('gauge-temp-zone');
+        this.gaugeTempZoneLabel = document.getElementById('gauge-temp-zone-label');
+        this.gaugeWaterVal = document.getElementById('gauge-water-val');
+        this.gaugeWaterFill = document.getElementById('gauge-water-fill');
+        this.gaugeWaterThumb = document.getElementById('gauge-water-thumb');
+        this.gaugeWaterZone = document.getElementById('gauge-water-zone');
+        this.gaugeSolventIcon = document.getElementById('gauge-solvent-icon');
+        this.gaugeSolventLabel = document.getElementById('gauge-solvent-label');
+        this.gaugeRadSpaceVal = document.getElementById('gauge-rad-space-val');
+        this.gaugeRadSurfVal = document.getElementById('gauge-rad-surf-val');
+        this.gaugeRadFill = document.getElementById('gauge-rad-fill');
+        this.gaugeRadThumb = document.getElementById('gauge-rad-thumb');
+        this.gaugeRadZone = document.getElementById('gauge-rad-zone');
+
+        // Strip Tab buttons and content panes
+        this.stripTabClimate = document.getElementById('strip-tab-climate');
+        this.stripTabAtmosphere = document.getElementById('strip-tab-atmosphere');
+        this.stripTabPlanet = document.getElementById('strip-tab-planet');
+        this.stripContentClimate = document.getElementById('strip-content-climate');
+        this.stripContentAtmosphere = document.getElementById('strip-content-atmosphere');
+        this.stripContentPlanet = document.getElementById('strip-content-planet');
+
+        // Planet Info strip mirrors
+        this.stripMagnetShield = document.getElementById('strip-magnet-shield');
+        this.stripOzoneLayer = document.getElementById('strip-ozone-layer');
+        this.stripStarLuminosity = document.getElementById('strip-star-luminosity');
+
         Object.defineProperty(this, 'tokenBalance', {
             get: () => this.tokenBalanceBlue || { textContent: '0' },
             configurable: true
@@ -363,6 +394,11 @@ export class GameUI {
         if (this.tabTuning) this.tabTuning.addEventListener('click', () => this.switchTab('tuning'));
         if (this.tabExchange) this.tabExchange.addEventListener('click', () => this.switchTab('exchange'));
 
+        // Strip tab switching events
+        if (this.stripTabClimate) this.stripTabClimate.addEventListener('click', () => this.switchStripTab('climate'));
+        if (this.stripTabAtmosphere) this.stripTabAtmosphere.addEventListener('click', () => this.switchStripTab('atmosphere'));
+        if (this.stripTabPlanet) this.stripTabPlanet.addEventListener('click', () => this.switchStripTab('planet'));
+
         // Setup modal event listeners for realtime feedback
         this.setupStarClass.addEventListener('change', () => this.updateSetupTelemetry());
         this.setupStarSize.addEventListener('input', (e) => {
@@ -478,6 +514,15 @@ export class GameUI {
         if (this.tabContentRoadmap) this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
         if (this.tabContentTuning) this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
         if (this.tabContentExchange) this.tabContentExchange.classList.toggle('active', tabId === 'exchange');
+    }
+
+    switchStripTab(tabId) {
+        if (this.stripTabClimate) this.stripTabClimate.classList.toggle('active', tabId === 'climate');
+        if (this.stripTabAtmosphere) this.stripTabAtmosphere.classList.toggle('active', tabId === 'atmosphere');
+        if (this.stripTabPlanet) this.stripTabPlanet.classList.toggle('active', tabId === 'planet');
+        if (this.stripContentClimate) this.stripContentClimate.classList.toggle('active', tabId === 'climate');
+        if (this.stripContentAtmosphere) this.stripContentAtmosphere.classList.toggle('active', tabId === 'atmosphere');
+        if (this.stripContentPlanet) this.stripContentPlanet.classList.toggle('active', tabId === 'planet');
     }
 
 
@@ -752,47 +797,119 @@ export class GameUI {
     }
 
     /**
-     * Synchronize sliders back to planet values
+     * Synchronize sliders back to planet values, and update all gauge visualizations
      */
     syncSliders(planet) {
+        // Keep hidden sliders in sync for any code that reads .value
         this.tempSlider.value = Math.round(planet.temperature);
-        this.tempVal.textContent = `${this.tempSlider.value}°C`;
-
         this.waterSlider.value = Math.round(planet.getSolventCoverage());
-        this.waterVal.textContent = `${this.waterSlider.value}%`;
-
         const currentRad = planet.radiation;
         const effectiveRad = planet.getEffectiveRadiation();
         this.radSlider.value = currentRad.toFixed(1);
+
+        // Update hidden legacy spans (backwards compat)
+        this.tempVal.textContent = `${this.tempSlider.value}°C`;
+        this.waterVal.textContent = `${this.waterSlider.value}%`;
         this.radVal.textContent = `Space: ${currentRad.toFixed(1)}`;
         if (this.radEffectiveVal) {
             this.radEffectiveVal.textContent = `Surf: ${effectiveRad.toFixed(1)} rad/s`;
         }
 
-        // Color surface radiation value by warning level
-        if (this.radEffectiveVal) {
-            if (effectiveRad > 4.0) {
-                this.radEffectiveVal.style.color = 'var(--accent-red)';
-                this.radEffectiveVal.style.background = 'var(--accent-red-glow)';
-            } else if (effectiveRad > 1.5) {
-                this.radEffectiveVal.style.color = 'var(--accent-amber)';
-                this.radEffectiveVal.style.background = 'rgba(245, 158, 11, 0.1)';
+        // ── Temperature Gauge ──────────────────────────────────────────────
+        const temp = planet.temperature;
+        // Range: -200 to +150 = 350 total
+        const tempPct = Math.max(0, Math.min(100, ((temp - (-200)) / 350) * 100));
+        if (this.gaugeTempFill) this.gaugeTempFill.style.width = `${tempPct}%`;
+        if (this.gaugeTempThumb) this.gaugeTempThumb.style.left = `${tempPct}%`;
+        if (this.gaugeTempVal) this.gaugeTempVal.textContent = `${temp.toFixed(1)}°C`;
+
+        // Set habitable zone band and label based on solvent
+        if (this.gaugeTempZone && this.gaugeTempZoneLabel) {
+            let zoneLeft, zoneWidth, zoneLabel;
+            if (planet.activeSolvent === 'water') {
+                // Water: 0–100°C out of -200–150 range
+                zoneLeft = ((0 - (-200)) / 350) * 100;      // ~57.1%
+                zoneWidth = (100 / 350) * 100;               // ~28.6%
+                zoneLabel = '— Water Zone (0–100°C) —';
+            } else if (planet.activeSolvent === 'ammonia') {
+                // Ammonia: -78 to -33°C
+                zoneLeft = ((-78 - (-200)) / 350) * 100;    // ~34.9%
+                zoneWidth = (45 / 350) * 100;                // ~12.9%
+                zoneLabel = '— Ammonia Zone (-78 to -33°C) —';
             } else {
-                this.radEffectiveVal.style.color = 'var(--accent-green)';
-                this.radEffectiveVal.style.background = 'var(--accent-green-glow)';
+                // Methane: -183 to -130°C
+                zoneLeft = ((-183 - (-200)) / 350) * 100;   // ~4.9%
+                zoneWidth = (53 / 350) * 100;                // ~15.1%
+                zoneLabel = '— Methane Zone (-183 to -130°C) —';
             }
+            this.gaugeTempZone.style.left = `${zoneLeft}%`;
+            this.gaugeTempZone.style.width = `${zoneWidth}%`;
+            this.gaugeTempZoneLabel.textContent = zoneLabel;
         }
 
-        // Update labels based on solvent
-        if (planet.activeSolvent === 'water') {
-            this.solventIcon.textContent = '💧';
-            this.solventLabel.textContent = 'Water';
-        } else if (planet.activeSolvent === 'ammonia') {
-            this.solventIcon.textContent = '❄️';
-            this.solventLabel.textContent = 'Ammonia';
+        // Color the thumb based on whether temp is inside habitable zone
+        if (this.gaugeTempThumb) {
+            const inZone = (planet.activeSolvent === 'water' && temp >= 0 && temp <= 100) ||
+                           (planet.activeSolvent === 'ammonia' && temp >= -78 && temp <= -33) ||
+                           (planet.activeSolvent === 'methane' && temp >= -183 && temp <= -130);
+            this.gaugeTempThumb.style.background = inZone ? 'var(--accent-green)' : 'var(--accent-red)';
+            this.gaugeTempThumb.style.boxShadow = inZone
+                ? '0 0 6px rgba(16,185,129,0.8)'
+                : '0 0 6px rgba(239,68,68,0.8)';
+        }
+
+        // ── Solvent Coverage Gauge ─────────────────────────────────────────
+        const water = planet.getSolventCoverage();
+        const waterPct = Math.max(0, Math.min(100, water));
+        if (this.gaugeWaterFill) this.gaugeWaterFill.style.width = `${waterPct}%`;
+        if (this.gaugeWaterThumb) this.gaugeWaterThumb.style.left = `${waterPct}%`;
+        if (this.gaugeWaterVal) this.gaugeWaterVal.textContent = `${waterPct.toFixed(0)}%`;
+
+        const inWaterZone = water >= 10 && water <= 90;
+        if (this.gaugeWaterThumb) {
+            this.gaugeWaterThumb.style.background = inWaterZone ? 'var(--accent-green)' : 'var(--accent-amber)';
+            this.gaugeWaterThumb.style.boxShadow = inWaterZone
+                ? '0 0 6px rgba(16,185,129,0.8)'
+                : '0 0 6px rgba(245,158,11,0.8)';
+        }
+
+        // Update solvent icons & labels
+        let solventIcon = '💧', solventLabelText = 'WATER';
+        if (planet.activeSolvent === 'ammonia') {
+            solventIcon = '❄️'; solventLabelText = 'AMMONIA';
         } else if (planet.activeSolvent === 'methane') {
-            this.solventIcon.textContent = '🍊';
-            this.solventLabel.textContent = 'Methane';
+            solventIcon = '🍊'; solventLabelText = 'METHANE';
+        }
+        if (this.solventIcon) this.solventIcon.textContent = solventIcon;
+        if (this.solventLabel) this.solventLabel.textContent = solventLabelText;
+        if (this.gaugeSolventIcon) this.gaugeSolventIcon.textContent = solventIcon;
+        if (this.gaugeSolventLabel) this.gaugeSolventLabel.textContent = solventLabelText;
+
+        // ── Radiation Gauge ────────────────────────────────────────────────
+        // Range: 0 to 10
+        const radPct = Math.max(0, Math.min(100, (currentRad / 10) * 100));
+        if (this.gaugeRadFill) this.gaugeRadFill.style.width = `${radPct}%`;
+        if (this.gaugeRadThumb) this.gaugeRadThumb.style.left = `${radPct}%`;
+        if (this.gaugeRadSpaceVal) this.gaugeRadSpaceVal.textContent = `Space: ${currentRad.toFixed(1)}`;
+        if (this.gaugeRadSurfVal) {
+            this.gaugeRadSurfVal.textContent = `Surf: ${effectiveRad.toFixed(1)} rad/s`;
+            if (effectiveRad > 4.0) {
+                this.gaugeRadSurfVal.style.color = 'var(--accent-red)';
+                this.gaugeRadSurfVal.style.background = 'rgba(239,68,68,0.1)';
+            } else if (effectiveRad > 1.5) {
+                this.gaugeRadSurfVal.style.color = 'var(--accent-amber)';
+                this.gaugeRadSurfVal.style.background = 'rgba(245,158,11,0.1)';
+            } else {
+                this.gaugeRadSurfVal.style.color = 'var(--accent-green)';
+                this.gaugeRadSurfVal.style.background = 'rgba(16,185,129,0.1)';
+            }
+        }
+        const radSafe = effectiveRad <= 2.5;
+        if (this.gaugeRadThumb) {
+            this.gaugeRadThumb.style.background = radSafe ? 'var(--accent-green)' : 'var(--accent-red)';
+            this.gaugeRadThumb.style.boxShadow = radSafe
+                ? '0 0 6px rgba(16,185,129,0.8)'
+                : '0 0 6px rgba(239,68,68,0.8)';
         }
     }
 
@@ -1106,11 +1223,18 @@ export class GameUI {
                             biology.cognitiveSpeciesPop > 0.0 || biology.crystallineCognitivePop > 0.0 || biology.thinkingOceanPop > 0.0;
         this.bioLegend5.style.display = hasSentient ? 'inline-flex' : 'none';
         
-        // Shield, Ozone, Star, and Moon telemetry
-        this.magnetShield.textContent = `${planet.magneticStrength.toFixed(0)}%`;
-        this.ozoneLayer.textContent = `${(planet.ozone * 100).toFixed(0)}%`;
-        this.starLuminosity.textContent = `${planet.starLuminosity.toFixed(2)}x`;
+        // Shield, Ozone, Star, and Moon telemetry — sync left panel cards + strip Planet Info tab
+        const shieldText = `${planet.magneticStrength.toFixed(0)}%`;
+        const ozoneText = `${(planet.ozone * 100).toFixed(0)}%`;
+        const starText = `${planet.starLuminosity.toFixed(2)}x`;
+        this.magnetShield.textContent = shieldText;
+        this.ozoneLayer.textContent = ozoneText;
+        this.starLuminosity.textContent = starText;
+        if (this.stripMagnetShield) this.stripMagnetShield.textContent = shieldText;
+        if (this.stripOzoneLayer) this.stripOzoneLayer.textContent = ozoneText;
+        if (this.stripStarLuminosity) this.stripStarLuminosity.textContent = starText;
         this.moonIndicator.style.display = planet.hasMoon ? 'flex' : 'none';
+
 
         // Update atmospheric graph bars
         this.barCo2.style.width = `${planet.co2}%`;

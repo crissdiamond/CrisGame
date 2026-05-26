@@ -54,46 +54,43 @@
         <!-- MAIN LAYOUT -->
         <main class="dashboard-grid">
             
-            <!-- LEFT PANEL: ENVIRONMENTAL CONTROLLER & INTERVENTIONS -->
+            <!-- LEFT PANEL: COMMAND & CONTROL -->
             <section class="panel glass-card" id="control-panel">
-                <h2 class="panel-title">Environmental Controls</h2>
-                
-                <div class="control-group">
-                    <div class="control-header">
-                        <label for="temp-slider"><span class="icon">🌡️</span> Temperature</label>
-                        <span class="control-value" id="temp-val">25°C</span>
-                    </div>
-                    <input type="range" id="temp-slider" min="-200" max="150" value="75" class="custom-slider">
-                    <div class="slider-labels">
-                        <span>Cryo (-200°C)</span>
-                        <span>Boiling (150°C)</span>
-                    </div>
-                </div>
+                <h2 class="panel-title">Command & Control</h2>
 
-                <div class="control-group">
-                    <div class="control-header">
-                        <label for="water-slider"><span class="icon" id="solvent-icon">💧</span> <span id="solvent-label">Liquid Solvent</span> Coverage</label>
-                        <span class="control-value" id="water-val">30%</span>
-                    </div>
-                    <input type="range" id="water-slider" min="0" max="100" value="30" class="custom-slider">
-                    <div class="slider-labels">
-                        <span>Arid (0%)</span>
-                        <span>Oceanic (100%)</span>
-                    </div>
-                </div>
+                <!-- Hidden sliders — kept for JS programmatic control only -->
+                <input type="range" id="temp-slider" min="-200" max="150" value="75" class="custom-slider" style="display:none;" aria-hidden="true">
+                <input type="range" id="water-slider" min="0" max="100" value="30" class="custom-slider" style="display:none;" aria-hidden="true">
+                <input type="range" id="radiation-slider" min="0" max="10" step="0.1" value="3.5" class="custom-slider" style="display:none;" aria-hidden="true">
+                <!-- Hidden label spans for backwards-compat with JS -->
+                <span id="solvent-icon" style="display:none;">💧</span>
+                <span id="solvent-label" style="display:none;">Water</span>
+                <span id="temp-val" style="display:none;">25°C</span>
+                <span id="water-val" style="display:none;">30%</span>
+                <span id="radiation-val" style="display:none;">Space: 3.5</span>
+                <span id="radiation-effective-val" style="display:none;">Surf: 0.9 rad/s</span>
 
-                <div class="control-group">
-                    <div class="control-header">
-                        <label for="radiation-slider"><span class="icon">☢️</span> Cosmic Radiation</label>
-                        <div class="radiation-readouts" style="display: flex; gap: 4px;">
-                            <span class="control-value" id="radiation-val" title="Cosmic Radiation in Space">Space: 3.5</span>
-                            <span class="control-value" id="radiation-effective-val" title="Effective Radiation at Surface" style="color: var(--accent-amber); background: rgba(245, 158, 11, 0.1);">Surf: 0.9 rad/s</span>
-                        </div>
+                <!-- SYSTEM STATUS READOUTS -->
+                <div class="sys-readouts-grid">
+                    <div class="sys-readout-card">
+                        <span class="sys-readout-icon">🧲</span>
+                        <span class="sys-readout-label">MAGNETOSPHERE</span>
+                        <span class="sys-readout-value" id="magnet-shield">100%</span>
                     </div>
-                    <input type="range" id="radiation-slider" min="0" max="10" step="0.1" value="3.5" class="custom-slider">
-                    <div class="slider-labels">
-                        <span>Shielded</span>
-                        <span>Extreme</span>
+                    <div class="sys-readout-card">
+                        <span class="sys-readout-icon">🌫️</span>
+                        <span class="sys-readout-label">OZONE LAYER</span>
+                        <span class="sys-readout-value" id="ozone-layer">0%</span>
+                    </div>
+                    <div class="sys-readout-card">
+                        <span class="sys-readout-icon">⭐</span>
+                        <span class="sys-readout-label">STAR LUMINOSITY</span>
+                        <span class="sys-readout-value" id="star-luminosity">1.00x</span>
+                    </div>
+                    <div class="sys-readout-card" id="moon-indicator" style="display:none;">
+                        <span class="sys-readout-icon">🌕</span>
+                        <span class="sys-readout-label">MOON</span>
+                        <span class="sys-readout-value text-cyan" id="moon-status">PRESENT</span>
                     </div>
                 </div>
 
@@ -132,38 +129,124 @@
                     <canvas id="simulation-canvas"></canvas>
                 </div>
 
-                <div class="telemetry-bar">
-                    <div class="telemetry-item">
-                        <span class="label">PLANET AGE</span>
-                        <span class="value" id="planet-age">0.0 Myr</span>
+                <!-- PLANET TELEMETRY STRIP: 3-tab dashboard below canvas -->
+                <div id="planet-telemetry-strip" class="planet-telemetry-strip">
+
+                    <!-- Strip Tab Buttons -->
+                    <div class="strip-tab-bar">
+                        <button class="strip-tab-btn active" id="strip-tab-climate">🌡️ Climate</button>
+                        <button class="strip-tab-btn" id="strip-tab-atmosphere">🌫️ Atmosphere</button>
+                        <button class="strip-tab-btn" id="strip-tab-planet">🪐 Planet Info</button>
                     </div>
-                    <div class="telemetry-item">
-                        <span class="label">HABITABILITY</span>
-                        <span class="value highlight" id="habitability-score">0%</span>
+
+                    <!-- CLIMATE TAB -->
+                    <div class="strip-tab-content active" id="strip-content-climate">
+                        <!-- Temperature Gauge -->
+                        <div class="climate-gauge-card">
+                            <div class="gauge-header">
+                                <span class="gauge-icon">🌡️</span>
+                                <span class="gauge-label">TEMPERATURE</span>
+                                <span class="gauge-value" id="gauge-temp-val">25°C</span>
+                            </div>
+                            <div class="gauge-track-wrapper">
+                                <div class="gauge-track">
+                                    <div class="gauge-zone" id="gauge-temp-zone"></div>
+                                    <div class="gauge-fill" id="gauge-temp-fill" style="width:64%"></div>
+                                    <div class="gauge-thumb" id="gauge-temp-thumb" style="left:64%"></div>
+                                </div>
+                                <div class="gauge-track-labels">
+                                    <span>-200°C (Cryo)</span>
+                                    <span>150°C (Boiling)</span>
+                                </div>
+                            </div>
+                            <div class="gauge-zone-label" id="gauge-temp-zone-label">— Water Zone (0–100°C) —</div>
+                        </div>
+                        <!-- Solvent Coverage Gauge -->
+                        <div class="climate-gauge-card">
+                            <div class="gauge-header">
+                                <span class="gauge-icon" id="gauge-solvent-icon">💧</span>
+                                <span class="gauge-label"><span id="gauge-solvent-label">WATER</span> COVERAGE</span>
+                                <span class="gauge-value" id="gauge-water-val">30%</span>
+                            </div>
+                            <div class="gauge-track-wrapper">
+                                <div class="gauge-track">
+                                    <div class="gauge-zone" id="gauge-water-zone" style="left:10%; width:80%"></div>
+                                    <div class="gauge-fill gauge-fill-water" id="gauge-water-fill" style="width:30%"></div>
+                                    <div class="gauge-thumb" id="gauge-water-thumb" style="left:30%"></div>
+                                </div>
+                                <div class="gauge-track-labels">
+                                    <span>Arid (0%)</span>
+                                    <span>Oceanic (100%)</span>
+                                </div>
+                            </div>
+                            <div class="gauge-zone-label">— Habitable: 10–90% coverage —</div>
+                        </div>
+                        <!-- Radiation Gauge -->
+                        <div class="climate-gauge-card">
+                            <div class="gauge-header">
+                                <span class="gauge-icon">☢️</span>
+                                <span class="gauge-label">COSMIC RADIATION</span>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                                    <span class="gauge-value" id="gauge-rad-space-val" title="Space radiation">Space: 3.5</span>
+                                    <span class="gauge-value gauge-value-surf" id="gauge-rad-surf-val" title="Surface radiation">Surf: 0.9</span>
+                                </div>
+                            </div>
+                            <div class="gauge-track-wrapper">
+                                <div class="gauge-track">
+                                    <div class="gauge-zone" id="gauge-rad-zone" style="left:0%; width:25%"></div>
+                                    <div class="gauge-fill gauge-fill-rad" id="gauge-rad-fill" style="width:35%"></div>
+                                    <div class="gauge-thumb" id="gauge-rad-thumb" style="left:35%"></div>
+                                </div>
+                                <div class="gauge-track-labels">
+                                    <span>Shielded (0)</span>
+                                    <span>Extreme (10)</span>
+                                </div>
+                            </div>
+                            <div class="gauge-zone-label">— Safe zone: &lt; 2.5 rad/s surface —</div>
+                        </div>
                     </div>
-                    <div class="telemetry-item">
-                        <span class="label">SOLVENT STATE</span>
-                        <span class="value text-cyan" id="solvent-state">Water</span>
+
+                    <!-- ATMOSPHERE TAB -->
+                    <div class="strip-tab-content" id="strip-content-atmosphere">
+                        <div class="strip-atmo-grid">
+                            <div class="gas-bar-wrapper"><span class="gas-name">CO₂</span><div class="gas-bar-bg"><div class="gas-bar-fill co2" id="bar-co2" style="width:95%"></div></div><span id="gas-co2-val">95.0%</span></div>
+                            <div class="gas-bar-wrapper"><span class="gas-name">N₂</span><div class="gas-bar-bg"><div class="gas-bar-fill n2" id="bar-n2" style="width:5%"></div></div><span id="gas-n2-val">4.9%</span></div>
+                            <div class="gas-bar-wrapper"><span class="gas-name">O₂</span><div class="gas-bar-bg"><div class="gas-bar-fill o2" id="bar-o2" style="width:0%"></div></div><span id="gas-o2-val">0.1%</span></div>
+                            <div class="gas-bar-wrapper" id="ch4-gas-wrapper" style="display:none;"><span class="gas-name">CH₄</span><div class="gas-bar-bg"><div class="gas-bar-fill ch4" id="bar-ch4" style="width:0%"></div></div><span id="gas-ch4-val">0.0%</span></div>
+                            <div class="gas-bar-wrapper" id="h2-gas-wrapper" style="display:none;"><span class="gas-name">H₂</span><div class="gas-bar-bg"><div class="gas-bar-fill h2" id="bar-h2" style="width:0%"></div></div><span id="gas-h2-val">0.0%</span></div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="telemetry-bar secondary">
-                    <div class="telemetry-item">
-                        <span class="label">MAGNETIC SHIELD</span>
-                        <span class="value" id="magnet-shield">100%</span>
+
+                    <!-- PLANET INFO TAB -->
+                    <div class="strip-tab-content" id="strip-content-planet">
+                        <div class="strip-info-grid">
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">PLANET AGE</span>
+                                <span class="strip-info-value" id="planet-age">0.0 Myr</span>
+                            </div>
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">HABITABILITY</span>
+                                <span class="strip-info-value highlight" id="habitability-score">0%</span>
+                            </div>
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">SOLVENT STATE</span>
+                                <span class="strip-info-value text-cyan" id="solvent-state">Water</span>
+                            </div>
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">MAGNETOSPHERE</span>
+                                <span class="strip-info-value" id="strip-magnet-shield">100%</span>
+                            </div>
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">OZONE LAYER</span>
+                                <span class="strip-info-value" id="strip-ozone-layer">0%</span>
+                            </div>
+                            <div class="strip-info-item">
+                                <span class="strip-info-label">STAR LUMINOSITY</span>
+                                <span class="strip-info-value" id="strip-star-luminosity">1.00x</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="telemetry-item">
-                        <span class="label">OZONE LAYER</span>
-                        <span class="value" id="ozone-layer">0%</span>
-                    </div>
-                    <div class="telemetry-item">
-                        <span class="label">STAR LUMINOSITY</span>
-                        <span class="value" id="star-luminosity">1.00x</span>
-                    </div>
-                    <div class="telemetry-item" id="moon-indicator" style="display:none;">
-                        <span class="label">MOON</span>
-                        <span class="value text-cyan" id="moon-status">🌕 PRESENT</span>
-                    </div>
+
                 </div>
             </section>
 
@@ -202,18 +285,6 @@
 
                 <!-- BIOMASS TAB CONTENT -->
                 <div id="tab-content-metrics" class="tab-content active">
-                    <div class="metric-category">
-                        <h3>Atmosphere & Gas</h3>
-                        <div class="atmosphere-details-compact">
-                            <div class="gas-bars-horizontal">
-                                <div class="gas-bar-wrapper"><span class="gas-name">CO₂</span><div class="gas-bar-bg"><div class="gas-bar-fill co2" id="bar-co2" style="width:95%"></div></div><span id="gas-co2-val">95.0%</span></div>
-                                <div class="gas-bar-wrapper"><span class="gas-name">N₂</span><div class="gas-bar-bg"><div class="gas-bar-fill n2" id="bar-n2" style="width:5%"></div></div><span id="gas-n2-val">4.9%</span></div>
-                                <div class="gas-bar-wrapper"><span class="gas-name">O₂</span><div class="gas-bar-bg"><div class="gas-bar-fill o2" id="bar-o2" style="width:0%"></div></div><span id="gas-o2-val">0.1%</span></div>
-                                <div class="gas-bar-wrapper" id="ch4-gas-wrapper" style="display:none;"><span class="gas-name">CH₄</span><div class="gas-bar-bg"><div class="gas-bar-fill ch4" id="bar-ch4" style="width:0%"></div></div><span id="gas-ch4-val">0.0%</span></div>
-                                <div class="gas-bar-wrapper" id="h2-gas-wrapper" style="display:none;"><span class="gas-name">H₂</span><div class="gas-bar-bg"><div class="gas-bar-fill h2" id="bar-h2" style="width:0%"></div></div><span id="gas-h2-val">0.0%</span></div>
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="metric-category" id="biomass-readouts">
                         <h3>Biomasses</h3>
