@@ -107,8 +107,10 @@ Dedicated entirely to tracking biological progress:
 ```
 CrisGame/
 ├── index.html           # Main lab dashboard layout
+├── LICENCE              # MIT License
 ├── README.md            # Scientific documentation and user guide
 ├── TODO.md              # Feature roadmap and implementation details
+├── EVOLUTION_DESIGNS.md # Phylogenetic graph database design blueprint
 ├── server.py            # Simple Python developmental server
 ├── css/
 │   └── style.css        # Glassmorphic and retro sci-fi panel styling
@@ -135,3 +137,9 @@ No compilers or heavy frameworks are required.
    python3 server.py
    ```
    and navigate to `http://localhost:8080`.
+
+---
+
+## 7. License
+
+This project is licensed under the MIT License - see the [LICENCE](file:///home/diamond/CrisGame/LICENCE) file for details.
