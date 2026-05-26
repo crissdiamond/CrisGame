@@ -96,37 +96,14 @@
                     <div class="no-threats-msg">No active threats detected.</div>
                 </div>
 
-                <!-- Tab Controls (moved from Right Panel) -->
+                <!-- Tab Controls (Left Panel) -->
                 <div class="tab-controls">
-                    <button id="tab-roadmap" class="tab-btn active">Evolution Tree</button>
-                    <button id="tab-tuning" class="tab-btn">Gene Tuning</button>
+                    <button id="tab-tuning" class="tab-btn active">Gene Tuning</button>
                     <button id="tab-exchange" class="tab-btn">Exchange</button>
                 </div>
 
-                <!-- ROADMAP TAB CONTENT (EVOLUTION ROADMAP TREE) -->
-                <div id="tab-content-roadmap" class="tab-content active">
-                    <div class="roadmap-tree-container">
-                        <div class="tree-branch-selector">
-                            <span class="branch-label">Active Branch:</span>
-                            <span id="active-branch-name" class="branch-highlight">Water Line</span>
-                        </div>
-                        
-                        <!-- Dynamic node tree grid -->
-                        <div class="tree-nodes-list" id="tree-nodes-list">
-                            <!-- Populated in UI script based on current solvent -->
-                        </div>
-
-                        <!-- Details card for nudge -->
-                        <div class="node-details-card glass-card" id="node-details">
-                            <h4 id="node-details-title">Evolution Details</h4>
-                            <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
-                            <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- GENE TUNING TAB CONTENT -->
-                <div id="tab-content-tuning" class="tab-content">
+                <div id="tab-content-tuning" class="tab-content active">
                     <div class="roadmap-tree-container">
                         <div class="node-details-card glass-card" style="margin-top: 0; padding: 0.8rem; border-top: none;">
                             <h4 style="margin-bottom: 0.4rem; color: var(--accent-cyan); font-size: 0.95rem;">🧬 Biological Adaptation Tuning</h4>
@@ -347,6 +324,12 @@
                     </div>
                 </div>
 
+                <!-- Tab Controls (Right Panel) -->
+                <div class="tab-controls" style="margin-top: 0.75rem; margin-bottom: 0.75rem;">
+                    <button id="tab-metrics" class="tab-btn active">Biomasses</button>
+                    <button id="tab-roadmap" class="tab-btn">Evolution Tree</button>
+                </div>
+
                 <!-- BIOMASS TAB CONTENT -->
                 <div id="tab-content-metrics" class="tab-content active">
 
@@ -498,6 +481,28 @@
                                 <div class="metric-header"><span class="metric-name">Megastructure Cryo-Colloids</span><span class="metric-value" id="cryo-colloid-pop">0.00 Index</span></div>
                                 <div class="progress-bar-container"><div class="progress-bar" id="cryo-colloid-progress" style="width: 0%; background: linear-gradient(90deg, #b45309, #d97706);"></div></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROADMAP TAB CONTENT (EVOLUTION ROADMAP TREE) -->
+                <div id="tab-content-roadmap" class="tab-content">
+                    <div class="roadmap-tree-container">
+                        <div class="tree-branch-selector">
+                            <span class="branch-label">Active Branch:</span>
+                            <span id="active-branch-name" class="branch-highlight">Water Line</span>
+                        </div>
+                        
+                        <!-- Dynamic node tree grid -->
+                        <div class="tree-nodes-list" id="tree-nodes-list">
+                            <!-- Populated in UI script based on current solvent -->
+                        </div>
+
+                        <!-- Details card for nudge -->
+                        <div class="node-details-card glass-card" id="node-details">
+                            <h4 id="node-details-title">Evolution Details</h4>
+                            <p id="node-details-text">Select an evolutionary milestone from the list above to view adaptation details, triggers, and spend tokens to nudge genes.</p>
+                            <button id="btn-nudge-evolution" class="btn btn-action" style="display:none; width: 100%; margin-top: 0.5rem;"></button>
                         </div>
                     </div>
                 </div>

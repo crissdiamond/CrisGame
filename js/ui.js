@@ -513,14 +513,28 @@ export class GameUI {
         this.setupViableLine.textContent = line;
     }
 
-    switchTab(tabId) {
-        if (this.tabRoadmap) this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
+    switchLeftTab(tabId) {
         if (this.tabTuning) this.tabTuning.classList.toggle('active', tabId === 'tuning');
         if (this.tabExchange) this.tabExchange.classList.toggle('active', tabId === 'exchange');
 
-        if (this.tabContentRoadmap) this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
         if (this.tabContentTuning) this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
         if (this.tabContentExchange) this.tabContentExchange.classList.toggle('active', tabId === 'exchange');
+    }
+
+    switchRightTab(tabId) {
+        if (this.tabMetrics) this.tabMetrics.classList.toggle('active', tabId === 'metrics');
+        if (this.tabRoadmap) this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
+
+        if (this.tabContentMetrics) this.tabContentMetrics.classList.toggle('active', tabId === 'metrics');
+        if (this.tabContentRoadmap) this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
+    }
+
+    switchTab(tabId) {
+        if (tabId === 'tuning' || tabId === 'exchange') {
+            this.switchLeftTab(tabId);
+        } else if (tabId === 'metrics' || tabId === 'roadmap') {
+            this.switchRightTab(tabId);
+        }
     }
 
     switchStripTab(tabId) {
