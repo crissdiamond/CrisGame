@@ -1099,8 +1099,19 @@ export class BiologySimulation {
             const respiration = this.spongesPop * 0.008 + this.medusesPop * 0.01 + this.wormsPop * 0.012 + this.fishPop * 0.025 + 
                                 this.cambrianPop * 0.02 + this.sauropsidPop * 0.05 + this.synapsidPop * 0.06 + this.cognitiveSpeciesPop * 0.06;
 
+            // Total living biomass for decomposition
+            const totalBiomass = this.photosyntheticPop + this.landPlantsPop + this.spongesPop + this.medusesPop + 
+                                 this.wormsPop + this.fishPop + this.cambrianPop + this.sauropsidPop + 
+                                 this.synapsidPop + this.cognitiveSpeciesPop + this.noospherePop + this.gaiaHivemindPop;
+            
+            // Global heterotrophic decay flux representing general decomposers (facultative anaerobes, fungi, aerobic bacteria)
+            const decayFlux = totalBiomass * 0.015;
+
+            // In an oxygenated atmosphere, decay is aerobic and consumes O2
+            const aerobicDecay = decayFlux * Math.min(1.0, planet.o2 / 2.0);
+
             // Direct anaerobic/heterotrophic decomposition venting of CO2
-            const decayCO2Prod = this.anaerobicPop * 0.02 + (this.organicSoup > 0 ? 0.35 : 0.01);
+            const decayCO2Prod = this.anaerobicPop * 0.02 + decayFlux + (this.organicSoup > 0 ? 0.35 : 0.01);
 
             // Spontaneous oxygen wildfires if O2 exceeds 25% (ignitions due to lightning/thunderstrike)
             let fireO2Drawdown = 0;
@@ -1132,13 +1143,13 @@ export class BiologySimulation {
                 soupOxidationCO2Release = soupOxidation * 0.5;
             }
 
-            o2Prod = o2ProdRaw - respiration - fireO2Drawdown - soupOxidationO2Drawdown;
+            o2Prod = o2ProdRaw - respiration - fireO2Drawdown - soupOxidationO2Drawdown - aerobicDecay;
             co2Cons = o2Prod - decayCO2Prod;
             co2Prod = decayCO2Prod + fireCO2Release + soupOxidationCO2Release;
             
             // Nitrogen Cycle: denitrifiers vent N2, fixers consume N2, radiation fixes N2
-            const denitrification = this.anaerobicPop * 0.04;
-            const nitrogenFixation = this.photosyntheticPop * 0.025 + this.landPlantsPop * 0.06;
+            const denitrification = this.anaerobicPop * 0.04 + decayFlux * 1.5;
+            const nitrogenFixation = (this.photosyntheticPop * 0.025 + this.landPlantsPop * 0.06) * (planet.n2 / (planet.n2 + 30.0));
             const atmosphericFixation = Math.min(1.0, planet.radiation * 0.08);
             n2Prod = denitrification - nitrogenFixation - atmosphericFixation;
         }
@@ -1382,17 +1393,30 @@ export class BiologySimulation {
                 }
             }
 
+            // Scale autotrophic production by CO2 availability (throttling below 2%)
+            const co2ViabilityAmmonia = Math.min(1.0, planet.co2 / 2.0);
+
+            // Total living ammonic biomass for decomposition
+            const biomassAmmonia = this.ammonicProtoPop + this.ammonicMultiPop + this.silicoFloraPop + this.cryoFaunaPop + 
+                                   this.crystallineCognitivePop + this.quantumLatticePop + this.cryoHivemindPop;
+            const decayFluxAmmonia = biomassAmmonia * 0.012;
+
+            // Ammonic decay consumes N2 (nitrogenous respiration analog) and vents CO2
+            const ammonicDecayN2Drawdown = decayFluxAmmonia * Math.min(1.0, planet.n2 / 10.0);
+
             // Ammonic life produces N2 as photosynthesis byproduct, boosted by Cryo Hivemind
+            let n2ProdRaw = 0;
             if (this.cryoHivemindPop > 0) {
-                if (planet.co2 > 1.0) {
-                    n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1 + this.cryoHivemindPop * 0.12;
-                } else {
-                    n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1;
-                }
+                n2ProdRaw = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1 + this.cryoHivemindPop * 0.12;
             } else {
-                n2Prod = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1;
+                n2ProdRaw = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1;
             }
-            co2Cons = this.silicoFloraPop * 0.08 + this.ammonicProtoPop * 0.01 + this.crystallineCognitivePop * 0.02 + this.quantumLatticePop * 0.01 + this.cryoHivemindPop * 0.03;
+
+            n2Prod = n2ProdRaw * co2ViabilityAmmonia - ammonicDecayN2Drawdown;
+
+            const co2ConsRaw = this.silicoFloraPop * 0.08 + this.ammonicProtoPop * 0.01 + 
+                               this.crystallineCognitivePop * 0.02 + this.quantumLatticePop * 0.01 + this.cryoHivemindPop * 0.03;
+            co2Cons = co2ConsRaw * co2ViabilityAmmonia - decayFluxAmmonia;
         }
 
         // ----------------------------------------------------
@@ -1602,15 +1626,28 @@ export class BiologySimulation {
                 }
             }
 
+            // Scale methanogenesis and hydrogen consumption by H2 availability (throttling below 5%)
+            const h2ViabilityMethane = Math.min(1.0, planet.h2 / 5.0);
+
+            // Total living methane biomass for decomposition
+            const biomassMethane = this.methaneProtoPop + this.methaneMultiPop + this.cryoOrganismsPop + 
+                                   this.cryoPolymerNetworkPop + this.thinkingOceanPop + this.cryoColloidPop;
+            const decayFluxMethane = biomassMethane * 0.01;
+
+            // Methane decay consumes CH4 and vents H2
+            const methaneDecayCH4Drawdown = decayFluxMethane * Math.min(1.0, planet.ch4 / 10.0);
+
             // Methanotrophic cycle consumes H2, vents CH4, boosted by Cryo Colloids and Thinking Oceans
+            let ch4ProdRaw = 0;
             if (this.cryoColloidPop > 0 || this.thinkingOceanPop > 0) {
                 const boost = this.cryoColloidPop * 0.05 + this.thinkingOceanPop * 0.04;
-                ch4Prod = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01 + boost;
-                h2Cons = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01 + boost;
+                ch4ProdRaw = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01 + boost;
             } else {
-                ch4Prod = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01;
-                h2Cons = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01;
+                ch4ProdRaw = this.methaneProtoPop * 0.05 + this.cryoOrganismsPop * 0.02 + this.cryoPolymerNetworkPop * 0.01;
             }
+
+            ch4Prod = ch4ProdRaw * h2ViabilityMethane - methaneDecayCH4Drawdown;
+            h2Cons = ch4ProdRaw * h2ViabilityMethane - methaneDecayCH4Drawdown * 1.5;
         }
 
         // Return calculated biological feedback impacts

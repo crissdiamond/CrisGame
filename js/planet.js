@@ -421,13 +421,18 @@ export class Planet {
             this.hasMagnetosphere = false;
         }
 
-        // Abiotic water photolysis under radiation
+        // Abiotic water or methane photolysis under radiation
         if (this.activeSolvent === 'water' && this.waterCoverage > 0.0) {
             // Radiation splits water vapor into O2 and H2
             const photolysis = 0.005 * this.radiation * (this.waterCoverage / 100.0) * tickRate;
             this.waterCoverage = Math.max(0.0, this.waterCoverage - photolysis);
             this.o2 += photolysis * 0.4;
             this.h2 += photolysis * 0.8;
+        } else if (this.activeSolvent === 'methane' && this.ch4 > 0.0) {
+            // Solar UV photolysis splits methane gas in the atmosphere, producing H2 gas
+            const photolysis = 0.006 * this.radiation * (this.ch4 / 100.0) * tickRate;
+            this.ch4 = Math.max(0.0, this.ch4 - photolysis);
+            this.h2 += photolysis * 1.5;
         }
 
         // Hydrogen gas atmospheric escape to space (lightest element escapes into the void)
@@ -544,9 +549,29 @@ export class Planet {
             this.ozone = Math.max(0, this.ozone - 0.05 * tickRate);
         }
 
-        // Continuous baseline tectonic outgassing of CO2 (geological carbon cycle)
-        const tectonicCO2 = (this.magneticStrength > 10.0 ? 0.005 : 0.001) * tickRate;
-        this.co2 += tectonicCO2;
+        // Multi-solvent geological outgassing (tectonic volatile resupply)
+        if (this.activeSolvent === 'methane') {
+            const tectonicCH4 = (this.magneticStrength > 10.0 ? 0.01 : 0.003) * tickRate;
+            const tectonicN2 = (this.magneticStrength > 10.0 ? 0.005 : 0.001) * tickRate;
+            this.ch4 += tectonicCH4;
+            this.n2 += tectonicN2;
+        } else {
+            const tectonicCO2 = (this.magneticStrength > 10.0 ? 0.005 : 0.001) * tickRate;
+            const tectonicN2 = (this.magneticStrength > 10.0 ? 0.015 : 0.004) * tickRate;
+            this.co2 += tectonicCO2;
+            this.n2 += tectonicN2;
+        }
+
+        // Abiotic Silicate Weathering (planetary carbon sink thermostat / Walker feedback)
+        if (this.activeSolvent === 'water') {
+            const tempFactor = 1.0 + (this.temperature - 15.0) / 30.0;
+            const silicateWeathering = 0.004 * this.co2 * (this.waterCoverage / 100.0) * Math.max(0.1, tempFactor) * tickRate;
+            this.co2 = Math.max(0.001, this.co2 - silicateWeathering);
+        } else if (this.activeSolvent === 'ammonia') {
+            const tempFactor = 1.0 + (this.temperature - (-55.0)) / 20.0;
+            const silicateWeathering = 0.003 * this.co2 * (this.ammoniaCoverage / 100.0) * Math.max(0.1, tempFactor) * tickRate;
+            this.co2 = Math.max(0.001, this.co2 - silicateWeathering);
+        }
 
         // Crustal mineral oxidation (geological oxygen sink)
         // Excess O2 reacts with surface iron, sulfur, and rocks (rusting)

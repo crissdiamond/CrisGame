@@ -55,6 +55,9 @@
 - **Abiotic Water Photolysis & Hydrogen Escape**: Solar UV splits atmospheric water vapor into H₂ and O₂ under radiation. Light hydrogen gas escapes to the void of space over time, with the escape rate accelerating 6x if the protective magnetosphere is lost.
 - **Greenhouse Vapor Feedbacks**: Included baseline water and ammonia vapor greenhouse heating in temperature calculations so planets with liquid oceans do not freeze instantly if CO₂ drops.
 - **Geological Crustal Oxidation Sink**: Excess oxygen ($\text{O}_2 > 21\%$) reacts chemically with crustal mineral sinks (such as ferrous iron), depositing iron oxides and buffering atmospheric $\text{O}_2$ (mimicking Earth's Banded Iron Formations).
+- **Multi-Solvent Volcanic Outgassing**: Mantle outgassing of volatiles matches the planet's solvent (Water/Ammonia outgasses $\text{CO}_2$ and $\text{N}_2$; Methane outgasses $\text{CH}_4$ and $\text{N}_2$) to resupply the atmosphere geologically.
+- **Abiotic Silicate Weathering**: Carbonate-silicate weathering (on Water and Ammonia worlds) acts as a planetary carbon sink thermostat, scaling with temperature and surface ocean coverage.
+- **Solar Methane Photolysis**: Methane gas splits under solar UV radiation on methane worlds, drawing down $\text{CH}_4$ and releasing $\text{H}_2$ gas.
 
 ### 2. Ecological & Evolutionary Dynamics
 - **Photosynthesis CO₂ Dependency**: Photosynthesis oxygen production and carbon consumption rates scale with CO₂ availability. If CO₂ drops to zero, photosynthesis stops entirely to prevent absolute carbon depletion.
@@ -62,6 +65,8 @@
 - **Abiotic Prebiotic Soup Oxidation**: Excess oxygen ($\text{O}_2 > 21\%$) abiotically decomposes dissolved organic compounds in the water pool, consuming $\text{O}_2$ and venting $\text{CO}_2$.
 - **Spontaneous Wildfires & Firestorms**: Spontaneous brushfires above 25% oxygen consume O₂ and release CO₂ while burning plant biomass. An **Atmospheric Firestorm** hazard event triggers above 35% oxygen (on either land plants or marine algal/cyanobacteria mats) to restore planetary gas equilibrium.
 - **Eukaryote Recombination Boost**: Evolutionary endosymbiosis (Mitochondria) enables meiotic Sexual Reproduction. Evolving sex provides a 1.25x niche colonization growth/capacity boost to eukaryotes, and accelerates all subsequent advanced evolutionary breakthroughs by 30% due to genetic recombination.
+- **Multi-Solvent Biomass Decay**: Integrated global biomass decay fluxes for all three solvent lines (Water, Ammonia, Methane). On Water worlds, this decay is aerobic, consuming $\text{O}_2$ and venting $\text{CO}_2$, capping oxygen spikes under high biomass.
+- **Metabolic Saturation Kinetics**: Biological cycles (nitrogen fixation, methanogenesis, and ammonic photosynthesis) scale with atmospheric gas concentration via Michaelis-Menten kinetics, preventing absolute depletion.
 
 ### 3. Interface & Quality of Life
 - **Save & Load System**: Full local storage save/load persistence that restores all physical, biological, event, timeline history, and scrollable terminal log HTML states.
