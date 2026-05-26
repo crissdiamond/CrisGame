@@ -200,11 +200,15 @@ export class GameUI {
         this.popupReward = document.getElementById('popup-reward');
         this.popupCloseBtn = document.getElementById('popup-close-btn');
         this.popupDismissBtn = document.getElementById('popup-dismiss-btn');
+        this.popupDeflectBtn = document.getElementById('popup-deflect-btn');
+        this.popupIcon = document.getElementById('popup-icon');
         this.popupDossierContainer = document.getElementById('popup-dossier-container');
         this.popupToggleDossier = document.getElementById('popup-toggle-dossier');
         this.popupDossierText = document.getElementById('popup-dossier-text');
-        this.popupDossierToggleIcon = document.getElementById('popup-dossier-toggle-icon');
         this.popupDossierTextWrapper = document.getElementById('popup-dossier-text-wrapper');
+        this.popupDossierToggleIcon = document.getElementById('popup-dossier-toggle-icon');
+        
+        this.activePopupWarningId = null;
 
         // Future Metric Cards Cache
         this.cyborgCard = document.getElementById('cyborg-card');
@@ -382,7 +386,59 @@ export class GameUI {
         }
     }
 
-    showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null) {
+// Geological Earth ages (in Myr from planet formation) for singular biological milestones.
+const earthTimeline = {
+    // Water Line
+    'soup': { age: 600.0, name: "Prebiotic Soup" },
+    'membrane': { age: 700.0, name: "Membranes" },
+    'bacteria': { age: 800.0, name: "First Prokaryotes" },
+    'anaerobic': { age: 1000.0, name: "Anaerobic Archaea" },
+    'photosynthetic': { age: 1500.0, name: "Cyanobacteria" },
+    'nucleus': { age: 2100.0, name: "Cellular Nucleus" },
+    'mitochondria': { age: 2500.0, name: "Mitochondria Symbiosis" },
+    'eukaryotes': { age: 2700.0, name: "Eukaryotic Cells" },
+    'sexual': { age: 3300.0, name: "Sexual Reproduction" },
+    'multicellular': { age: 3700.0, name: "Multicellularity" },
+    'sponges': { age: 3900.0, name: "Marine Sponges" },
+    'meduses': { age: 3950.0, name: "Jellyfish & Meduses" },
+    'worms': { age: 3980.0, name: "Bilateral Worms" },
+    'fish': { age: 4000.0, name: "Early Vertebrate Fish" },
+    'mosses': { age: 4100.0, name: "Non-Vascular Mosses" },
+    'ferns': { age: 4150.0, name: "Vascular Ferns" },
+    'conifers': { age: 4250.0, name: "Gymnosperms" },
+    'angiosperms': { age: 4400.0, name: "Flowering Plants" },
+    'cambrian': { age: 4000.0, name: "Cambrian Explosion" },
+    'insects': { age: 4120.0, name: "Land Insects" },
+    'tetrapods': { age: 4180.0, name: "Tetrapods" },
+    'sauropsids': { age: 4300.0, name: "Dinosaurs/Sauropsids" },
+    'synapsids': { age: 4320.0, name: "Mammals/Synapsids" },
+    'cognitive': { age: 4540.0, name: "Sentient/Cognitive Life" },
+    'ai': { age: 4540.0, name: "Post-Biological AI" },
+    'cyborg': { age: 4540.0, name: "Cyborg Hybrids" },
+    'noosphere': { age: 4540.0, name: "Planetary AI Noosphere" },
+    'gaia_hivemind': { age: 4540.0, name: "Gaia Hivemind" },
+    
+    // Ammonia Line
+    'ammonic_soup': { age: 600.0, name: "Prebiotic Chemistry" },
+    'ammonic_proto': { age: 800.0, name: "Simple Prokaryotes" },
+    'ammonic_multi': { age: 3700.0, name: "Multicellularity" },
+    'silico_flora': { age: 4100.0, name: "Photosynthetic Flora" },
+    'cryo_fauna': { age: 4000.0, name: "Fauna Colonization" },
+    'crystalline_cognitive': { age: 4540.0, name: "Cognitive Species" },
+    'quantum_lattices': { age: 4540.0, name: "Advanced Computing Systems" },
+    'cryo_hivemind': { age: 4540.0, name: "Global Hivemind Network" },
+
+    // Methane Line
+    'methane_soup': { age: 600.0, name: "Prebiotic Chemistry" },
+    'methane_proto': { age: 800.0, name: "Simple Prokaryotes" },
+    'methane_multi': { age: 3700.0, name: "Multicellularity" },
+    'cryo_organisms': { age: 4000.0, name: "Fauna Colonization" },
+    'cryo_polymer_network': { age: 4100.0, name: "Flora Colonization" },
+    'thinking_ocean': { age: 4540.0, name: "Global Hivemind Network" },
+    'cryo_colloid': { age: 4540.0, name: "Cognitive Species" }
+};
+
+    showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null, warningMeta = null, currentTokens = 0) {
         this.popupTitle.textContent = title;
         this.popupDesc.textContent = desc;
         
@@ -404,12 +460,64 @@ export class GameUI {
         } else {
             this.popupReward.style.display = 'none';
         }
+
+        // Handle threat warning configuration
+        if (warningMeta) {
+            this.popupIcon.textContent = '⚠️';
+            this.popupDeflectBtn.style.display = 'block';
+            this.activePopupWarningId = warningMeta.id;
+            
+            if (currentTokens >= warningMeta.cost) {
+                this.popupDeflectBtn.disabled = false;
+                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}T]`;
+                this.popupDeflectBtn.classList.remove('disabled');
+            } else {
+                this.popupDeflectBtn.disabled = true;
+                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}T] (Need Tokens)`;
+                this.popupDeflectBtn.classList.add('disabled');
+            }
+            this.popupDismissBtn.textContent = "Dismiss (Run Simulation)";
+        } else {
+            this.popupIcon.textContent = '🎉';
+            this.popupDeflectBtn.style.display = 'none';
+            this.activePopupWarningId = null;
+            this.popupDismissBtn.textContent = "Acknowledge";
+        }
         
         this.popupOverlay.style.display = 'flex';
     }
 
     hidePopup() {
         this.popupOverlay.style.display = 'none';
+    }
+
+    isPopupVisible() {
+        return this.popupOverlay.style.display === 'flex';
+    }
+
+    updateSpeedControls(userSpeed, activeSpeed, hasWarnings) {
+        const speedBtns = document.querySelectorAll('.speed-btn');
+        speedBtns.forEach(btn => {
+            const speed = parseInt(btn.getAttribute('data-speed'), 10);
+            
+            // Highlight user selected speed
+            if (speed === userSpeed) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            
+            // Lock/disable higher speed controls during active warning crises
+            if (hasWarnings && speed > 1) {
+                btn.disabled = true;
+                btn.classList.add('disabled');
+                btn.title = "Restricted to 1x speed during active planetary threats";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+                btn.removeAttribute('title');
+            }
+        });
     }
 
     /**
@@ -490,6 +598,25 @@ export class GameUI {
         this.popupDismissBtn.addEventListener('click', () => {
             this.hidePopup();
             if (handlers.onPopupClose) handlers.onPopupClose();
+        });
+
+        // Popup deflect button click listener
+        this.popupDeflectBtn.addEventListener('click', () => {
+            if (this.activePopupWarningId) {
+                handlers.onDeflectThreat(this.activePopupWarningId);
+                this.hidePopup();
+                if (handlers.onPopupClose) handlers.onPopupClose();
+            }
+        });
+
+        // Bind speed selection controls
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const speed = parseInt(btn.getAttribute('data-speed'), 10);
+                if (handlers.onChangeSpeed) {
+                    handlers.onChangeSpeed(speed);
+                }
+            });
         });
     }
 
@@ -724,10 +851,50 @@ export class GameUI {
 
     renderSelectedNodeDetails(node, biology) {
         this.nodeDetailsTitle.textContent = node.name;
+        
+        let comparisonHTML = "";
+        const earthMilestone = earthTimeline[node.id];
+        if (earthMilestone) {
+            const earthAge = earthMilestone.age;
+            const unlockAge = biology.unlockAges ? biology.unlockAges[node.id] : null;
+            
+            if (unlockAge !== undefined && unlockAge !== null) {
+                const diff = earthAge - unlockAge;
+                if (Math.abs(diff) < 15.0) {
+                    comparisonHTML = `
+                        <div class="earth-comparison simultaneous">
+                            🌍 <strong>Earth Pacing Match</strong>: Unlocked at <strong>${unlockAge.toFixed(1)} Myr</strong> (simultaneous with Earth's equivalent at ${earthAge} Myr).
+                        </div>
+                    `;
+                } else if (diff > 0) {
+                    comparisonHTML = `
+                        <div class="earth-comparison earlier">
+                            🌍 <strong>Earth Pacing</strong>: Unlocked at <strong>${unlockAge.toFixed(1)} Myr</strong> (evolved <span style="color: var(--accent-cyan); font-weight: bold;">${diff.toFixed(1)} Myr EARLIER</span> than Earth's equivalent at ${earthAge} Myr).
+                        </div>
+                    `;
+                } else {
+                    comparisonHTML = `
+                        <div class="earth-comparison later">
+                            🌍 <strong>Earth Pacing</strong>: Unlocked at <strong>${unlockAge.toFixed(1)} Myr</strong> (evolved <span style="color: var(--accent-amber); font-weight: bold;">${Math.abs(diff).toFixed(1)} Myr LATER</span> than Earth's equivalent at ${earthAge} Myr).
+                        </div>
+                    `;
+                }
+            } else {
+                comparisonHTML = `
+                    <div class="earth-comparison pending">
+                        🌍 <strong>Earth Pacing Target</strong>: Typically reached at <strong>${earthAge} Myr</strong> on Earth (not yet reached on this planet).
+                    </div>
+                `;
+            }
+        }
+
         this.nodeDetailsText.innerHTML = `
             <strong>Milestone Requirements:</strong> ${node.req}<br>
             <strong>Current Population:</strong> ${node.pop.toFixed(2)} / ${node.cap.toFixed(0)}<br>
             ${node.nudgeId ? `<strong>Gene Upgrade Nudge:</strong> ${node.nudgeName} (Allows unlocking or speeds up development).` : 'No manual gene upgrades for this branch.'}
+            <div style="margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+                ${comparisonHTML}
+            </div>
         `;
 
         if (node.nudgeId && !biology.activeAdaptations.has(node.nudgeId)) {

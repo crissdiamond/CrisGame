@@ -27,7 +27,13 @@ class GameController {
         this.lastTime = 0;
         this.wasPlayingBeforePopup = false;
         
-        // Time scale: 1 real second = 0.1 Million Years (Myr)
+        // Simulation speed controls
+        this.userSpeed = 1;
+        this.activeSpeed = 1;
+        this.speedLockedMessageLogged = false;
+        this.popupQueue = [];
+        
+        // Time scale: 1 real second = 0.1 Million Years (Myr) * activeSpeed
         this.timeScale = 0.1; 
 
         // Initialize bindings and setup initial state
@@ -142,12 +148,28 @@ class GameController {
             },
 
             onPopupClose: () => {
-                if (this.wasPlayingBeforePopup) {
-                    this.isPlaying = true;
-                    this.ui.setPlayState(this.isPlaying);
-                    this.lastTime = performance.now(); // reset timer to avoid huge delta-time jump
-                    this.wasPlayingBeforePopup = false;
+                if (this.popupQueue.length > 0) {
+                    this.processPopupQueue();
+                } else {
+                    if (this.wasPlayingBeforePopup) {
+                        this.isPlaying = true;
+                        this.ui.setPlayState(this.isPlaying);
+                        this.lastTime = performance.now(); // reset timer to avoid huge delta-time jump
+                        this.wasPlayingBeforePopup = false;
+                    }
                 }
+            },
+
+            onChangeSpeed: (speed) => {
+                if (this.eventSystem.warnings.length > 0 && speed > 1) {
+                    this.ui.logEvent("SPEED LOCKED", "⚠️ Simulation speed restricted to 1x during active planetary threats.", "hazard");
+                    return;
+                }
+                this.userSpeed = speed;
+                this.activeSpeed = speed;
+                this.timeScale = 0.1 * this.activeSpeed;
+                this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
+                this.ui.logEvent("SPEED ADJUSTED", `Simulation speed set to ${speed}x.`, "system");
             }
         });
 
@@ -180,6 +202,25 @@ class GameController {
 
         // Perform simulation updates if active
         if (this.isPlaying && dt > 0) {
+            // Constrain simulation speed if active threats exist
+            const hasWarnings = this.eventSystem.warnings.length > 0;
+            if (hasWarnings) {
+                if (this.activeSpeed !== 1) {
+                    if (!this.speedLockedMessageLogged) {
+                        this.ui.logEvent("SPEED RESTRICTED", "⚠️ Simulation speed locked to 1x during active planetary threats.", "alert");
+                        this.speedLockedMessageLogged = true;
+                    }
+                    this.activeSpeed = 1;
+                }
+            } else {
+                if (this.activeSpeed !== this.userSpeed) {
+                    this.ui.logEvent("SPEED RESTORED", `🟢 Crisis resolved. Restoring simulation speed to ${this.userSpeed}x.`, "success");
+                    this.activeSpeed = this.userSpeed;
+                    this.speedLockedMessageLogged = false;
+                }
+            }
+            this.timeScale = 0.1 * this.activeSpeed;
+
             // Convert real-world time step into Million Years (Myr)
             const tickRate = dt * this.timeScale;
 
@@ -211,8 +252,10 @@ class GameController {
                     }
                     this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
-                    if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard') {
-                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, evt.tokens);
+                    if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard' || evt.type === 'alert') {
+                        const isDetection = evt.title.includes("DETECTED");
+                        const warningMeta = isDetection ? { id: evt.warningId, cost: evt.warningCost } : null;
+                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, isDetection ? null : evt.tokens, warningMeta);
                     }
                 });
                 // Sync sliders back to planet values since events can alter targets
@@ -238,6 +281,9 @@ class GameController {
         // Update warnings panel
         this.ui.updateThreats(this.eventSystem.warnings);
 
+        // Update speed controls visually
+        this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
+
         // Update token readout directly from eventSystem
         this.ui.tokenBalance.textContent = Math.floor(this.eventSystem.tokens);
 
@@ -248,13 +294,31 @@ class GameController {
         requestAnimationFrame((time) => this.loop(time));
     }
 
-    triggerPopup(title, desc, details, rewardTokens = null) {
+    triggerPopup(title, desc, details, rewardTokens = null, warningMeta = null) {
         if (this.isPlaying) {
             this.isPlaying = false;
             this.ui.setPlayState(this.isPlaying);
             this.wasPlayingBeforePopup = true;
         }
-        this.ui.showMilestonePopup(title, desc, details, rewardTokens);
+        this.popupQueue.push({ title, desc, details, rewardTokens, warningMeta });
+        this.processPopupQueue();
+    }
+
+    processPopupQueue() {
+        if (this.ui.isPopupVisible()) {
+            return;
+        }
+        if (this.popupQueue.length > 0) {
+            const nextPopup = this.popupQueue.shift();
+            this.ui.showMilestonePopup(
+                nextPopup.title,
+                nextPopup.desc,
+                nextPopup.details,
+                nextPopup.rewardTokens,
+                nextPopup.warningMeta,
+                this.eventSystem.tokens
+            );
+        }
     }
 
     saveGame() {
@@ -262,6 +326,7 @@ class GameController {
             const data = {
                 version: 1.0,
                 timestamp: Date.now(),
+                userSpeed: this.userSpeed,
                 planet: {
                     temperature: this.planet.temperature,
                     waterCoverage: this.planet.waterCoverage,
@@ -412,7 +477,8 @@ class GameController {
                     
                     activeAdaptations: Array.from(this.biology.activeAdaptations),
                     pendingNudges: this.biology.pendingNudges,
-                    radiationResistance: this.biology.radiationResistance
+                    radiationResistance: this.biology.radiationResistance,
+                    unlockAges: this.biology.unlockAges
                 },
                 eventSystem: {
                     tokens: this.eventSystem.tokens,
@@ -468,6 +534,14 @@ class GameController {
             }
             const data = JSON.parse(raw);
 
+            if (typeof data.userSpeed === 'number') {
+                this.userSpeed = data.userSpeed;
+            } else {
+                this.userSpeed = 1;
+            }
+            this.activeSpeed = data.eventSystem.warnings.length > 0 ? 1 : this.userSpeed;
+            this.timeScale = 0.1 * this.activeSpeed;
+
             // Restore Planet
             for (const key in data.planet) {
                 this.planet[key] = data.planet[key];
@@ -480,6 +554,9 @@ class GameController {
                 } else {
                     this.biology[key] = data.biology[key];
                 }
+            }
+            if (!this.biology.unlockAges) {
+                this.biology.unlockAges = {};
             }
 
             // Restore EventSystem

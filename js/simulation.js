@@ -137,6 +137,7 @@ export class BiologySimulation {
 
         // General Mutation / Adaptation Level
         this.radiationResistance = 0.1;
+        this.unlockAges = {};
     }
 
     /**
@@ -177,7 +178,70 @@ export class BiologySimulation {
 
         const lambda = rarity.rate * solventMult * conditionMult * nudgeMult * sexBoost;
         const p = 1 - Math.exp(-lambda * tickRate);
-        return Math.random() < p;
+        const success = Math.random() < p;
+
+        if (success) {
+            const transitionToNodeMap = {
+                'soup': 'soup',
+                'membrane': 'membrane',
+                'anaerobic': 'anaerobic',
+                'photosynthesis': 'photosynthetic',
+                'nucleus': 'nucleus',
+                'endosymbiosis': 'mitochondria',
+                'sexual_reproduction': 'sexual',
+                'multicellular': 'multicellular',
+                'sponges': 'sponges',
+                'meduses': 'meduses',
+                'worms': 'worms',
+                'fish': 'fish',
+                'cambrian': 'cambrian',
+                'vascular_tissue': 'mosses',
+                'ferns': 'ferns',
+                'seed_evolution': 'conifers',
+                'angiosperms': 'angiosperms',
+                'arthropods': 'insects',
+                'tetrapods': 'tetrapods',
+                'scales': 'sauropsids',
+                'endthermy': 'synapsids',
+                'cognitive': 'cognitive',
+                'technological_singularity': 'ai',
+                'cybernetic_implants': 'cyborg',
+                'global_consciousness': 'noosphere',
+                'ecological_integration': 'gaia_hivemind',
+                
+                // Ammonia Line
+                'ammonic_soup': 'ammonic_soup',
+                'ammonic_proto': 'ammonic_proto',
+                'ammonic_multi': 'ammonic_multi',
+                'silicon_chains': 'silico_flora',
+                'cryo_fauna': 'cryo_fauna',
+                'crystalline_collective': 'crystalline_cognitive',
+                'quantum_alignment': 'quantum_lattices',
+                'cryo_neural_webs': 'cryo_hivemind',
+                
+                // Methane Line
+                'methane_soup': 'methane_soup',
+                'methane_proto': 'methane_proto',
+                'methane_multi': 'methane_multi',
+                'cryo_polymers': 'cryo_organisms',
+                'cryo_polymer_network': 'cryo_polymer_network',
+                'colloidal_solids': 'thinking_ocean',
+                'macromolecular_assembly': 'cryo_colloid'
+            };
+
+            const nodeId = transitionToNodeMap[transitionKey] || transitionKey;
+            if (!this.unlockAges) this.unlockAges = {};
+            this.unlockAges[nodeId] = planet.age;
+
+            // Special double-unlock cases
+            if (transitionKey === 'anaerobic') {
+                this.unlockAges['bacteria'] = planet.age;
+            } else if (transitionKey === 'endosymbiosis') {
+                this.unlockAges['eukaryotes'] = planet.age;
+            }
+        }
+
+        return success;
     }
 
     /**

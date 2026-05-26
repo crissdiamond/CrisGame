@@ -68,6 +68,9 @@
 - **Interactive Viewport View Toggle**: Click anywhere on the viewport panel to transition between Planet View (Macro) and Microscopic View (Micro), with hover borders and a dynamic status badge.
 - **Biomass Graph & Color Alignment**: Restructured the environment history graph to dynamically color solvent lines based on active presets (Green/Water, Purple/Ammonia, Amber/Methane), changed N₂ history line to match the dashboard, and color-aligned all 20+ microscopic view particles to their 5 biomass categories.
 - **Auto-Pause & Dynamic Milestone Popups**: Milestone modal overlays automatically pause the simulation ticks and threat clocks, resuming automatically on close. Milestone popups dynamically display actual token rewards (+2, +5, +12, or +25) based on event rarity.
+- **Simulation Speed Controls**: Adjustable speed options (1x, 2x, 5x, 10x) with an automated safety lock that restricts simulation to 1x during active threat warnings to prevent panic. Speed settings are automatically restored once all warnings are resolved.
+- **Threat Warning Deflect Popups**: Automatic pauses and warning popups triggered upon first warning detection, allowing players to deflect the threat immediately from the modal or dismiss it.
+- **Earth Timeline Comparison Roadmap**: Integrated an Earth pacing comparison card on the Roadmap details panel. Displays real-world Earth equivalent timeline ages for all milestones (on Water and alternative biochemistry lines) and compares the planet's actual unlock ages, highlighting whether evolution is earlier (cyan), later (amber), or simultaneous (green).
 
 ---
 
@@ -122,6 +125,21 @@ This simulator utilizes established astrophysical, chemical, and biological prin
   - **Water ($\text{H}_2\text{O}$)**: Highly polar, liquid range $0^\circ\text{C}$ to $100^\circ\text{C}$ at 1 atm. Supports standard carbon-oxygen biochemistry.
   - **Ammonia ($\text{NH}_3$)**: Polar solvent liquid at lower temperatures ($-78^\circ\text{C}$ to $-33^\circ\text{C}$). Supports nitrogen-centric metabolic paths in cryogenic environments.
   - **Methane ($\text{CH}_4$)**: Apolar solvent liquid at cryogenic temperatures ($-183^\circ\text{C}$ to $-140^\circ\text{C}$). Requires non-lipid bilayers (such as nitrogen-rich azotosome vesicles) and methanogenesis (consuming hydrogen, producing methane).
+
+### 10. Earth History Milestone Timelines
+* **Scientific Basis**: Measured in Million Years (Myr) from planetary formation (4.54 billion years ago), the timeline of major biological breakthroughs provides the baseline for the simulator's comparative pacing:
+  - **Prebiotic Chemistry/Soup**: ~600 Myr
+  - **First Prokaryotes (Bacteria)**: ~800 Myr
+  - **Great Oxidation Event (GOE)**: ~2100 Myr
+  - **Cellular Nucleus & Endosymbiosis**: ~2100 - 2500 Myr
+  - **Eukaryotic Cells**: ~2700 Myr
+  - **Meiotic Sexual Reproduction**: ~3300 Myr
+  - **Multicellularity (Metazoans)**: ~3700 Myr
+  - **Cambrian Explosion / Vertebrates**: ~4000 Myr
+  - **Land Colonization & Vascular Plants**: ~4100 Myr
+  - **Dinosaurs & Mammals**: ~4300 Myr
+  - **Cognitive Species (Sentient Life)**: ~4540 Myr (present day)
+* **Comparative Pacing**: By mapping alternative biochemistry stages (Ammonia and Methane) to their functional Earth equivalents, players gain a quantitative understanding of how different chemical solvents and environmental constraints affect the speed of evolutionary jumps.
 
 
 

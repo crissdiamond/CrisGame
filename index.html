@@ -106,6 +106,13 @@
                         <button id="btn-save-state" class="control-icon-btn">💾 Save</button>
                         <button id="btn-load-state" class="control-icon-btn">📂 Load</button>
                         <button id="btn-pause-play" class="control-icon-btn">⏸️ Pause</button>
+                        <div class="speed-control-group">
+                            <span class="speed-label">SPEED:</span>
+                            <button id="btn-speed-1x" class="control-icon-btn speed-btn active" data-speed="1">1x</button>
+                            <button id="btn-speed-2x" class="control-icon-btn speed-btn" data-speed="2">2x</button>
+                            <button id="btn-speed-5x" class="control-icon-btn speed-btn" data-speed="5">5x</button>
+                            <button id="btn-speed-10x" class="control-icon-btn speed-btn" data-speed="10">10x</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -401,7 +408,7 @@
     <div id="milestone-popup" class="popup-overlay" style="display: none;">
         <div class="popup-content glass-card">
             <span class="popup-close" id="popup-close-btn">&times;</span>
-            <div class="popup-icon">🎉</div>
+            <div class="popup-icon" id="popup-icon">🎉</div>
             <h2 id="popup-title">Milestone Unlocked!</h2>
             <p id="popup-desc">Milestone description goes here.</p>
             
@@ -417,7 +424,10 @@
             </div>
 
             <div class="popup-reward" id="popup-reward">Curator Reward: +5 Evo-Tokens</div>
-            <button id="popup-dismiss-btn" class="btn btn-action">Acknowledge</button>
+            <div class="popup-actions">
+                <button id="popup-deflect-btn" class="btn btn-warning" style="display: none;"></button>
+                <button id="popup-dismiss-btn" class="btn btn-action">Acknowledge</button>
+            </div>
         </div>
     </div>
 

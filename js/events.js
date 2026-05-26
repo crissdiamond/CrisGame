@@ -683,7 +683,7 @@ export class EventSystem {
         if (planet.magneticStrength < 40.0 && planet.hasMagnetosphere) {
             const hasDynamoWarning = this.warnings.some(w => w.id === 'dynamo_decay');
             if (!hasDynamoWarning) {
-                this.warnings.push({
+                const dynamoWarning = {
                     id: 'dynamo_decay',
                     name: "MAGNETIC FIELD CRITICAL",
                     description: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent.",
@@ -696,6 +696,16 @@ export class EventSystem {
                         p.magneticStrength = 10.0;
                         return "Magnetosphere collapsed! Atmosphere stripping active.";
                     }
+                };
+                this.warnings.push(dynamoWarning);
+
+                outputLogs.push({
+                    title: "⚠️ DETECTED: MAGNETIC FIELD CRITICAL",
+                    desc: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent. TIME TO EFFECT: 4.0 Myr. Spend 15 tokens to avoid.",
+                    type: "alert",
+                    scientificDetails: dynamoWarning.scientificDetails,
+                    warningId: 'dynamo_decay',
+                    warningCost: 15
                 });
             }
         }
@@ -752,8 +762,8 @@ export class EventSystem {
 
         // 5. Accumulate time to check for triggering new warnings
         this.timeAccumulator += tickRate;
-        if (this.timeAccumulator >= this.checkInterval) {
-            this.timeAccumulator = 0.0;
+        while (this.timeAccumulator >= this.checkInterval) {
+            this.timeAccumulator -= this.checkInterval;
             
             const candidates = this.eventsRegistry.filter(e => {
                 if (this.warnings.some(w => w.id === e.id) || this.isEventActive(e.id)) {
@@ -782,7 +792,10 @@ export class EventSystem {
                     outputLogs.push({
                         title: `⚠️ DETECTED: ${selected.name.toUpperCase()}`,
                         desc: `${selected.description} TIME TO EFFECT: ${selected.warningDuration.toFixed(1)} Myr. Spend ${selected.cost} tokens to avoid.`,
-                        type: warningType === "bonus" ? "system" : "alert"
+                        type: warningType === "bonus" ? "system" : "alert",
+                        scientificDetails: selected.scientificDetails,
+                        warningId: selected.id,
+                        warningCost: selected.cost
                     });
                 }
             }
