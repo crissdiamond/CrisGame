@@ -36,17 +36,22 @@
 - Model more intermediate steps between simple organisms and sentient or high-intelligence life forms.
 - Keep speculative high-intelligence branches consistent with current biology, physics, chemistry, and cosmology rather than treating intelligence as a single unlock jump.
 
-### 8. Implement Phylogenetic Graph Database and Visualizer
-- Transition evolutionary milestones to a true Directed Acyclic Graph (DAG) structure to support horizontal endosymbiosis mergers (e.g., eukaryotes and algae) across all solvents.
-- Model species abundance (biomass density) and taxonomic richness (species counts / biodiversity) using differential speciation/extinction equations.
-- Design an interactive SVG Cladogram visualizer in the UI showing column-aligned clades, curved connecting lines, merger points, and hover info.
+### 8. Interactive SVG Cladogram Visualizer
+- Design an interactive SVG Cladogram visualizer in the UI showing column-aligned clades, curved bezier connecting lines, merger nodes, and hover info popups.
+- Support dynamic pan/drag navigation across the full phylogenetic tree.
+
+### 9. Save/Load Persistence for Graph State
+- Extend the save/load system to fully serialize `biomassMap`, `biodiversityMap`, `unlockedMap`, and `pendingNudges` from `BiologySimulation`.
+- Implement migration shims for saves created before the DAG refactor.
+
+---
 
 ## Suggested First Priorities
 
 1. Add a clear objective and progress indicator.
 2. Add planet health history graphs. (Implemented: Completed biomass and environment timeline graphing with dynamic color keys.)
 3. Add planet start presets for replayability. (Implemented: Initial protoplanetary presets and setup config loops.)
-4. Implement the Phylogenetic Graph Database, clade biodiversity model, and interactive SVG Cladogram visualizer across Water, Ammonia, and Methane lines. (Design Blueprint completed in EVOLUTION_DESIGNS.md)
+4. Implement the Phylogenetic Graph Database, clade biodiversity model, and interactive SVG Cladogram visualizer across Water, Ammonia, and Methane lines. (DAG database **implemented** in `js/evolutionData.js`; SVG cladogram popup stub implemented; biodiversity model tracking active; full interactive visualizer pending.)
 
 ---
 
@@ -72,6 +77,10 @@
 - **Eukaryote Recombination Boost**: Evolutionary endosymbiosis (Mitochondria) enables meiotic Sexual Reproduction. Evolving sex provides a 1.25x niche colonization growth/capacity boost to eukaryotes, and accelerates all subsequent advanced evolutionary breakthroughs by 30% due to genetic recombination.
 - **Multi-Solvent Biomass Decay**: Integrated global biomass decay fluxes for all three solvent lines (Water, Ammonia, Methane). On Water worlds, this decay is aerobic, consuming $\text{O}_2$ and venting $\text{CO}_2$, capping oxygen spikes under high biomass.
 - **Metabolic Saturation Kinetics**: Biological cycles (nitrogen fixation, methanogenesis, and ammonic photosynthesis) scale with atmospheric gas concentration via Michaelis-Menten kinetics, preventing absolute depletion.
+- **Phylogenetic DAG Database (`js/evolutionData.js`)**: Full Directed Acyclic Graph schema for all three solvent lines (Water, Ammonia, Methane) with node metadata: id, name, clade, parents (supporting multi-parent merger nodes), popKey, cap, unit, reqs, nudge, details, and `monitorable` flag.
+- **Clade Biodiversity Tracking**: `biodiversityMap` in `BiologySimulation` tracks per-clade species counts using speciation/extinction differential equations. Species count grows toward a target proportional to biomass and is accelerated by active nudge boosts.
+- **Temporary Nudge Boost System**: Spending Blue Mutagen Tokens (🔹) now activates a **temporary ×3 growth multiplier** for 5 Myr on the target clade (rather than a permanent stat change). `getNudgeGrowthMultiplier` propagates this boost to all growth loops across all three solvent lines. A non-blocking amber toast popup confirms the activation without pausing the simulation.
+- **Biomasses Monitor Filter**: The Biomasses tab in the right panel now only shows actual living population clades. Evolutionary advance/milestone nodes (transitional steps like Nucleus/Mitochondria/Sexual, and technological endpoints like Cognitive/Cyborg/AI/Noosphere/Gaia, Quantum Lattices, Hiveminds, Thinking Oceans, Cryo-Colloids) are hidden using the `monitorable: false` flag.
 
 ### 3. Interface & Quality of Life
 - **Save & Load System**: Full local storage save/load persistence that restores all physical, biological, event, timeline history, and scrollable terminal log HTML states. Includes responsive toast popups for immediate feedback upon saving or loading.
@@ -88,9 +97,10 @@
     - **🌡️ Climate** — compact horizontal gauges for Temperature, Solvent Coverage, and Cosmic Radiation that match the design of the atmosphere bars. Each gauge displays a green habitable-zone band and a colour-coded thumb marker (green = in zone, red = out, amber = marginal). Space and surface radiation values are displayed as a vertical column of badges on the right.
     - **🌫️ Atmosphere** — gas composition bars (CO₂, N₂, O₂, CH₄, H₂) relocated from the right panel.
     - **🪐 Planet Info** — six-cell grid (Age, Habitability, Solvent, Magnetosphere, Ozone, Star).
-  - **Right panel** renamed to *Biosphere Monitor*: acts as a dedicated monitoring panel displaying the compacted pacing timeline and provides tabs to switch between the scrollable **Biomasses** list and the read-only **Evolution Tree** (roadmap).
+  - **Right panel** renamed to *Biosphere Monitor*: acts as a dedicated monitoring panel displaying the compacted pacing timeline and provides tabs to switch between the scrollable **Biomasses** list (filtered to living populations only) and the read-only **Evolution Tree** (roadmap).
   - **Decoupled Tab Controllers**: Splitting the Left and Right panel tab handlers allows independent navigation on both panels.
   - **Environmental agency via interventions only**: Temperature, water, and radiation are now exclusively driven by triggered events and Silver-token interventions — no direct slider dragging.
+- **Evolution Boost Toast**: A non-blocking amber floating popup confirms nudge boost activation with node name, multiplier, and duration — auto-dismisses after 5 seconds without pausing the simulation.
 
 ---
 
@@ -160,6 +170,3 @@ This simulator utilizes established astrophysical, chemical, and biological prin
   - **Dinosaurs & Mammals**: ~4300 Myr
   - **Cognitive Species (Sentient Life)**: ~4540 Myr (present day)
 * **Comparative Pacing**: By mapping alternative biochemistry stages (Ammonia and Methane) to their functional Earth equivalents, players gain a quantitative understanding of how different chemical solvents and environmental constraints affect the speed of evolutionary jumps.
-
-
-

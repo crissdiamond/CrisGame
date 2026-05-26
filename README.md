@@ -58,10 +58,10 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
     *   **Metabolic Efficiency**: Reduces biological decay and nutrient consumption by $15\%$ per level (max level 5).
 *   **Eukaryogenesis Boost**: Transitioning from prokaryotes to eukaryotes (via mitochondria endosymbiosis) unlocks meiotic sexual reproduction, providing a **1.25x** carrying capacity boost and a **30% speed boost** to all subsequent evolution rates.
 *   **Saturation Kinetics**: Biological gas exchanges (such as nitrogen fixation and methanogenesis) scale using Michaelis-Menten kinetics (e.g. $\frac{\text{Gas}}{\text{Gas} + K_m}$) to throttle rates and prevent absolute depletion of critical atmospheric components.
-*   **Evolution Nudges**: Pay Blue Mutagen Tokens (🔹) for evolutionary branch jumps (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.
 *   **Threat Management**: Deflect incoming disasters (such as Asteroid Impacts, Gamma-Ray Bursts, or Solar Flares) using Gold Deflection Tokens (🛡️). The simulator automatically locks speed to **1x** during threats for safety.
 *   **Environmental Control via Events Only**: Temperature, solvent coverage, and radiation cannot be adjusted by sliders. All environmental changes occur exclusively through triggered events (disasters) or player-activated interventions (Silver token purchases via the ☄️ Trigger Event button).
-*   **Phylogenetic Graph Database & Clade Architecture (Planned)**: The evolution tree is moving to a true Directed Acyclic Graph (DAG) schema to mathematically model horizontal endosymbiotic mergers, speciation dynamics (biomass growth vs. species-count biodiversity), and stagnant dead-ends across all three solvents (documented in `EVOLUTION_DESIGNS.md`).
+*   **Evolution Nudges (Temporary Boost)**: Pay Blue Mutagen Tokens (🔹) to activate a **temporary ×3 growth rate boost** lasting 5 Myr on a target clade (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives). A floating amber toast popup confirms activation; the Evolution Tree panel shows the remaining countdown on the node's button. Boost accelerates both population growth and species diversification (biodiversity) for the window.
+*   **Phylogenetic DAG Database (`js/evolutionData.js`)**: The evolution tree is a true Directed Acyclic Graph (DAG) supporting horizontal endosymbiotic merger nodes (e.g. Eukaryotes, Algae, Noosphere), clade biodiversity tracking (species counts), and `monitorable` flags that filter node types across the UI. Full schema documented in `EVOLUTION_DESIGNS.md`.
 
 ---
 
@@ -92,8 +92,8 @@ The dashboard is divided into three vertical columns plus a full-width history p
 Dedicated entirely to tracking biological progress:
 *   **Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic comparison badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
 *   **Monitoring Tabs**:
-    *   **Biomasses tab**: Scrollable lists of progressive biomass cards that appear as each species is unlocked across the Water, Ammonia, or Methane solvent lines.
-    *   **Evolution Tree tab**: Branching roadmap with mutation progress and nudge-purchase buttons (using Blue tokens).
+    *   **Biomasses tab**: Scrollable list of biomass cards that appear as each living population clade is unlocked. Filtered to actual biological populations only — transitional milestones (Nucleus, Mitochondria, Sexual Reproduction) and technological endpoints (Cognitive, Cyborg, AI, Noosphere, Gaia, Quantum Lattices, Hiveminds, Thinking Oceans, Cryo-Colloids) are excluded. Each card shows biomass density, species count, and an active boost indicator (⚡) when a nudge is in progress.
+    *   **Evolution Tree tab**: Branching roadmap with mutation progress, Earth pacing comparison, species count, and nudge-purchase buttons (using Blue tokens).
 
 ### Global Controls
 *   **☄️ Trigger Event button**: Opens the interventions modal to purchase Silver-token events (comets, volcanic eruptions, silicate weathering, etc.) that alter the environment.
@@ -118,6 +118,7 @@ CrisGame/
     ├── game.js          # Controller loop, save/load state, game lifecycle
     ├── planet.js        # Physical, geological, and atmospheric physics formulas
     ├── simulation.js    # Biological growth, decay fluxes, and ecosystem formulas
+    ├── evolutionData.js # Phylogenetic DAG schemas for Water, Ammonia, and Methane lines
     ├── ui.js            # DOM caches, pacing calculations, modal popups, and toast systems
     ├── visualization.js # Canvas visualizers for planet macro / microscopic views
     ├── history.js       # Background time-series metrics data recorder
