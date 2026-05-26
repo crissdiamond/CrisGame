@@ -61,6 +61,7 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 *   **Evolution Nudges**: Pay Blue Mutagen Tokens (🔹) for evolutionary branch jumps (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.
 *   **Threat Management**: Deflect incoming disasters (such as Asteroid Impacts, Gamma-Ray Bursts, or Solar Flares) using Gold Deflection Tokens (🛡️). The simulator automatically locks speed to **1x** during threats for safety.
 *   **Environmental Control via Events Only**: Temperature, solvent coverage, and radiation cannot be adjusted by sliders. All environmental changes occur exclusively through triggered events (disasters) or player-activated interventions (Silver token purchases via the ☄️ Trigger Event button).
+*   **Phylogenetic Graph Database & Clade Architecture (Planned)**: The evolution tree is moving to a true Directed Acyclic Graph (DAG) schema to mathematically model horizontal endosymbiotic mergers, speciation dynamics (biomass growth vs. species-count biodiversity), and stagnant dead-ends across all three solvents (documented in `EVOLUTION_DESIGNS.md`).
 
 ---
 

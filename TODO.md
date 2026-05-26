@@ -34,14 +34,19 @@
 
 ### 7. Expand Astrobiology Toward Sentient Life
 - Model more intermediate steps between simple organisms and sentient or high-intelligence life forms.
-- Add scientifically plausible prerequisites for advanced cognition, such as complex ecosystems, sensory systems, nervous-system analogues, social behavior, environmental stability, energy availability, and sustained evolutionary time.
 - Keep speculative high-intelligence branches consistent with current biology, physics, chemistry, and cosmology rather than treating intelligence as a single unlock jump.
+
+### 8. Implement Phylogenetic Graph Database and Visualizer
+- Transition evolutionary milestones to a true Directed Acyclic Graph (DAG) structure to support horizontal endosymbiosis mergers (e.g., eukaryotes and algae) across all solvents.
+- Model species abundance (biomass density) and taxonomic richness (species counts / biodiversity) using differential speciation/extinction equations.
+- Design an interactive SVG Cladogram visualizer in the UI showing column-aligned clades, curved connecting lines, merger points, and hover info.
 
 ## Suggested First Priorities
 
 1. Add a clear objective and progress indicator.
 2. Add planet health history graphs. (Implemented: Completed biomass and environment timeline graphing with dynamic color keys.)
 3. Add planet start presets for replayability. (Implemented: Initial protoplanetary presets and setup config loops.)
+4. Implement the Phylogenetic Graph Database, clade biodiversity model, and interactive SVG Cladogram visualizer across Water, Ammonia, and Methane lines. (Design Blueprint completed in EVOLUTION_DESIGNS.md)
 
 ---
 
