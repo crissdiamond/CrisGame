@@ -59,7 +59,7 @@ export class EventSystem {
                 scientificDetails: "Carbonaceous chondrites are primitive, volatile-rich bodies containing hydrated minerals, amino-acid precursors, and complex organics. Small impacts can fertilize prebiotic chemistry while ejecta dust briefly blocks sunlight and cools the surface.",
                 type: (p, b) => this.hasMulticellularLife(b) ? "hazard" : "bonus",
                 chance: 0.18,
-                cost: 3,
+                cost: 20,
                 warningDuration: 4.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -78,7 +78,7 @@ export class EventSystem {
                 scientificDetails: "Silicaceous asteroids are rocky olivine- and pyroxene-rich bodies. Their impacts excavate silicate crust, loft reflective dust, and can vaporize carbonate rocks, producing a delayed carbon dioxide warming pulse after the initial cooling.",
                 type: "hazard",
                 chance: 0.12,
-                cost: 6,
+                cost: 40,
                 warningDuration: 3.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -95,7 +95,7 @@ export class EventSystem {
                 scientificDetails: "Metallic M-type bodies are dense iron-nickel fragments, so an equal-size impactor carries more kinetic energy than porous rock or ice. The impact produces severe thermal shock, a long dust winter, and a later greenhouse rebound from vaporized carbonates.",
                 type: "hazard",
                 chance: 0.06,
-                cost: 12,
+                cost: 90,
                 warningDuration: 2.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -112,7 +112,7 @@ export class EventSystem {
                 scientificDetails: "Long-period comets are volatile-rich ice and dust aggregates. They can deliver water and organics to dry worlds, but their high velocities and fine ejecta load can block sunlight efficiently after impact.",
                 type: (p, b) => p.waterCoverage < 10.0 && !this.hasMulticellularLife(b) ? "bonus" : "hazard",
                 chance: 0.10,
-                cost: 4,
+                cost: 30,
                 warningDuration: 5.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -132,7 +132,7 @@ export class EventSystem {
                 scientificDetails: "Solar superflares launch billions of tons of high-energy protons and ions (Coronal Mass Ejections). Without a planetary magnetic shield to deflect them, these particles collide directly with atmospheric molecules, triggering radiolysis, ozone destruction, and gradual atmospheric stripping.",
                 type: "hazard",
                 chance: 0.18,
-                cost: 8,
+                cost: 60,
                 warningDuration: 2.0,
                 condition: (p, b) => !p.hasMagnetosphere && !this.isEventActive("solar_flare"),
                 duration: 6.0,
@@ -161,7 +161,7 @@ export class EventSystem {
                 scientificDetails: "Severe mantle convection leads to flood basalt volcanism, releasing massive amounts of carbon dioxide (CO2), sulfur dioxide (SO2), and halogen gases. While sulfur compounds cause brief cooling and acid rain, the accumulated CO2 leads to long-term global greenhouse warming.",
                 type: "alert",
                 chance: 0.20,
-                cost: 10,
+                cost: 75,
                 warningDuration: 2.5,
                 condition: (p, b) => p.age > 20.0 && !this.isEventActive("volcanic_eruption"),
                 duration: 8.0,
@@ -182,7 +182,7 @@ export class EventSystem {
                 scientificDetails: "Runaway glaciation occurs due to ice-albedo positive feedback. As temperatures drop, snow and ice coverage expands, reflecting more stellar radiation back into space. This drives further cooling until ice sheets meet at the equator, locking the planet in a 'Snowball Earth' state.",
                 type: "hazard",
                 chance: 0.15,
-                cost: 12,
+                cost: 90,
                 warningDuration: 4.0,
                 condition: (p, b) => p.temperature < 15.0 && !p.isGlaciated && !this.isEventActive("glaciation"),
                 duration: 10.0,
@@ -211,7 +211,7 @@ export class EventSystem {
                 scientificDetails: "When atmospheric oxygen exceeds 30-35%, the combustion threshold of organic matter drops dramatically. Even damp vegetation becomes highly flammable, allowing a single lightning bolt to spark global wildfire storms that consume vast quantities of biomass and oxygen, venting carbon dioxide.",
                 type: "hazard",
                 chance: 0.25,
-                cost: 8,
+                cost: 60,
                 warningDuration: 3.0,
                 condition: (p, b) => p.o2 > 35.0 && (b.landPlantsPop > 10.0 || b.photosyntheticPop > 40.0) && !this.isEventActive("atmospheric_firestorm"),
                 duration: 5.0,
@@ -251,7 +251,7 @@ export class EventSystem {
                 scientificDetails: "A relativistic gamma-ray burst from a collapsing massive star strikes the atmosphere, ionizing nitrogen and oxygen molecules to produce nitrogen oxides (NOx). These compounds act as catalytic agents that destroy the ozone layer, exposing surface life to lethal UV-B radiation.",
                 type: "hazard",
                 chance: 0.05, // Extremely rare
-                cost: 25,
+                cost: 180,
                 warningDuration: 4.5,
                 condition: (p, b) => p.age > 100.0,
                 duration: 15.0,
@@ -285,7 +285,7 @@ export class EventSystem {
                 scientificDetails: "A close stellar passage perturbs the planetary orbit, altering its eccentricity. This shifts the insolation baseline, triggering extreme seasonal temperature swings, tides, and potential climate instability.",
                 type: "hazard",
                 chance: 0.03, // Extremely rare
-                cost: 30,
+                cost: 220,
                 warningDuration: 3.5,
                 condition: (p, b) => p.age > 150.0,
                 apply: (p, b) => {
@@ -461,8 +461,8 @@ export class EventSystem {
      */
     triggerIntervention(type, planet, biology) {
         if (type === 'water_comet') {
-            if (this.tokens >= 6) {
-                this.tokens -= 6;
+            if (this.tokens >= 45) {
+                this.tokens -= 45;
                 planet.waterCoverage = Math.min(100, planet.waterCoverage + 20);
                 planet.targetWaterCoverage = Math.min(100, planet.targetWaterCoverage + 20);
                 biology.organicSoup = Math.min(100, biology.organicSoup + 10.0);
@@ -475,8 +475,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'ammonia_comet') {
-            if (this.tokens >= 6) {
-                this.tokens -= 6;
+            if (this.tokens >= 45) {
+                this.tokens -= 45;
                 planet.ammoniaCoverage = Math.min(100, planet.ammoniaCoverage + 25);
                 planet.targetAmmoniaCoverage = Math.min(100, planet.targetAmmoniaCoverage + 25);
                 biology.ammonicSoup = Math.min(100, biology.ammonicSoup + 15.0);
@@ -488,8 +488,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'methane_comet') {
-            if (this.tokens >= 6) {
-                this.tokens -= 6;
+            if (this.tokens >= 45) {
+                this.tokens -= 45;
                 planet.methaneCoverage = Math.min(100, planet.methaneCoverage + 20);
                 planet.targetMethaneCoverage = Math.min(100, planet.targetMethaneCoverage + 20);
                 biology.methaneSoup = Math.min(100, biology.methaneSoup + 12.0);
@@ -506,8 +506,8 @@ export class EventSystem {
             if (planet.age > 500.0) {
                 return { success: false, title: "ACTION FAILED", msg: "Planet has solidified. Giant collisions are only possible in early stages (<500 Myr)." };
             }
-            if (this.tokens >= 15) {
-                this.tokens -= 15;
+            if (this.tokens >= 120) {
+                this.tokens -= 120;
                 planet.hasMoon = true;
                 planet.magneticStrength = Math.min(100.0, planet.magneticStrength + 35.0);
                 planet.hasMagnetosphere = true;
@@ -523,8 +523,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'gravitational_resonance') {
-            if (this.tokens >= 12) {
-                this.tokens -= 12;
+            if (this.tokens >= 90) {
+                this.tokens -= 90;
                 planet.magneticStrength = 100.0;
                 planet.hasMagnetosphere = true;
                 return { 
@@ -535,8 +535,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'volcanic_eruption') {
-            if (this.tokens >= 10) {
-                this.tokens -= 10;
+            if (this.tokens >= 75) {
+                this.tokens -= 75;
                 planet.co2 = Math.min(100, planet.co2 + 12.0);
                 planet.atmospherePressure = Math.min(3.0, planet.atmospherePressure + 0.2);
                 planet.rebalanceAtmosphere();
@@ -548,8 +548,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'methanogen_bloom') {
-            if (this.tokens >= 8) {
-                this.tokens -= 8;
+            if (this.tokens >= 60) {
+                this.tokens -= 60;
                 planet.ch4 = Math.min(100, planet.ch4 + 12.0);
                 planet.rebalanceAtmosphere();
                 return {
@@ -560,8 +560,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'silicate_weathering') {
-            if (this.tokens >= 10) {
-                this.tokens -= 10;
+            if (this.tokens >= 75) {
+                this.tokens -= 75;
                 planet.co2 = Math.max(0.5, planet.co2 - 8.0);
                 planet.rebalanceAtmosphere();
                 return {
@@ -572,8 +572,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'dust_veil') {
-            if (this.tokens >= 8) {
-                this.tokens -= 8;
+            if (this.tokens >= 60) {
+                this.tokens -= 60;
                 planet.dustVeilActive = true;
                 return {
                     success: true,
@@ -583,8 +583,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'cyanobacteria_bloom') {
-            if (this.tokens >= 8) {
-                this.tokens -= 8;
+            if (this.tokens >= 60) {
+                this.tokens -= 60;
                 planet.co2 = Math.max(0.5, planet.co2 - 5.0);
                 planet.o2 = Math.min(100, planet.o2 + 8.0);
                 planet.rebalanceAtmosphere();
@@ -669,7 +669,7 @@ export class EventSystem {
 
         // Accrual rate: flat base rate + biomass boost
         const accrual = (0.2 + biomassRating * 0.15) * tickRate;
-        this.tokens = Math.min(99.0, this.tokens + accrual);
+        this.tokens = Math.min(900.0, this.tokens + accrual);
 
         // Milestone token awards moved to the per-event tier system. This loop
         // only marks the seen-set so a stale flag flip won't re-emit a popup.
@@ -689,7 +689,7 @@ export class EventSystem {
                     description: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent.",
                     scientificDetails: "As the outer nickel-iron core cools, thermal convection currents decline. This slows the geodynamo, weakening and ultimately collapsing the protective magnetosphere shield that diverts high-energy stellar winds.",
                     durationRemaining: 4.0,
-                    cost: 15,
+                    cost: 100,
                     type: "alert",
                     apply: (p, b) => {
                         p.hasMagnetosphere = false;
@@ -701,11 +701,11 @@ export class EventSystem {
 
                 outputLogs.push({
                     title: "⚠️ DETECTED: MAGNETIC FIELD CRITICAL",
-                    desc: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent. TIME TO EFFECT: 4.0 Myr. Spend 15 tokens to avoid.",
+                    desc: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent. TIME TO EFFECT: 4.0 Myr. Spend 100 tokens to avoid.",
                     type: "alert",
                     scientificDetails: dynamoWarning.scientificDetails,
                     warningId: 'dynamo_decay',
-                    warningCost: 15
+                    warningCost: 100
                 });
             }
         }

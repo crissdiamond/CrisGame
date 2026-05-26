@@ -133,16 +133,16 @@ export class GameUI {
 
         // List of all 10 interventions with titles and descriptions
         this.interventionsList = [
-            { id: 'water_comet', name: '☄️ Redirect Water Comet', cost: 6, desc: 'Redirects a water-rich comet from the outer system. Increases solvent coverage (+20%) and enriches prebiotic soup.' },
-            { id: 'ammonia_comet', name: '☄️ Redirect Ammonia Comet', cost: 6, desc: 'Redirects a nitrogenous ammonia-rich comet. Adds alternative liquid solvent coverage (+25%) for cold pathways.' },
-            { id: 'methane_comet', name: '☄️ Redirect Hydrocarbon Comet', cost: 6, desc: 'Redirects a methane-rich comet, forming non-polar liquid hydrocarbon seas (+20%) on cold worlds.' },
-            { id: 'giant_collision', name: '💥 Giant Protoplanet Collision', cost: 15, desc: 'Triggers a massive collision with a Mars-sized body. Forms a Moon (+tides), melts crust, and boosts magnetosphere potential.' },
-            { id: 'gravitational_resonance', name: '🧲 Gravitational Resonance', cost: 12, desc: 'Uses orbital gravitational flex to heat core convection dynamo, restoring planetary magnetosphere shield to 100%.' },
-            { id: 'volcanic_eruption', name: '🌋 Trigger Volcanic Eruptions', cost: 10, desc: 'Opens tectonic crustal vents, triggering basalt volcanism. Outgasses CO2 (+12%) and thickens atmosphere (+0.2 atm).' },
-            { id: 'methanogen_bloom', name: '🦠 Induce Methanogenic Bloom', cost: 8, desc: 'Fertilizes deep-sea hydrothermal vents to trigger methanogen growth. Releases methane gas (+12%) to warm the planet.' },
-            { id: 'silicate_weathering', name: '🪨 Silicate Weathering', cost: 10, desc: 'Accelerates continental rock chemical weathering via acid rain. Traps atmospheric CO2 (-8%) into sea carbonate sediment.' },
-            { id: 'dust_veil', name: '🌫️ Seed Aerosol Dust Veil', cost: 8, desc: 'Disintegrates a minor asteroid in the upper atmosphere. Seeds dust reflecting starlight to cool the planet.' },
-            { id: 'cyanobacteria_bloom', name: '🌿 Cyanobacteria Bloom', cost: 8, desc: 'Injects nutrients into liquid basins to trigger photosynthetic blooms. Releases oxygen (+8%) and absorbs CO2 (-5%).' }
+            { id: 'water_comet', name: '☄️ Redirect Water Comet', cost: 45, desc: 'Redirects a water-rich comet from the outer system. Increases solvent coverage (+20%) and enriches prebiotic soup.' },
+            { id: 'ammonia_comet', name: '☄️ Redirect Ammonia Comet', cost: 45, desc: 'Redirects a nitrogenous ammonia-rich comet. Adds alternative liquid solvent coverage (+25%) for cold pathways.' },
+            { id: 'methane_comet', name: '☄️ Redirect Hydrocarbon Comet', cost: 45, desc: 'Redirects a methane-rich comet, forming non-polar liquid hydrocarbon seas (+20%) on cold worlds.' },
+            { id: 'giant_collision', name: '💥 Giant Protoplanet Collision', cost: 120, desc: 'Triggers a massive collision with a Mars-sized body. Forms a Moon (+tides), melts crust, and boosts magnetosphere potential.' },
+            { id: 'gravitational_resonance', name: '🧲 Gravitational Resonance', cost: 90, desc: 'Uses orbital gravitational flex to heat core convection dynamo, restoring planetary magnetosphere shield to 100%.' },
+            { id: 'volcanic_eruption', name: '🌋 Trigger Volcanic Eruptions', cost: 75, desc: 'Opens tectonic crustal vents, triggering basalt volcanism. Outgasses CO2 (+12%) and thickens atmosphere (+0.2 atm).' },
+            { id: 'methanogen_bloom', name: '🦠 Induce Methanogenic Bloom', cost: 60, desc: 'Fertilizes deep-sea hydrothermal vents to trigger methanogen growth. Releases methane gas (+12%) to warm the planet.' },
+            { id: 'silicate_weathering', name: '🪨 Silicate Weathering', cost: 75, desc: 'Accelerates continental rock chemical weathering via acid rain. Traps atmospheric CO2 (-8%) into sea carbonate sediment.' },
+            { id: 'dust_veil', name: '🌫️ Seed Aerosol Dust Veil', cost: 60, desc: 'Disintegrates a minor asteroid in the upper atmosphere. Seeds dust reflecting starlight to cool the planet.' },
+            { id: 'cyanobacteria_bloom', name: '🌿 Cyanobacteria Bloom', cost: 60, desc: 'Injects nutrients into liquid basins to trigger photosynthetic blooms. Releases oxygen (+8%) and absorbs CO2 (-5%).' }
         ];
 
         this.currentPlanet = null;
@@ -819,7 +819,7 @@ export class GameUI {
                 { id: 'anoxygenic_photo', name: 'Anoxygenic Photosynthesizers', pop: biology.anoxygenicPhotoPop, cap: 180.0, unit: 'M/mL', req: 'Chemotrophs > 20 M/mL & Solar Radiance', nudgeId: null, cost: 0 },
                 { id: 'photosynthetic', name: 'Cyanobacteria', pop: biology.photosyntheticPop, cap: 200.0, unit: 'M/mL', req: 'Anoxygenic Photo > 15 M/mL & 100 Myr OEC Stability', nudgeId: null, cost: 0 },
                 { id: 'nucleus', name: 'Cellular Nucleus', pop: biology.unlockedNucleus ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Cyanobacteria > 15 M/mL', nudgeId: null, cost: 0 },
-                { id: 'mitochondria', name: 'Mitochondria Symbiosis', pop: biology.unlockedMitochondria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Nucleus & O₂ > 1.2% OR Nudge', nudgeId: 'endosymbiosis', nudgeName: 'Promote Endosymbiosis', cost: 8 },
+                { id: 'mitochondria', name: 'Mitochondria Symbiosis', pop: biology.unlockedMitochondria ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Nucleus & O₂ > 1.2% OR Nudge', nudgeId: 'endosymbiosis', nudgeName: 'Promote Endosymbiosis', cost: 60 },
                 { id: 'eukaryotes', name: 'Eukaryotic Cells', pop: biology.eukaryoticPop, cap: biology.unlockedSexualReproduction ? 180.0 : 120.0, unit: 'M/mL', req: 'Mitochondria Symbiosis', nudgeId: null, cost: 0 },
                 { id: 'sexual', name: 'Sexual Reproduction', pop: biology.unlockedSexualReproduction ? 100.0 : 0.0, cap: 100.0, unit: 'Idx', req: 'Eukaryotes > 20 M/mL', nudgeId: null, cost: 0 },
                 { id: 'multicellular', name: 'Multicellularity', pop: biology.multicellularPop, cap: 100.0, unit: 'Idx', req: 'Sexual Reprod & Eukaryotes > 45 M/mL', nudgeId: null, cost: 0 },
@@ -831,42 +831,42 @@ export class GameUI {
                 { id: 'fish', name: 'Early Vertebrate Fish', pop: biology.fishPop, cap: 100.0, unit: 'Idx', req: 'Worms > 30, O₂ > 15%', nudgeId: null, cost: 0 },
                 
                 // New soil plants vegetable line
-                { id: 'mosses', name: 'Non-Vascular Mosses', pop: biology.mossesPop, cap: 100.0, unit: 'Idx', req: 'Fish > 25, Magnetosphere & Ozone OR Nudge', nudgeId: 'vascular_tissue', nudgeName: 'Develop Vascular Tissue', cost: 10 },
+                { id: 'mosses', name: 'Non-Vascular Mosses', pop: biology.mossesPop, cap: 100.0, unit: 'Idx', req: 'Fish > 25, Magnetosphere & Ozone OR Nudge', nudgeId: 'vascular_tissue', nudgeName: 'Develop Vascular Tissue', cost: 75 },
                 { id: 'ferns', name: 'Vascular Ferns', pop: biology.fernsPop, cap: 100.0, unit: 'Idx', req: 'Mosses > 30, O₂ > 16%', nudgeId: null, cost: 0 },
-                { id: 'conifers', name: 'Gymnosperms (Conifers)', pop: biology.conifersPop, cap: 100.0, unit: 'Idx', req: 'Ferns > 30 OR Nudge', nudgeId: 'seed_evolution', nudgeName: 'Develop Seed Protection', cost: 12 },
+                { id: 'conifers', name: 'Gymnosperms (Conifers)', pop: biology.conifersPop, cap: 100.0, unit: 'Idx', req: 'Ferns > 30 OR Nudge', nudgeId: 'seed_evolution', nudgeName: 'Develop Seed Protection', cost: 90 },
                 { id: 'angiosperms', name: 'Flowering Plants', pop: biology.angiospermsPop, cap: 100.0, unit: 'Idx', req: 'Conifers > 30, O₂ > 18%', nudgeId: null, cost: 0 },
                 
                 { id: 'cambrian', name: 'Cambrian Marine Life', pop: biology.cambrianPop, cap: 100.0, unit: 'Idx', req: 'Worms > 20, O₂ > 15%', nudgeId: null, cost: 0 },
                 { id: 'insects', name: 'Land Insects', pop: biology.arthropodPop, cap: 100.0, unit: 'Idx', req: 'Mosses > 25%', nudgeId: null, cost: 0 },
-                { id: 'tetrapods', name: 'Tetrapods (Amphibia)', pop: biology.tetrapodPop, cap: 100.0, unit: 'Idx', req: 'Fish > 30, Mosses > 30', nudgeId: 'amniotic_egg', nudgeName: 'Synthesize Amniotic Egg', cost: 12 },
-                { id: 'sauropsids', name: 'Sauropsida (Dinosaurs)', pop: biology.sauropsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, Temp > 28°C OR Nudge', nudgeId: 'scales', nudgeName: 'Nudge Scale Shielding', cost: 12 },
-                { id: 'synapsids', name: 'Synapsida (Mammals)', pop: biology.synapsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, O₂ > 20% OR Nudge', nudgeId: 'endthermy', nudgeName: 'Nudge Endothermy (Hair)', cost: 15 },
-                { id: 'cognitive', name: 'Cognitive Species', pop: biology.cognitiveSpeciesPop, cap: 100.0, unit: 'Idx', req: 'Mammal/Dino > 45, O₂ > 19% OR Nudge', nudgeId: 'cognitive', nudgeName: 'Nudge Neural Networking', cost: 15 },
-                { id: 'ai', name: 'Post-Biological AI', pop: biology.technologicalAIPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 35, Magnetosphere OR Nudge', nudgeId: 'ai', nudgeName: 'Buy Singularity core', cost: 15 },
-                { id: 'cyborg', name: 'Cyborg Hybrids', pop: biology.cyborgPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 40, O₂ > 18% OR Nudge', nudgeId: 'cybernetic_implants', nudgeName: 'Promote Cybernetic Implants', cost: 18 },
-                { id: 'noosphere', name: 'Planetary Noosphere', pop: biology.noospherePop, cap: 100.0, unit: 'Idx', req: 'AI/Cyborg > 45, Magnetosphere OR Nudge', nudgeId: 'global_consciousness', nudgeName: 'Sync Planetary Cloud', cost: 20 },
-                { id: 'gaia_hivemind', name: 'Gaia Biosphere Hivemind', pop: biology.gaiaHivemindPop, cap: 100.0, unit: 'Idx', req: 'Cyborg > 45 OR Mosses > 60, O₂ > 20% OR Nudge', nudgeId: 'ecological_integration', nudgeName: 'Weave Mycelium Synapses', cost: 20 }
+                { id: 'tetrapods', name: 'Tetrapods (Amphibia)', pop: biology.tetrapodPop, cap: 100.0, unit: 'Idx', req: 'Fish > 30, Mosses > 30', nudgeId: 'amniotic_egg', nudgeName: 'Synthesize Amniotic Egg', cost: 90 },
+                { id: 'sauropsids', name: 'Sauropsida (Dinosaurs)', pop: biology.sauropsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, Temp > 28°C OR Nudge', nudgeId: 'scales', nudgeName: 'Nudge Scale Shielding', cost: 90 },
+                { id: 'synapsids', name: 'Synapsida (Mammals)', pop: biology.synapsidPop, cap: 100.0, unit: 'Idx', req: 'Tetrapods > 30, O₂ > 20% OR Nudge', nudgeId: 'endthermy', nudgeName: 'Nudge Endothermy (Hair)', cost: 110 },
+                { id: 'cognitive', name: 'Cognitive Species', pop: biology.cognitiveSpeciesPop, cap: 100.0, unit: 'Idx', req: 'Mammal/Dino > 45, O₂ > 19% OR Nudge', nudgeId: 'cognitive', nudgeName: 'Nudge Neural Networking', cost: 110 },
+                { id: 'ai', name: 'Post-Biological AI', pop: biology.technologicalAIPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 35, Magnetosphere OR Nudge', nudgeId: 'ai', nudgeName: 'Buy Singularity core', cost: 110 },
+                { id: 'cyborg', name: 'Cyborg Hybrids', pop: biology.cyborgPop, cap: 100.0, unit: 'Idx', req: 'Cognitive > 40, O₂ > 18% OR Nudge', nudgeId: 'cybernetic_implants', nudgeName: 'Promote Cybernetic Implants', cost: 130 },
+                { id: 'noosphere', name: 'Planetary Noosphere', pop: biology.noospherePop, cap: 100.0, unit: 'Idx', req: 'AI/Cyborg > 45, Magnetosphere OR Nudge', nudgeId: 'global_consciousness', nudgeName: 'Sync Planetary Cloud', cost: 150 },
+                { id: 'gaia_hivemind', name: 'Gaia Biosphere Hivemind', pop: biology.gaiaHivemindPop, cap: 100.0, unit: 'Idx', req: 'Cyborg > 45 OR Mosses > 60, O₂ > 20% OR Nudge', nudgeId: 'ecological_integration', nudgeName: 'Weave Mycelium Synapses', cost: 150 }
             ];
         } else if (solvent === 'ammonia') {
             nodes = [
                 { id: 'ammonic_soup', name: 'Ammonic Soup', pop: biology.ammonicSoup, cap: 100.0, unit: 'ppm', req: 'Ammonia > 10%, Temp -80 to -30°C', nudgeId: null, cost: 0 },
                 { id: 'ammonic_proto', name: 'Ammonic Prokaryotes', pop: biology.ammonicProtoPop, cap: 120.0, unit: 'M/mL', req: 'Ammonic Soup > 10 ppm', nudgeId: null, cost: 0 },
                 { id: 'ammonic_multi', name: 'Ammonic Multicells', pop: biology.ammonicMultiPop, cap: 100.0, unit: 'Idx', req: 'Ammonic Proto > 35 M/mL', nudgeId: null, cost: 0 },
-                { id: 'silico_flora', name: 'Silico-Flora', pop: biology.silicoFloraPop, cap: 100.0, unit: 'Idx', req: 'Temp < -45°C OR Nudge', nudgeId: 'silicon_chains', nudgeName: 'Promote Silicon Chains', cost: 12 },
+                { id: 'silico_flora', name: 'Silico-Flora', pop: biology.silicoFloraPop, cap: 100.0, unit: 'Idx', req: 'Temp < -45°C OR Nudge', nudgeId: 'silicon_chains', nudgeName: 'Promote Silicon Chains', cost: 90 },
                 { id: 'cryo_fauna', name: 'Ammonic Megafauna', pop: biology.cryoFaunaPop, cap: 100.0, unit: 'Idx', req: 'Silico-Flora > 30', nudgeId: null, cost: 0 },
-                { id: 'crystalline_cognitive', name: 'Crystalline Cognitive Swarms', pop: biology.crystallineCognitivePop, cap: 80.0, unit: 'Idx', req: 'Megafauna > 35, Temp < -40°C OR Nudge', nudgeId: 'crystalline_cognitive', nudgeName: 'Ignite Crystalline Collective', cost: 15 },
-                { id: 'quantum_lattices', name: 'Quantum Lattices', pop: biology.quantumLatticePop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Temp < -50°C OR Nudge', nudgeId: 'quantum_alignment', nudgeName: 'Align Quantum Crystals', cost: 18 },
-                { id: 'cryo_hivemind', name: 'Cryo-Biosphere Hivemind', pop: biology.cryoHivemindPop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Silico-Flora > 45 OR Nudge', nudgeId: 'cryo_neural_webs', nudgeName: 'Glacier Neural Synapses', cost: 18 }
+                { id: 'crystalline_cognitive', name: 'Crystalline Cognitive Swarms', pop: biology.crystallineCognitivePop, cap: 80.0, unit: 'Idx', req: 'Megafauna > 35, Temp < -40°C OR Nudge', nudgeId: 'crystalline_cognitive', nudgeName: 'Ignite Crystalline Collective', cost: 110 },
+                { id: 'quantum_lattices', name: 'Quantum Lattices', pop: biology.quantumLatticePop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Temp < -50°C OR Nudge', nudgeId: 'quantum_alignment', nudgeName: 'Align Quantum Crystals', cost: 130 },
+                { id: 'cryo_hivemind', name: 'Cryo-Biosphere Hivemind', pop: biology.cryoHivemindPop, cap: 100.0, unit: 'Idx', req: 'Crystalline > 40, Silico-Flora > 45 OR Nudge', nudgeId: 'cryo_neural_webs', nudgeName: 'Glacier Neural Synapses', cost: 130 }
             ];
         } else if (solvent === 'methane') {
             nodes = [
                 { id: 'methane_soup', name: 'Hydrocarbon Soup', pop: biology.methaneSoup, cap: 100.0, unit: 'ppm', req: 'Methane > 10%, Temp -185 to -135°C', nudgeId: null, cost: 0 },
                 { id: 'methane_proto', name: 'Cryo-Methanogen Prokaryotes', pop: biology.methaneProtoPop, cap: 100.0, unit: 'M/mL', req: 'Hydrocarbon Soup > 10 ppm', nudgeId: null, cost: 0 },
                 { id: 'methane_multi', name: 'Cryo-Multicells', pop: biology.methaneMultiPop, cap: 80.0, unit: 'Idx', req: 'Methanogens > 30 M/mL', nudgeId: null, cost: 0 },
-                { id: 'cryo_beasts', name: 'Cyto-Beasts', pop: biology.cryoOrganismsPop, cap: 70.0, unit: 'Idx', req: 'Stability OR Nudge', nudgeId: 'cryo_polymers', nudgeName: 'Synthesize Cryo-Polymers', cost: 12 },
-                { id: 'cryo_polymer_network', name: 'Cryo-Polymer Networks', pop: biology.cryoPolymerNetworkPop, cap: 60.0, unit: 'Idx', req: 'Cyto-beasts > 30, Stability OR Nudge', nudgeId: 'cryo_polymer_network', nudgeName: 'Boot Cryo-Singularity Lattices', cost: 15 },
-                { id: 'thinking_ocean', name: 'Thinking Methane Oceans', pop: biology.thinkingOceanPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Methane > 40% OR Nudge', nudgeId: 'colloidal_solids', nudgeName: 'Dissolve Computing Polymers', cost: 18 },
-                { id: 'cryo_colloids', name: 'Megastructure Cryo-Colloids', pop: biology.cryoColloidPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Beasts > 45 OR Nudge', nudgeId: 'macromolecular_assembly', nudgeName: 'Assemble Colloidal structures', cost: 18 }
+                { id: 'cryo_beasts', name: 'Cyto-Beasts', pop: biology.cryoOrganismsPop, cap: 70.0, unit: 'Idx', req: 'Stability OR Nudge', nudgeId: 'cryo_polymers', nudgeName: 'Synthesize Cryo-Polymers', cost: 90 },
+                { id: 'cryo_polymer_network', name: 'Cryo-Polymer Networks', pop: biology.cryoPolymerNetworkPop, cap: 60.0, unit: 'Idx', req: 'Cyto-beasts > 30, Stability OR Nudge', nudgeId: 'cryo_polymer_network', nudgeName: 'Boot Cryo-Singularity Lattices', cost: 110 },
+                { id: 'thinking_ocean', name: 'Thinking Methane Oceans', pop: biology.thinkingOceanPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Methane > 40% OR Nudge', nudgeId: 'colloidal_solids', nudgeName: 'Dissolve Computing Polymers', cost: 130 },
+                { id: 'cryo_colloids', name: 'Megastructure Cryo-Colloids', pop: biology.cryoColloidPop, cap: 100.0, unit: 'Idx', req: 'Polymer Net > 40, Beasts > 45 OR Nudge', nudgeId: 'macromolecular_assembly', nudgeName: 'Assemble Colloidal structures', cost: 130 }
             ];
         }
 
@@ -1254,7 +1254,7 @@ export class GameUI {
                 this.btnUpgradeThermal.textContent = "MAX UPGRADE";
                 this.btnUpgradeThermal.disabled = true;
             } else {
-                const cost = 4 + thermalLvl * 3;
+                const cost = Math.round(10 * Math.pow(2.8, thermalLvl));
                 this.btnUpgradeThermal.textContent = `Upgrade: ${cost} Tokens`;
                 this.btnUpgradeThermal.disabled = false;
             }
@@ -1267,7 +1267,7 @@ export class GameUI {
                 this.btnUpgradeRadiation.textContent = "MAX UPGRADE";
                 this.btnUpgradeRadiation.disabled = true;
             } else {
-                const cost = 4 + radLvl * 3;
+                const cost = Math.round(10 * Math.pow(2.8, radLvl));
                 this.btnUpgradeRadiation.textContent = `Upgrade: ${cost} Tokens`;
                 this.btnUpgradeRadiation.disabled = false;
             }
@@ -1280,7 +1280,7 @@ export class GameUI {
                 this.btnUpgradeMetabolic.textContent = "MAX UPGRADE";
                 this.btnUpgradeMetabolic.disabled = true;
             } else {
-                const cost = 4 + metabLvl * 3;
+                const cost = Math.round(10 * Math.pow(2.8, metabLvl));
                 this.btnUpgradeMetabolic.textContent = `Upgrade: ${cost} Tokens`;
                 this.btnUpgradeMetabolic.disabled = false;
             }

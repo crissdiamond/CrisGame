@@ -51,25 +51,25 @@ class GameController {
 
         // Nudges definition map
         const nudges = {
-            'mitochondria': { id: 'endosymbiosis', cost: 8 },
-            'mosses': { id: 'vascular_tissue', cost: 10 },
-            'conifers': { id: 'seed_evolution', cost: 12 },
-            'tetrapods': { id: 'amniotic_egg', cost: 12 },
-            'sauropsids': { id: 'scales', cost: 12 },
-            'synapsids': { id: 'endthermy', cost: 15 },
-            'cognitive': { id: 'cognitive', cost: 15 },
-            'ai': { id: 'technological_singularity', cost: 15 },
-            'cyborg': { id: 'cybernetic_implants', cost: 18 },
-            'noosphere': { id: 'global_consciousness', cost: 20 },
-            'gaia_hivemind': { id: 'ecological_integration', cost: 20 },
-            'silico_flora': { id: 'silicon_chains', cost: 12 },
-            'crystalline_cognitive': { id: 'crystalline_collective', cost: 15 },
-            'quantum_lattices': { id: 'quantum_alignment', cost: 18 },
-            'cryo_hivemind': { id: 'cryo_neural_webs', cost: 18 },
-            'cryo_beasts': { id: 'cryo_polymers', cost: 12 },
-            'cryo_polymer_network': { id: 'cryo_singularity', cost: 15 },
-            'thinking_ocean': { id: 'colloidal_solids', cost: 18 },
-            'cryo_colloids': { id: 'macromolecular_assembly', cost: 18 }
+            'mitochondria': { id: 'endosymbiosis', cost: 60 },
+            'mosses': { id: 'vascular_tissue', cost: 75 },
+            'conifers': { id: 'seed_evolution', cost: 90 },
+            'tetrapods': { id: 'amniotic_egg', cost: 90 },
+            'sauropsids': { id: 'scales', cost: 90 },
+            'synapsids': { id: 'endthermy', cost: 110 },
+            'cognitive': { id: 'cognitive', cost: 110 },
+            'ai': { id: 'technological_singularity', cost: 110 },
+            'cyborg': { id: 'cybernetic_implants', cost: 130 },
+            'noosphere': { id: 'global_consciousness', cost: 150 },
+            'gaia_hivemind': { id: 'ecological_integration', cost: 150 },
+            'silico_flora': { id: 'silicon_chains', cost: 90 },
+            'crystalline_cognitive': { id: 'crystalline_collective', cost: 110 },
+            'quantum_lattices': { id: 'quantum_alignment', cost: 130 },
+            'cryo_hivemind': { id: 'cryo_neural_webs', cost: 130 },
+            'cryo_beasts': { id: 'cryo_polymers', cost: 90 },
+            'cryo_polymer_network': { id: 'cryo_singularity', cost: 110 },
+            'thinking_ocean': { id: 'colloidal_solids', cost: 130 },
+            'cryo_colloids': { id: 'macromolecular_assembly', cost: 130 }
         };
 
         // Bind UI triggers and controls
@@ -148,7 +148,7 @@ class GameController {
                     return { success: false, msg: `Your species' ${traitType} resilience has already reached maximum level.` };
                 }
                 
-                const cost = 4 + currentLevel * 3;
+                const cost = Math.round(10 * Math.pow(2.8, currentLevel));
                 if (this.eventSystem.tokens >= cost) {
                     this.eventSystem.tokens -= cost;
                     this.biology[traitField] = currentLevel + 1;
@@ -275,7 +275,7 @@ class GameController {
             if (bioUpdate.events && bioUpdate.events.length > 0) {
                 bioUpdate.events.forEach(evt => {
                     if (typeof evt.tokens === 'number') {
-                        this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + evt.tokens);
+                        this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + evt.tokens);
                     }
                     this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
@@ -292,7 +292,7 @@ class GameController {
             if (eventLogs && eventLogs.length > 0) {
                 eventLogs.forEach(evt => {
                     if (typeof evt.tokens === 'number') {
-                        this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + evt.tokens);
+                        this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + evt.tokens);
                     }
                     this.history.recordEvent(evt, this.planet.age);
                     this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
@@ -320,10 +320,10 @@ class GameController {
                 if (this.planet.getHabitabilityScore() > 10) {
                     const lon = Math.random() * Math.PI * 2;
                     const yFactor = (Math.random() - 0.5) * 1.6; // between -0.8 and 0.8
-                    const value = Math.floor(Math.random() * 3) + 1; // 1..3 tokens
+                    const value = (Math.floor(Math.random() * 3) + 1) * 8; // 8..24 tokens
                     
                     this.visualizer.spawnHotspot(lon, yFactor, value);
-                    this.eventSystem.tokens = Math.min(99.0, this.eventSystem.tokens + value);
+                    this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + value);
                     
                     this.ui.logEvent("BIOSPHERE HOTSPOT", `🧬 A genetic hotspot emerged, yielding +${value} Evo-Tokens.`, "success");
                 }
@@ -660,7 +660,7 @@ class GameController {
                         description: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent.",
                         scientificDetails: "As the outer nickel-iron core cools, thermal convection currents decline. This slows the geodynamo, weakening and ultimately collapsing the protective magnetosphere shield that diverts high-energy stellar winds.",
                         durationRemaining: savedWarning.durationRemaining,
-                        cost: 15,
+                        cost: 100,
                         type: "alert",
                         apply: (p, b) => {
                             p.hasMagnetosphere = false;

@@ -11,10 +11,10 @@
  */
 
 export const RARITY = Object.freeze({
-    COMMON:   { name: 'COMMON',   rate: 10.0, award: 2  },
-    NOTABLE:  { name: 'NOTABLE',  rate: 2.0,  award: 5  },
-    MAJOR:    { name: 'MAJOR',    rate: 0.7,  award: 12 },
-    SINGULAR: { name: 'SINGULAR', rate: 0.3,  award: 25 }
+    COMMON:   { name: 'COMMON',   rate: 10.0, award: 15  },
+    NOTABLE:  { name: 'NOTABLE',  rate: 2.0,  award: 35  },
+    MAJOR:    { name: 'MAJOR',    rate: 0.7,  award: 80  },
+    SINGULAR: { name: 'SINGULAR', rate: 0.3,  award: 150 }
 });
 
 const SOLVENT_RATE_FACTOR = { water: 1.0, ammonia: 0.7, methane: 0.5 };
