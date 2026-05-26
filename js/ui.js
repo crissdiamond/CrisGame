@@ -86,8 +86,15 @@ export class GameUI {
         this.starLuminosity = document.getElementById('star-luminosity');
         this.moonIndicator = document.getElementById('moon-indicator');
         
-        this.tokenBalance = document.getElementById('token-balance');
+        this.tokenBalanceBlue = document.getElementById('token-balance-blue');
+        this.tokenBalanceSilver = document.getElementById('token-balance-silver');
+        this.tokenBalanceGold = document.getElementById('token-balance-gold');
         this.threatList = document.getElementById('threat-list');
+
+        Object.defineProperty(this, 'tokenBalance', {
+            get: () => this.tokenBalanceBlue || { textContent: '0' },
+            configurable: true
+        });
         
         // Interventions Modal
         this.btnOpenInterventions = document.getElementById('btn-open-interventions');
@@ -133,16 +140,16 @@ export class GameUI {
 
         // List of all 10 interventions with titles and descriptions
         this.interventionsList = [
-            { id: 'water_comet', name: '☄️ Redirect Water Comet', cost: 45, desc: 'Redirects a water-rich comet from the outer system. Increases solvent coverage (+20%) and enriches prebiotic soup.' },
-            { id: 'ammonia_comet', name: '☄️ Redirect Ammonia Comet', cost: 45, desc: 'Redirects a nitrogenous ammonia-rich comet. Adds alternative liquid solvent coverage (+25%) for cold pathways.' },
-            { id: 'methane_comet', name: '☄️ Redirect Hydrocarbon Comet', cost: 45, desc: 'Redirects a methane-rich comet, forming non-polar liquid hydrocarbon seas (+20%) on cold worlds.' },
-            { id: 'giant_collision', name: '💥 Giant Protoplanet Collision', cost: 120, desc: 'Triggers a massive collision with a Mars-sized body. Forms a Moon (+tides), melts crust, and boosts magnetosphere potential.' },
-            { id: 'gravitational_resonance', name: '🧲 Gravitational Resonance', cost: 90, desc: 'Uses orbital gravitational flex to heat core convection dynamo, restoring planetary magnetosphere shield to 100%.' },
-            { id: 'volcanic_eruption', name: '🌋 Trigger Volcanic Eruptions', cost: 75, desc: 'Opens tectonic crustal vents, triggering basalt volcanism. Outgasses CO2 (+12%) and thickens atmosphere (+0.2 atm).' },
-            { id: 'methanogen_bloom', name: '🦠 Induce Methanogenic Bloom', cost: 60, desc: 'Fertilizes deep-sea hydrothermal vents to trigger methanogen growth. Releases methane gas (+12%) to warm the planet.' },
-            { id: 'silicate_weathering', name: '🪨 Silicate Weathering', cost: 75, desc: 'Accelerates continental rock chemical weathering via acid rain. Traps atmospheric CO2 (-8%) into sea carbonate sediment.' },
-            { id: 'dust_veil', name: '🌫️ Seed Aerosol Dust Veil', cost: 60, desc: 'Disintegrates a minor asteroid in the upper atmosphere. Seeds dust reflecting starlight to cool the planet.' },
-            { id: 'cyanobacteria_bloom', name: '🌿 Cyanobacteria Bloom', cost: 60, desc: 'Injects nutrients into liquid basins to trigger photosynthetic blooms. Releases oxygen (+8%) and absorbs CO2 (-5%).' }
+            { id: 'water_comet', name: '☄️ Redirect Water Comet', cost: 10, desc: 'Redirects a water-rich comet from the outer system. Increases solvent coverage (+20%) and enriches prebiotic soup.' },
+            { id: 'ammonia_comet', name: '☄️ Redirect Ammonia Comet', cost: 10, desc: 'Redirects a nitrogenous ammonia-rich comet. Adds alternative liquid solvent coverage (+25%) for cold pathways.' },
+            { id: 'methane_comet', name: '☄️ Redirect Hydrocarbon Comet', cost: 10, desc: 'Redirects a methane-rich comet, forming non-polar liquid hydrocarbon seas (+20%) on cold worlds.' },
+            { id: 'giant_collision', name: '💥 Giant Protoplanet Collision', cost: 30, desc: 'Triggers a massive collision with a Mars-sized body. Forms a Moon (+tides), melts crust, and boosts magnetosphere potential.' },
+            { id: 'gravitational_resonance', name: '🧲 Gravitational Resonance', cost: 20, desc: 'Uses orbital gravitational flex to heat core convection dynamo, restoring planetary magnetosphere shield to 100%.' },
+            { id: 'volcanic_eruption', name: '🌋 Trigger Volcanic Eruptions', cost: 15, desc: 'Opens tectonic crustal vents, triggering basalt volcanism. Outgasses CO2 (+12%) and thickens atmosphere (+0.2 atm).' },
+            { id: 'methanogen_bloom', name: '🦠 Induce Methanogenic Bloom', cost: 12, desc: 'Fertilizes deep-sea hydrothermal vents to trigger methanogen growth. Releases methane gas (+12%) to warm the planet.' },
+            { id: 'silicate_weathering', name: '🪨 Silicate Weathering', cost: 15, desc: 'Accelerates continental rock chemical weathering via acid rain. Traps atmospheric CO2 (-8%) into sea carbonate sediment.' },
+            { id: 'dust_veil', name: '🌫️ Seed Aerosol Dust Veil', cost: 12, desc: 'Disintegrates a minor asteroid in the upper atmosphere. Seeds dust reflecting starlight to cool the planet.' },
+            { id: 'cyanobacteria_bloom', name: '🌿 Cyanobacteria Bloom', cost: 12, desc: 'Injects nutrients into liquid basins to trigger photosynthetic blooms. Releases oxygen (+8%) and absorbs CO2 (-5%).' }
         ];
 
         this.currentPlanet = null;
@@ -239,9 +246,13 @@ export class GameUI {
         this.tabMetrics = document.getElementById('tab-metrics');
         this.tabRoadmap = document.getElementById('tab-roadmap');
         this.tabTuning = document.getElementById('tab-tuning');
+        this.tabExchange = document.getElementById('tab-exchange');
         this.tabContentMetrics = document.getElementById('tab-content-metrics');
         this.tabContentRoadmap = document.getElementById('tab-content-roadmap');
         this.tabContentTuning = document.getElementById('tab-content-tuning');
+        this.tabContentExchange = document.getElementById('tab-content-exchange');
+        this.btnConvertBlueSilver = document.getElementById('btn-convert-blue-silver');
+        this.btnConvertSilverGold = document.getElementById('btn-convert-silver-gold');
 
         // OEC stability gate UI elements
         this.pacingGateWrapper = document.getElementById('pacing-gate-wrapper');
@@ -347,9 +358,10 @@ export class GameUI {
         this.popupToggleDossier.addEventListener('click', () => this.togglePopupDossier());
         
         // Tab switching events
-        this.tabMetrics.addEventListener('click', () => this.switchTab('metrics'));
-        this.tabRoadmap.addEventListener('click', () => this.switchTab('roadmap'));
-        this.tabTuning.addEventListener('click', () => this.switchTab('tuning'));
+        if (this.tabMetrics) this.tabMetrics.addEventListener('click', () => this.switchTab('metrics'));
+        if (this.tabRoadmap) this.tabRoadmap.addEventListener('click', () => this.switchTab('roadmap'));
+        if (this.tabTuning) this.tabTuning.addEventListener('click', () => this.switchTab('tuning'));
+        if (this.tabExchange) this.tabExchange.addEventListener('click', () => this.switchTab('exchange'));
 
         // Setup modal event listeners for realtime feedback
         this.setupStarClass.addEventListener('change', () => this.updateSetupTelemetry());
@@ -457,17 +469,19 @@ export class GameUI {
     }
 
     switchTab(tabId) {
-        this.tabMetrics.classList.toggle('active', tabId === 'metrics');
-        this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
-        this.tabTuning.classList.toggle('active', tabId === 'tuning');
+        if (this.tabMetrics) this.tabMetrics.classList.toggle('active', tabId === 'metrics');
+        if (this.tabRoadmap) this.tabRoadmap.classList.toggle('active', tabId === 'roadmap');
+        if (this.tabTuning) this.tabTuning.classList.toggle('active', tabId === 'tuning');
+        if (this.tabExchange) this.tabExchange.classList.toggle('active', tabId === 'exchange');
 
-        this.tabContentMetrics.classList.toggle('active', tabId === 'metrics');
-        this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
-        this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
+        if (this.tabContentMetrics) this.tabContentMetrics.classList.toggle('active', tabId === 'metrics');
+        if (this.tabContentRoadmap) this.tabContentRoadmap.classList.toggle('active', tabId === 'roadmap');
+        if (this.tabContentTuning) this.tabContentTuning.classList.toggle('active', tabId === 'tuning');
+        if (this.tabContentExchange) this.tabContentExchange.classList.toggle('active', tabId === 'exchange');
     }
 
 
-    showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null, warningMeta = null, currentTokens = 0) {
+    showMilestonePopup(title, desc, scientificDetails = null, rewardTokens = null, warningMeta = null, eventSystem = null) {
         this.popupTitle.textContent = title;
         this.popupDesc.textContent = desc;
         
@@ -483,8 +497,14 @@ export class GameUI {
         }
 
         // Dynamically set reward text
-        if (typeof rewardTokens === 'number' && rewardTokens > 0) {
-            this.popupReward.textContent = `Curator Reward: +${rewardTokens} Evo-Tokens`;
+        if (rewardTokens) {
+            if (typeof rewardTokens === 'string') {
+                this.popupReward.textContent = `Curator Reward: ${rewardTokens}`;
+            } else if (typeof rewardTokens === 'number' && rewardTokens > 0) {
+                this.popupReward.textContent = `Curator Reward: +${rewardTokens} Evo-Tokens`;
+            } else {
+                this.popupReward.textContent = `Curator Reward: ${rewardTokens}`;
+            }
             this.popupReward.style.display = 'block';
         } else {
             this.popupReward.style.display = 'none';
@@ -496,13 +516,14 @@ export class GameUI {
             this.popupDeflectBtn.style.display = 'block';
             this.activePopupWarningId = warningMeta.id;
             
-            if (currentTokens >= warningMeta.cost) {
+            const gold = (eventSystem && typeof eventSystem.tokensGold === 'number') ? eventSystem.tokensGold : 0;
+            if (gold >= warningMeta.cost) {
                 this.popupDeflectBtn.disabled = false;
-                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}T]`;
+                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}🛡️]`;
                 this.popupDeflectBtn.classList.remove('disabled');
             } else {
                 this.popupDeflectBtn.disabled = true;
-                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}T] (Need Tokens)`;
+                this.popupDeflectBtn.textContent = `Deflect [${warningMeta.cost}🛡️] (Need Gold)`;
                 this.popupDeflectBtn.classList.add('disabled');
             }
             this.popupDismissBtn.textContent = "Dismiss (Run Simulation)";
@@ -670,6 +691,31 @@ export class GameUI {
         this.btnUpgradeThermal.addEventListener('click', () => handleUpgrade('thermal'));
         this.btnUpgradeRadiation.addEventListener('click', () => handleUpgrade('radiation'));
         this.btnUpgradeMetabolic.addEventListener('click', () => handleUpgrade('metabolic'));
+
+        if (this.btnConvertBlueSilver) {
+            this.btnConvertBlueSilver.addEventListener('click', () => {
+                if (handlers.onConvertTokens) {
+                    const res = handlers.onConvertTokens('blue_silver');
+                    if (res.success) {
+                        this.showToast(res.msg, "success");
+                    } else {
+                        this.showToast(res.msg, "hazard");
+                    }
+                }
+            });
+        }
+        if (this.btnConvertSilverGold) {
+            this.btnConvertSilverGold.addEventListener('click', () => {
+                if (handlers.onConvertTokens) {
+                    const res = handlers.onConvertTokens('silver_gold');
+                    if (res.success) {
+                        this.showToast(res.msg, "success");
+                    } else {
+                        this.showToast(res.msg, "hazard");
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -753,7 +799,7 @@ export class GameUI {
     /**
      * Render active threats/warnings list in threat control panel
      */
-    updateThreats(warnings) {
+    updateThreats(warnings, eventSystem = null) {
         const cards = this.threatList.querySelectorAll('.threat-card');
         const cardIds = Array.from(cards).map(card => {
             const btn = card.querySelector('.btn-deflect');
@@ -765,6 +811,8 @@ export class GameUI {
                            cardIds.some((id, idx) => id !== warningIds[idx]) ||
                            this.threatList.querySelector('.no-threats-msg');
 
+        const gold = (eventSystem && typeof eventSystem.tokensGold === 'number') ? eventSystem.tokensGold : 0;
+
         if (hasChanged) {
             this.threatList.innerHTML = '';
             if (warnings.length === 0) {
@@ -775,20 +823,21 @@ export class GameUI {
             warnings.forEach(threat => {
                 const row = document.createElement('div');
                 row.className = `threat-card ${threat.type}`;
+                const canAfford = gold >= threat.cost;
                 row.innerHTML = `
                     <div class="threat-header">
                         <span class="threat-title">⚠️ ${threat.name}</span>
                         <span class="threat-timer">${threat.durationRemaining.toFixed(1)} Myr</span>
                     </div>
                     <div class="threat-desc">${threat.description}</div>
-                    <button class="btn btn-warning btn-deflect" data-id="${threat.id}">
-                        Deflect [${threat.cost}T]
+                    <button class="btn btn-warning btn-deflect${canAfford ? '' : ' disabled'}" data-id="${threat.id}"${canAfford ? '' : ' disabled'}>
+                        Deflect [${threat.cost}🛡️]${canAfford ? '' : ' (Need Gold)'}
                     </button>
                 `;
                 this.threatList.appendChild(row);
             });
         } else {
-            // Update timers in place to prevent button recreation from breaking click events
+            // Update timers and button states in place to prevent button recreation from breaking click events
             cards.forEach((card, idx) => {
                 const threat = warnings[idx];
                 const timerSpan = card.querySelector('.threat-timer');
@@ -796,6 +845,19 @@ export class GameUI {
                     const newText = `${threat.durationRemaining.toFixed(1)} Myr`;
                     if (timerSpan.textContent !== newText) {
                         timerSpan.textContent = newText;
+                    }
+                }
+                const btn = card.querySelector('.btn-deflect');
+                if (btn) {
+                    const canAfford = gold >= threat.cost;
+                    if (canAfford) {
+                        btn.disabled = false;
+                        btn.classList.remove('disabled');
+                        btn.textContent = `Deflect [${threat.cost}🛡️]`;
+                    } else {
+                        btn.disabled = true;
+                        btn.classList.add('disabled');
+                        btn.textContent = `Deflect [${threat.cost}🛡️] (Need Gold)`;
                     }
                 }
             });
@@ -959,15 +1021,25 @@ export class GameUI {
             </div>
         `;
 
+        const mutagen = (this.currentEventSystem && typeof this.currentEventSystem.tokensBlue === 'number') ? this.currentEventSystem.tokensBlue : 0;
         if (node.nudgeId && !biology.activeAdaptations.has(node.nudgeId)) {
             this.btnNudgeEvolution.style.display = 'block';
-            this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptations [${node.cost}T]`;
+            const canAfford = mutagen >= node.cost;
+            this.btnNudgeEvolution.disabled = !canAfford;
+            if (canAfford) {
+                this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptations [${node.cost}🔹]`;
+                this.btnNudgeEvolution.classList.remove('disabled');
+            } else {
+                this.btnNudgeEvolution.textContent = `🧬 Nudge Adaptations [${node.cost}🔹] (Need Mutagen)`;
+                this.btnNudgeEvolution.classList.add('disabled');
+            }
             this.btnNudgeEvolution.setAttribute('data-nudge', node.nudgeId);
             this.btnNudgeEvolution.setAttribute('data-cost', node.cost);
         } else if (node.nudgeId && biology.activeAdaptations.has(node.nudgeId)) {
             this.btnNudgeEvolution.style.display = 'block';
             this.btnNudgeEvolution.textContent = "✅ ADAPTATION ACTIVE";
             this.btnNudgeEvolution.disabled = true;
+            this.btnNudgeEvolution.classList.remove('disabled');
         } else {
             this.btnNudgeEvolution.style.display = 'none';
         }
@@ -981,11 +1053,11 @@ export class GameUI {
         this.syncSliders(planet);
 
         // Curatorial Token display
-        this.tokenBalance.textContent = planet.age > 0 
-            ? `${Math.floor(biology.organicSoup > 0 || biology.ammonicSoup > 0 || biology.methaneSoup > 0 ? biology.organicSoup * 0.1 + biology.anaerobicPop * 0.05 + 15 : 15)}` 
-            : '15'; 
-        // Wait, let's tie this tokenBalance directly to events.tokens
-        // We will make sure game.js overrides this with events.tokens.
+        if (this.currentEventSystem) {
+            if (this.tokenBalanceBlue) this.tokenBalanceBlue.textContent = Math.floor(this.currentEventSystem.tokensBlue);
+            if (this.tokenBalanceSilver) this.tokenBalanceSilver.textContent = Math.floor(this.currentEventSystem.tokensSilver);
+            if (this.tokenBalanceGold) this.tokenBalanceGold.textContent = Math.floor(this.currentEventSystem.tokensGold);
+        }
         
         // Planet Age
         this.planetAge.textContent = `${planet.age.toFixed(1)} Myr`;
@@ -1246,6 +1318,8 @@ export class GameUI {
 
         // 2. Update Genetic Tuning panel values and buttons
         if (this.tabContentTuning && this.tabContentTuning.classList.contains('active')) {
+            const silver = (this.currentEventSystem && typeof this.currentEventSystem.tokensSilver === 'number') ? this.currentEventSystem.tokensSilver : 0;
+
             // Thermal Resilience
             const thermalLvl = biology.thermalResilienceLevel || 0;
             this.thermalResilienceLevelVal.textContent = `Lvl ${thermalLvl} / 5`;
@@ -1253,10 +1327,14 @@ export class GameUI {
             if (thermalLvl >= 5) {
                 this.btnUpgradeThermal.textContent = "MAX UPGRADE";
                 this.btnUpgradeThermal.disabled = true;
+                this.btnUpgradeThermal.classList.remove('disabled');
             } else {
-                const cost = Math.round(10 * Math.pow(2.8, thermalLvl));
-                this.btnUpgradeThermal.textContent = `Upgrade: ${cost} Tokens`;
-                this.btnUpgradeThermal.disabled = false;
+                const cost = Math.round(5 * Math.pow(2.2, thermalLvl));
+                const canAfford = silver >= cost;
+                this.btnUpgradeThermal.textContent = `Upgrade: ${cost} 🥈`;
+                this.btnUpgradeThermal.disabled = !canAfford;
+                if (canAfford) this.btnUpgradeThermal.classList.remove('disabled');
+                else this.btnUpgradeThermal.classList.add('disabled');
             }
 
             // Radiation Shielding
@@ -1266,10 +1344,14 @@ export class GameUI {
             if (radLvl >= 5) {
                 this.btnUpgradeRadiation.textContent = "MAX UPGRADE";
                 this.btnUpgradeRadiation.disabled = true;
+                this.btnUpgradeRadiation.classList.remove('disabled');
             } else {
-                const cost = Math.round(10 * Math.pow(2.8, radLvl));
-                this.btnUpgradeRadiation.textContent = `Upgrade: ${cost} Tokens`;
-                this.btnUpgradeRadiation.disabled = false;
+                const cost = Math.round(5 * Math.pow(2.2, radLvl));
+                const canAfford = silver >= cost;
+                this.btnUpgradeRadiation.textContent = `Upgrade: ${cost} 🥈`;
+                this.btnUpgradeRadiation.disabled = !canAfford;
+                if (canAfford) this.btnUpgradeRadiation.classList.remove('disabled');
+                else this.btnUpgradeRadiation.classList.add('disabled');
             }
 
             // Metabolic Efficiency
@@ -1279,10 +1361,40 @@ export class GameUI {
             if (metabLvl >= 5) {
                 this.btnUpgradeMetabolic.textContent = "MAX UPGRADE";
                 this.btnUpgradeMetabolic.disabled = true;
+                this.btnUpgradeMetabolic.classList.remove('disabled');
             } else {
-                const cost = Math.round(10 * Math.pow(2.8, metabLvl));
-                this.btnUpgradeMetabolic.textContent = `Upgrade: ${cost} Tokens`;
-                this.btnUpgradeMetabolic.disabled = false;
+                const cost = Math.round(5 * Math.pow(2.2, metabLvl));
+                const canAfford = silver >= cost;
+                this.btnUpgradeMetabolic.textContent = `Upgrade: ${cost} 🥈`;
+                this.btnUpgradeMetabolic.disabled = !canAfford;
+                if (canAfford) this.btnUpgradeMetabolic.classList.remove('disabled');
+                else this.btnUpgradeMetabolic.classList.add('disabled');
+            }
+        }
+
+        // 3. Update Token Exchange panel buttons
+        if (this.tabContentExchange && this.tabContentExchange.classList.contains('active')) {
+            const mutagen = (this.currentEventSystem && typeof this.currentEventSystem.tokensBlue === 'number') ? this.currentEventSystem.tokensBlue : 0;
+            const silver = (this.currentEventSystem && typeof this.currentEventSystem.tokensSilver === 'number') ? this.currentEventSystem.tokensSilver : 0;
+
+            if (this.btnConvertBlueSilver) {
+                const canConvert = mutagen >= 50.0;
+                this.btnConvertBlueSilver.disabled = !canConvert;
+                if (canConvert) {
+                    this.btnConvertBlueSilver.classList.remove('disabled');
+                } else {
+                    this.btnConvertBlueSilver.classList.add('disabled');
+                }
+            }
+
+            if (this.btnConvertSilverGold) {
+                const canConvert = silver >= 50.0;
+                this.btnConvertSilverGold.disabled = !canConvert;
+                if (canConvert) {
+                    this.btnConvertSilverGold.classList.remove('disabled');
+                } else {
+                    this.btnConvertSilverGold.classList.add('disabled');
+                }
             }
         }
 
@@ -1485,7 +1597,7 @@ export class GameUI {
         const planet = this.currentPlanet;
         const biology = this.currentBiology;
         const eventSystem = this.currentEventSystem;
-        const tokens = eventSystem.tokens;
+        const tokens = eventSystem.tokensSilver;
 
         this.interventionsGridList.innerHTML = '';
 
@@ -1505,7 +1617,7 @@ export class GameUI {
 
             const cost = document.createElement('span');
             cost.className = 'intervention-cost';
-            cost.textContent = `${event.cost} T`;
+            cost.textContent = `${event.cost} 🥈`;
 
             header.appendChild(title);
             header.appendChild(cost);
@@ -1533,7 +1645,7 @@ export class GameUI {
                 btn.style.opacity = '0.5';
                 btn.style.cursor = 'not-allowed';
             } else if (!canAfford) {
-                btn.textContent = `NEED ${event.cost} TOKENS (HAVE ${Math.floor(tokens)})`;
+                btn.textContent = `NEED ${event.cost} SILVER (HAVE ${Math.floor(tokens)})`;
                 btn.disabled = true;
                 btn.style.opacity = '0.6';
                 btn.style.cursor = 'not-allowed';

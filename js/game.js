@@ -6,7 +6,7 @@ import { EventSystem } from './events.js';
 import { HistoryRecorder } from './history.js';
 import { HistoryView } from './historyView.js';
 
-class GameController {
+export class GameController {
     constructor() {
         // Instantiate modules
         this.planet = new Planet();
@@ -101,6 +101,7 @@ class GameController {
                 } else {
                     this.ui.logEvent("INTERVENTION FAILED", res.msg, "hazard");
                 }
+                return res;
             },
             
             // Deflect active threat warning
@@ -110,10 +111,11 @@ class GameController {
                     this.ui.logEvent("THREAT AVERTED", res.msg, "success");
                     // Immediately refresh the threat panel so the card disappears now,
                     // not on the next animation frame (important when paused).
-                    this.ui.updateThreats(this.eventSystem.warnings);
+                    this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem);
                 } else {
                     this.ui.logEvent("DEFLECTION FAILED", res.msg, "hazard");
                 }
+                return res;
             },
 
             // Nudge evolution
@@ -126,7 +128,31 @@ class GameController {
                     } else {
                         this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");
                     }
+                    return res;
                 }
+                return { success: false, msg: "Invalid node for nudging." };
+            },
+
+            // Convert tokens
+            onConvertTokens: (type) => {
+                if (type === 'blue_silver') {
+                    if (this.eventSystem.tokensBlue >= 50.0) {
+                        this.eventSystem.tokensBlue -= 50.0;
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 1.0);
+                        this.ui.logEvent("TOKEN EXCHANGE", "🔹 Converted 50 Mutagen tokens into 1 Silver Adaptation token.", "success");
+                        return { success: true, msg: "Converted 50 Blue ➔ 1 Silver" };
+                    }
+                    return { success: false, msg: "Insufficient Mutagen tokens." };
+                } else if (type === 'silver_gold') {
+                    if (this.eventSystem.tokensSilver >= 50.0) {
+                        this.eventSystem.tokensSilver -= 50.0;
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 1.0);
+                        this.ui.logEvent("TOKEN EXCHANGE", "⚙️ Converted 50 Adaptation tokens into 1 Gold Deflection token.", "success");
+                        return { success: true, msg: "Converted 50 Silver ➔ 1 Gold" };
+                    }
+                    return { success: false, msg: "Insufficient Adaptation tokens." };
+                }
+                return { success: false, msg: "Invalid conversion type." };
             },
 
             // Upgrade permanent genetic adaptation trait
@@ -148,9 +174,9 @@ class GameController {
                     return { success: false, msg: `Your species' ${traitType} resilience has already reached maximum level.` };
                 }
                 
-                const cost = Math.round(10 * Math.pow(2.8, currentLevel));
-                if (this.eventSystem.tokens >= cost) {
-                    this.eventSystem.tokens -= cost;
+                const cost = Math.round(5 * Math.pow(2.2, currentLevel));
+                if (this.eventSystem.tokensSilver >= cost) {
+                    this.eventSystem.tokensSilver -= cost;
                     this.biology[traitField] = currentLevel + 1;
                     const names = {
                         thermal: "Thermal Resilience",
@@ -163,7 +189,7 @@ class GameController {
                         newLevel: currentLevel + 1 
                     };
                 } else {
-                    return { success: false, msg: `Insufficient Evo-Tokens. Upgrading ${traitType} requires ${cost} tokens.` };
+                    return { success: false, msg: `Insufficient Silver tokens. Upgrading ${traitType} requires ${cost} Silver tokens.` };
                 }
             },
             
@@ -268,21 +294,35 @@ class GameController {
             // Convert real-world time step into Million Years (Myr)
             const tickRate = dt * this.timeScale;
 
-            // 1. Run biological computations (pass current planet climate factors)
             const bioUpdate = this.biology.update(tickRate, this.planet);
 
             // Print any biological milestones / events to the science feed
             if (bioUpdate.events && bioUpdate.events.length > 0) {
                 bioUpdate.events.forEach(evt => {
-                    if (typeof evt.tokens === 'number') {
-                        this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + evt.tokens);
+                    const rarityTier = evt.tier;
+                    let rewardText = null;
+                    if (rarityTier === 'COMMON') {
+                        this.eventSystem.tokensBlue = Math.min(900.0, this.eventSystem.tokensBlue + 25);
+                        rewardText = "+25 Mutagen (🔹)";
+                    } else if (rarityTier === 'NOTABLE') {
+                        this.eventSystem.tokensBlue = Math.min(900.0, this.eventSystem.tokensBlue + 50);
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 5);
+                        rewardText = "+50 Mutagen (🔹), +5 Adapt (🥈)";
+                    } else if (rarityTier === 'MAJOR') {
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 15);
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 1);
+                        rewardText = "+15 Adapt (🥈), +1 Deflect (🛡️)";
+                    } else if (rarityTier === 'SINGULAR') {
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 30);
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 5);
+                        rewardText = "+30 Adapt (🥈), +5 Deflect (🛡️)";
                     }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
+                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
                     // Major and Singular breakthroughs always get the popup.
                     // Other 'success' (non-tiered) events keep their existing popup behavior.
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || (evt.type === 'success' && !evt.tier)) {
-                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, evt.tokens);
+                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, rewardText);
                     }
                 });
             }
@@ -291,15 +331,30 @@ class GameController {
             const eventLogs = this.eventSystem.tick(this.planet, this.biology, tickRate);
             if (eventLogs && eventLogs.length > 0) {
                 eventLogs.forEach(evt => {
-                    if (typeof evt.tokens === 'number') {
-                        this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + evt.tokens);
+                    const rarityTier = evt.tier;
+                    let rewardText = null;
+                    if (rarityTier === 'COMMON') {
+                        this.eventSystem.tokensBlue = Math.min(900.0, this.eventSystem.tokensBlue + 25);
+                        rewardText = "+25 Mutagen (🔹)";
+                    } else if (rarityTier === 'NOTABLE') {
+                        this.eventSystem.tokensBlue = Math.min(900.0, this.eventSystem.tokensBlue + 50);
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 5);
+                        rewardText = "+50 Mutagen (🔹), +5 Adapt (🥈)";
+                    } else if (rarityTier === 'MAJOR') {
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 15);
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 1);
+                        rewardText = "+15 Adapt (🥈), +1 Deflect (🛡️)";
+                    } else if (rarityTier === 'SINGULAR') {
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 30);
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 5);
+                        rewardText = "+30 Adapt (🥈), +5 Deflect (🛡️)";
                     }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: evt.tokens });
+                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard' || evt.type === 'alert') {
                         const isDetection = evt.title.includes("DETECTED");
                         const warningMeta = isDetection ? { id: evt.warningId, cost: evt.warningCost } : null;
-                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, isDetection ? null : evt.tokens, warningMeta);
+                        this.triggerPopup(evt.title, evt.desc, evt.scientificDetails, isDetection ? null : rewardText, warningMeta);
                     }
                 });
                 // Sync sliders back to planet values since events can alter targets
@@ -320,12 +375,33 @@ class GameController {
                 if (this.planet.getHabitabilityScore() > 10) {
                     const lon = Math.random() * Math.PI * 2;
                     const yFactor = (Math.random() - 0.5) * 1.6; // between -0.8 and 0.8
-                    const value = (Math.floor(Math.random() * 3) + 1) * 8; // 8..24 tokens
                     
-                    this.visualizer.spawnHotspot(lon, yFactor, value);
-                    this.eventSystem.tokens = Math.min(900.0, this.eventSystem.tokens + value);
+                    const roll = Math.random();
+                    let type = 'blue';
+                    let value = 0;
+                    let currencyName = "Mutagen";
+                    let symbol = "🔹";
                     
-                    this.ui.logEvent("BIOSPHERE HOTSPOT", `🧬 A genetic hotspot emerged, yielding +${value} Evo-Tokens.`, "success");
+                    if (roll < 0.80) {
+                        type = 'blue';
+                        value = Math.floor(Math.random() * 21) + 10; // 10..30 Blue
+                        this.eventSystem.tokensBlue = Math.min(900.0, this.eventSystem.tokensBlue + value);
+                    } else if (roll < 0.95) {
+                        type = 'silver';
+                        value = Math.floor(Math.random() * 6) + 3; // 3..8 Silver
+                        this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + value);
+                        currencyName = "Adaptation";
+                        symbol = "🥈";
+                    } else {
+                        type = 'gold';
+                        value = Math.floor(Math.random() * 2) + 1; // 1..2 Gold
+                        this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + value);
+                        currencyName = "Deflection";
+                        symbol = "🛡️";
+                    }
+                    
+                    this.visualizer.spawnHotspot(lon, yFactor, value, type);
+                    this.ui.logEvent("BIOSPHERE HOTSPOT", `${symbol} A genetic hotspot emerged, yielding +${value} ${currencyName} Tokens.`, "success");
                 }
             }
         }
@@ -340,13 +416,15 @@ class GameController {
         this.historyView.render();
         
         // Update warnings panel
-        this.ui.updateThreats(this.eventSystem.warnings);
+        this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem);
 
         // Update speed controls visually
         this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
 
         // Update token readout directly from eventSystem
-        this.ui.tokenBalance.textContent = Math.floor(this.eventSystem.tokens);
+        this.ui.tokenBalanceBlue.textContent = Math.floor(this.eventSystem.tokensBlue);
+        this.ui.tokenBalanceSilver.textContent = Math.floor(this.eventSystem.tokensSilver);
+        this.ui.tokenBalanceGold.textContent = Math.floor(this.eventSystem.tokensGold);
 
         // Update dynamic interventions modal compatibility/affordability state
         this.ui.updateInterventions(this.planet, this.biology, this.eventSystem);
@@ -377,7 +455,7 @@ class GameController {
                 nextPopup.details,
                 nextPopup.rewardTokens,
                 nextPopup.warningMeta,
-                this.eventSystem.tokens
+                this.eventSystem
             );
         }
     }
@@ -552,7 +630,10 @@ class GameController {
                     unlockAges: this.biology.unlockAges
                 },
                 eventSystem: {
-                    tokens: this.eventSystem.tokens,
+                    tokensBlue: this.eventSystem.tokensBlue,
+                    tokensSilver: this.eventSystem.tokensSilver,
+                    tokensGold: this.eventSystem.tokensGold,
+                    tokens: this.eventSystem.tokensBlue, // Legacy fallback
                     timeAccumulator: this.eventSystem.timeAccumulator,
                     prevUnlocks: this.eventSystem.prevUnlocks,
                     triggeredUniqueEvents: Array.from(this.eventSystem.triggeredUniqueEvents),
@@ -641,7 +722,9 @@ class GameController {
             }
 
             // Restore EventSystem
-            this.eventSystem.tokens = data.eventSystem.tokens;
+            this.eventSystem.tokensBlue = data.eventSystem.tokensBlue !== undefined ? data.eventSystem.tokensBlue : (data.eventSystem.tokens !== undefined ? data.eventSystem.tokens : 50.0);
+            this.eventSystem.tokensSilver = data.eventSystem.tokensSilver !== undefined ? data.eventSystem.tokensSilver : 1.0;
+            this.eventSystem.tokensGold = data.eventSystem.tokensGold !== undefined ? data.eventSystem.tokensGold : 0.0;
             this.eventSystem.timeAccumulator = data.eventSystem.timeAccumulator;
             this.eventSystem.prevUnlocks = { ...data.eventSystem.prevUnlocks };
             this.eventSystem.triggeredUniqueEvents = new Set(data.eventSystem.triggeredUniqueEvents);
@@ -660,7 +743,7 @@ class GameController {
                         description: "Convective core cooling. Shield strength has dropped below 40%. Magnetosphere collapse imminent.",
                         scientificDetails: "As the outer nickel-iron core cools, thermal convection currents decline. This slows the geodynamo, weakening and ultimately collapsing the protective magnetosphere shield that diverts high-energy stellar winds.",
                         durationRemaining: savedWarning.durationRemaining,
-                        cost: 100,
+                        cost: 6,
                         type: "alert",
                         apply: (p, b) => {
                             p.hasMagnetosphere = false;

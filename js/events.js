@@ -7,8 +7,16 @@ export class EventSystem {
         this.checkInterval = 2.0;         // Check for events every 2.0 Myr
         this.timeAccumulator = 0.0;
         
-        // Player resource
-        this.tokens = 15.0;
+        // Player resources (multi-tiered)
+        this.tokensBlue = 50.0;
+        this.tokensSilver = 1.0;
+        this.tokensGold = 0.0;
+        
+        // Legacy compatibility getter/setter
+        Object.defineProperty(this, 'tokens', {
+            get: () => this.tokensBlue,
+            set: (val) => { this.tokensBlue = val; }
+        });
         
         // Active event tracking
         this.activeEvents = []; // Array of { id, name, remainingDuration, onEnd }
@@ -59,7 +67,7 @@ export class EventSystem {
                 scientificDetails: "Carbonaceous chondrites are primitive, volatile-rich bodies containing hydrated minerals, amino-acid precursors, and complex organics. Small impacts can fertilize prebiotic chemistry while ejecta dust briefly blocks sunlight and cools the surface.",
                 type: (p, b) => this.hasMulticellularLife(b) ? "hazard" : "bonus",
                 chance: 0.18,
-                cost: 20,
+                cost: 2,
                 warningDuration: 4.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -78,7 +86,7 @@ export class EventSystem {
                 scientificDetails: "Silicaceous asteroids are rocky olivine- and pyroxene-rich bodies. Their impacts excavate silicate crust, loft reflective dust, and can vaporize carbonate rocks, producing a delayed carbon dioxide warming pulse after the initial cooling.",
                 type: "hazard",
                 chance: 0.12,
-                cost: 40,
+                cost: 3,
                 warningDuration: 3.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -95,7 +103,7 @@ export class EventSystem {
                 scientificDetails: "Metallic M-type bodies are dense iron-nickel fragments, so an equal-size impactor carries more kinetic energy than porous rock or ice. The impact produces severe thermal shock, a long dust winter, and a later greenhouse rebound from vaporized carbonates.",
                 type: "hazard",
                 chance: 0.06,
-                cost: 90,
+                cost: 6,
                 warningDuration: 2.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -112,7 +120,7 @@ export class EventSystem {
                 scientificDetails: "Long-period comets are volatile-rich ice and dust aggregates. They can deliver water and organics to dry worlds, but their high velocities and fine ejecta load can block sunlight efficiently after impact.",
                 type: (p, b) => p.waterCoverage < 10.0 && !this.hasMulticellularLife(b) ? "bonus" : "hazard",
                 chance: 0.10,
-                cost: 30,
+                cost: 2,
                 warningDuration: 5.0,
                 condition: (p, b) => p.age > 10.0,
                 apply: (p, b) => {
@@ -132,7 +140,7 @@ export class EventSystem {
                 scientificDetails: "Solar superflares launch billions of tons of high-energy protons and ions (Coronal Mass Ejections). Without a planetary magnetic shield to deflect them, these particles collide directly with atmospheric molecules, triggering radiolysis, ozone destruction, and gradual atmospheric stripping.",
                 type: "hazard",
                 chance: 0.18,
-                cost: 60,
+                cost: 4,
                 warningDuration: 2.0,
                 condition: (p, b) => !p.hasMagnetosphere && !this.isEventActive("solar_flare"),
                 duration: 6.0,
@@ -161,7 +169,7 @@ export class EventSystem {
                 scientificDetails: "Severe mantle convection leads to flood basalt volcanism, releasing massive amounts of carbon dioxide (CO2), sulfur dioxide (SO2), and halogen gases. While sulfur compounds cause brief cooling and acid rain, the accumulated CO2 leads to long-term global greenhouse warming.",
                 type: "alert",
                 chance: 0.20,
-                cost: 75,
+                cost: 5,
                 warningDuration: 2.5,
                 condition: (p, b) => p.age > 20.0 && !this.isEventActive("volcanic_eruption"),
                 duration: 8.0,
@@ -182,7 +190,7 @@ export class EventSystem {
                 scientificDetails: "Runaway glaciation occurs due to ice-albedo positive feedback. As temperatures drop, snow and ice coverage expands, reflecting more stellar radiation back into space. This drives further cooling until ice sheets meet at the equator, locking the planet in a 'Snowball Earth' state.",
                 type: "hazard",
                 chance: 0.15,
-                cost: 90,
+                cost: 6,
                 warningDuration: 4.0,
                 condition: (p, b) => p.temperature < 15.0 && !p.isGlaciated && !this.isEventActive("glaciation"),
                 duration: 10.0,
@@ -211,7 +219,7 @@ export class EventSystem {
                 scientificDetails: "When atmospheric oxygen exceeds 30-35%, the combustion threshold of organic matter drops dramatically. Even damp vegetation becomes highly flammable, allowing a single lightning bolt to spark global wildfire storms that consume vast quantities of biomass and oxygen, venting carbon dioxide.",
                 type: "hazard",
                 chance: 0.25,
-                cost: 60,
+                cost: 4,
                 warningDuration: 3.0,
                 condition: (p, b) => p.o2 > 35.0 && (b.landPlantsPop > 10.0 || b.photosyntheticPop > 40.0) && !this.isEventActive("atmospheric_firestorm"),
                 duration: 5.0,
@@ -251,7 +259,7 @@ export class EventSystem {
                 scientificDetails: "A relativistic gamma-ray burst from a collapsing massive star strikes the atmosphere, ionizing nitrogen and oxygen molecules to produce nitrogen oxides (NOx). These compounds act as catalytic agents that destroy the ozone layer, exposing surface life to lethal UV-B radiation.",
                 type: "hazard",
                 chance: 0.05, // Extremely rare
-                cost: 180,
+                cost: 10,
                 warningDuration: 4.5,
                 condition: (p, b) => p.age > 100.0,
                 duration: 15.0,
@@ -285,7 +293,7 @@ export class EventSystem {
                 scientificDetails: "A close stellar passage perturbs the planetary orbit, altering its eccentricity. This shifts the insolation baseline, triggering extreme seasonal temperature swings, tides, and potential climate instability.",
                 type: "hazard",
                 chance: 0.03, // Extremely rare
-                cost: 220,
+                cost: 12,
                 warningDuration: 3.5,
                 condition: (p, b) => p.age > 150.0,
                 apply: (p, b) => {
@@ -461,8 +469,8 @@ export class EventSystem {
      */
     triggerIntervention(type, planet, biology) {
         if (type === 'water_comet') {
-            if (this.tokens >= 45) {
-                this.tokens -= 45;
+            if (this.tokensSilver >= 10) {
+                this.tokensSilver -= 10;
                 planet.waterCoverage = Math.min(100, planet.waterCoverage + 20);
                 planet.targetWaterCoverage = Math.min(100, planet.targetWaterCoverage + 20);
                 biology.organicSoup = Math.min(100, biology.organicSoup + 10.0);
@@ -475,8 +483,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'ammonia_comet') {
-            if (this.tokens >= 45) {
-                this.tokens -= 45;
+            if (this.tokensSilver >= 10) {
+                this.tokensSilver -= 10;
                 planet.ammoniaCoverage = Math.min(100, planet.ammoniaCoverage + 25);
                 planet.targetAmmoniaCoverage = Math.min(100, planet.targetAmmoniaCoverage + 25);
                 biology.ammonicSoup = Math.min(100, biology.ammonicSoup + 15.0);
@@ -488,8 +496,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'methane_comet') {
-            if (this.tokens >= 45) {
-                this.tokens -= 45;
+            if (this.tokensSilver >= 10) {
+                this.tokensSilver -= 10;
                 planet.methaneCoverage = Math.min(100, planet.methaneCoverage + 20);
                 planet.targetMethaneCoverage = Math.min(100, planet.targetMethaneCoverage + 20);
                 biology.methaneSoup = Math.min(100, biology.methaneSoup + 12.0);
@@ -506,8 +514,8 @@ export class EventSystem {
             if (planet.age > 500.0) {
                 return { success: false, title: "ACTION FAILED", msg: "Planet has solidified. Giant collisions are only possible in early stages (<500 Myr)." };
             }
-            if (this.tokens >= 120) {
-                this.tokens -= 120;
+            if (this.tokensSilver >= 30) {
+                this.tokensSilver -= 30;
                 planet.hasMoon = true;
                 planet.magneticStrength = Math.min(100.0, planet.magneticStrength + 35.0);
                 planet.hasMagnetosphere = true;
@@ -523,8 +531,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'gravitational_resonance') {
-            if (this.tokens >= 90) {
-                this.tokens -= 90;
+            if (this.tokensSilver >= 20) {
+                this.tokensSilver -= 20;
                 planet.magneticStrength = 100.0;
                 planet.hasMagnetosphere = true;
                 return { 
@@ -535,8 +543,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'volcanic_eruption') {
-            if (this.tokens >= 75) {
-                this.tokens -= 75;
+            if (this.tokensSilver >= 15) {
+                this.tokensSilver -= 15;
                 planet.co2 = Math.min(100, planet.co2 + 12.0);
                 planet.atmospherePressure = Math.min(3.0, planet.atmospherePressure + 0.2);
                 planet.rebalanceAtmosphere();
@@ -548,8 +556,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'methanogen_bloom') {
-            if (this.tokens >= 60) {
-                this.tokens -= 60;
+            if (this.tokensSilver >= 12) {
+                this.tokensSilver -= 12;
                 planet.ch4 = Math.min(100, planet.ch4 + 12.0);
                 planet.rebalanceAtmosphere();
                 return {
@@ -560,8 +568,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'silicate_weathering') {
-            if (this.tokens >= 75) {
-                this.tokens -= 75;
+            if (this.tokensSilver >= 15) {
+                this.tokensSilver -= 15;
                 planet.co2 = Math.max(0.5, planet.co2 - 8.0);
                 planet.rebalanceAtmosphere();
                 return {
@@ -572,8 +580,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'dust_veil') {
-            if (this.tokens >= 60) {
-                this.tokens -= 60;
+            if (this.tokensSilver >= 12) {
+                this.tokensSilver -= 12;
                 planet.dustVeilActive = true;
                 return {
                     success: true,
@@ -583,8 +591,8 @@ export class EventSystem {
                 };
             }
         } else if (type === 'cyanobacteria_bloom') {
-            if (this.tokens >= 60) {
-                this.tokens -= 60;
+            if (this.tokensSilver >= 12) {
+                this.tokensSilver -= 12;
                 planet.co2 = Math.max(0.5, planet.co2 - 5.0);
                 planet.o2 = Math.min(100, planet.o2 + 8.0);
                 planet.rebalanceAtmosphere();
@@ -596,18 +604,17 @@ export class EventSystem {
                 };
             }
         }
-        return { success: false, title: "ACTION FAILED", msg: "Insufficient tokens." };
-        return { success: false, title: "ACTION FAILED", msg: "Insufficient tokens." };
+        return { success: false, title: "ACTION FAILED", msg: "Insufficient Silver tokens." };
     }
 
     /**
      * Evolve nudging
      */
     nudgeEvolution(adaptationId, cost, biology) {
-        if (this.tokens < cost) {
-            return { success: false, msg: `Insufficient tokens (need ${cost}).` };
+        if (this.tokensBlue < cost) {
+            return { success: false, msg: `Insufficient Mutagen tokens (need ${cost} 🔹).` };
         }
-        this.tokens -= cost;
+        this.tokensBlue -= cost;
         biology.applyAdaptation(adaptationId);
         biology.pendingNudges[adaptationId] = {
             multiplier: 20,

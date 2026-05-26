@@ -576,13 +576,24 @@ export class GameVisualizer {
                 const posX = cx + Math.cos(rotX) * radius * Math.sqrt(1 - h.yFactor * h.yFactor);
                 const posY = cy + h.yFactor * radius;
                 ctx.save();
-                ctx.strokeStyle = 'rgba(0, 242, 254, 0.85)';
+                
+                let strokeColorMain = 'rgba(59, 130, 246, 0.85)'; // Blue
+                let strokeColorOuter = 'rgba(59, 130, 246, 0.3)';
+                if (h.type === 'silver') {
+                    strokeColorMain = 'rgba(209, 213, 219, 0.85)'; // Silver
+                    strokeColorOuter = 'rgba(209, 213, 219, 0.3)';
+                } else if (h.type === 'gold') {
+                    strokeColorMain = 'rgba(251, 191, 36, 0.85)'; // Gold
+                    strokeColorOuter = 'rgba(251, 191, 36, 0.3)';
+                }
+                
+                ctx.strokeStyle = strokeColorMain;
                 ctx.lineWidth = 1.5;
                 const pulse = 4 + Math.sin(Date.now() * 0.008) * 2;
                 ctx.beginPath();
                 ctx.arc(posX, posY, pulse, 0, Math.PI * 2);
                 ctx.stroke();
-                ctx.strokeStyle = 'rgba(0, 242, 254, 0.3)';
+                ctx.strokeStyle = strokeColorOuter;
                 ctx.beginPath();
                 ctx.arc(posX, posY, pulse + 4, 0, Math.PI * 2);
                 ctx.stroke();
@@ -610,11 +621,12 @@ export class GameVisualizer {
         });
     }
 
-    spawnHotspot(lon, yFactor, value) {
+    spawnHotspot(lon, yFactor, value, type = 'blue') {
         this.hotspots.push({
             lon: lon,
             yFactor: yFactor,
             value: value,
+            type: type,
             life: 3.0
         });
 
@@ -628,12 +640,22 @@ export class GameVisualizer {
         const posX = cx + Math.cos(rotX) * radius * Math.sqrt(1 - yFactor * yFactor);
         const posY = cy + yFactor * radius;
 
+        let color = '#60a5fa'; // Blue
+        let text = `+${value} Mutagen`;
+        if (type === 'silver') {
+            color = '#d1d5db'; // Silver
+            text = `+${value} Adapt`;
+        } else if (type === 'gold') {
+            color = '#fbbf24'; // Gold
+            text = `+${value} Deflect`;
+        }
+
         this.textParticles.push({
             x: posX,
             y: posY - 5,
-            text: `+${value} EVO`,
+            text: text,
             opacity: 1.0,
-            color: '#00f2fe',
+            color: color,
             ySpeed: -0.7,
             life: 1.5
         });

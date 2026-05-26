@@ -1955,4 +1955,61 @@ body {
     font-family: var(--font-mono);
 }
 
+/* Multi-Tiered Token Economy Styles */
+.tokens-group-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tokens-group-container .token-container {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: help;
+}
+
+.tokens-group-container .token-container:hover {
+    transform: translateY(-1px);
+}
+
+.tokens-group-container .token-blue:hover {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.18) !important;
+}
+
+.tokens-group-container .token-silver:hover {
+    box-shadow: 0 0 12px rgba(156, 163, 175, 0.35);
+    background: rgba(156, 163, 175, 0.18) !important;
+}
+
+.tokens-group-container .token-gold:hover {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.18) !important;
+}
+
+#btn-convert-blue-silver, #btn-convert-silver-gold {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#btn-convert-blue-silver:hover {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+#btn-convert-silver-gold:hover {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    transform: translateY(-1px);
+}
+
+#btn-convert-blue-silver:active,
+#btn-convert-silver-gold:active {
+    transform: translateY(0);
+}
+#btn-convert-blue-silver:disabled,
+#btn-convert-silver-gold:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
 
