@@ -76,6 +76,7 @@
 - **Simulation Speed Controls**: Adjustable speed options (1x, 2x, 5x, 10x) with an automated safety lock that restricts simulation to 1x during active threat warnings to prevent panic. Speed settings are automatically restored once all warnings are resolved.
 - **Threat Warning Deflect Popups**: Automatic pauses and warning popups triggered upon first warning detection, allowing players to deflect the threat immediately from the modal or dismiss it.
 - **Always-Visible Pacing Comparison Timeline**: Added a dedicated pacing timeline card on the main dashboard above the tab controls. The component dynamically displays the planet's current age, the latest unlocked milestone, and an Earth comparison badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, or `BEHIND`) across all solvent types. Remapped names for cryo-beasts and cryo-colloids to support methane worlds.
+- **Multi-Tiered Token Economy**: Replaced the single Evo-Token currency with a robust three-tier system: Blue Mutagen (🔹) for evolutionary branch nudges, Silver Adaptation (🥈) for genetic upgrades/interventions, and Gold Deflection (🛡️) reserved for deflecting disasters. Added an Exchange tab permitting conversion (`50 Blue ➔ 1 Silver`, `50 Silver ➔ 1 Gold`) with dynamic affordability checking and color-coded hotspots.
 
 ---
 

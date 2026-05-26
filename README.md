@@ -47,14 +47,19 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 ## 3. Core Simulation & Evolution Mechanics
 
 *   **Oxygenic Photosynthesis (OEC) Stability Gate**: Transitioning from anoxygenic photosynthesizers to cyanobacteria requires an environmental stability window of $100\text{ Myr}$. During this window, the planet must maintain temperature between $15\text{--}55^\circ\text{C}$, liquid solvent coverage $>20\%$, and effective surface radiation $<3.0\text{ rad/s}$. Any violation instantly resets the gate timer back to $100\text{ Myr}$.
-*   **Genetic Resilience Tuning**: Spend accumulated Evo-Tokens to permanently upgrade species traits, which are inherited across all active branches:
+*   **Multi-Tiered Token Economy**:
+    *   **Blue Mutagen Tokens (🔹)**: Spent on species evolution tree branch nudges. Accrues passively from biomass hotspots and COMMON/NOTABLE milestone breakthroughs.
+    *   **Silver Adaptation Tokens (🥈)**: Spent on environmental interventions (e.g. comets, outgassing triggers) and Genetic Resilience upgrades. Earned from notable milestones, silver hotspots, or converted from Blue tokens.
+    *   **Gold Deflection Tokens (🛡️)**: Reserved EXCLUSIVELY for active warning deflections (e.g. asteroid impacts, stellar flares, geodynamo repairs). Earned from major/singular milestones, gold hotspots, or converted from Silver tokens.
+    *   **Curator Exchange**: Convert currencies in the **Exchange** tab under biological telemetry (`50 Blue ➔ 1 Silver`, `50 Silver ➔ 1 Gold`).
+*   **Genetic Resilience Tuning**: Spend accumulated Silver Adaptation Tokens (🥈) to permanently upgrade species traits, which are inherited across all active branches:
     *   **Thermal Resilience**: Widens temperature survival ranges by $\pm 2^\circ\text{C}$ per level (max level 5).
     *   **Radiation Shielding**: Lowers effective radiation exposure by $15\%$ per level (max level 5).
     *   **Metabolic Efficiency**: Reduces biological decay and nutrient consumption by $15\%$ per level (max level 5).
 *   **Eukaryogenesis Boost**: Transitioning from prokaryotes to eukaryotes (via mitochondria endosymbiosis) unlocks meiotic sexual reproduction, providing a **1.25x** carrying capacity boost and a **30% speed boost** to all subsequent evolution rates.
 *   **Saturation Kinetics**: Biological gas exchanges (such as nitrogen fixation and methanogenesis) scale using Michaelis-Menten kinetics (e.g. $\frac{\text{Gas}}{\text{Gas} + K_m}$) to throttle rates and prevent absolute depletion of critical atmospheric components.
-*   **Evo-Tokens & Nudges**: Accumulate Evo-Tokens from biological milestones and use them to pay for genetic nudges (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.
-*   **Threat Management**: Deflect incoming disasters (such as Asteroid Impacts, Gamma-Ray Bursts, or Solar Flares) using Evo-Tokens. The simulator automatically locks speed to **1x** during threats for safety.
+*   **Evolution Nudges**: Pay Blue Mutagen Tokens (🔹) for evolutionary branch jumps (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.
+*   **Threat Management**: Deflect incoming disasters (such as Asteroid Impacts, Gamma-Ray Bursts, or Solar Flares) using Gold Deflection Tokens (🛡️). The simulator automatically locks speed to **1x** during threats for safety.
 
 ---
 
