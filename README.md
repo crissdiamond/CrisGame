@@ -72,7 +72,6 @@ The dashboard is divided into three vertical columns plus a full-width history p
 *   **Live Climate Pills**: Compact horizontal readouts for Temperature, Solvent Coverage, and Radiation that dynamically show current values and color-code zone status (in-zone, marginal, or out-of-zone) for quick status checks.
 *   **Threats & Intel Box**: Displays active planetary threats with countdown timers and Gold-token deflect buttons. When no threats are active, this box dynamically converts into a **Biosphere Intel Card** that teaches the player about the current apex evolving life form in the simulation.
 *   **Action Tabs**: Provides direct curatorial controls below the warnings/intel box:
-    *   **Evolution Tree tab**: Branching roadmap with mutation progress and nudge-purchase buttons (using Blue tokens).
     *   **Gene Tuning tab**: Trait upgrades (Thermal Resilience, Radiation Shielding, Metabolic Efficiency) using Silver tokens.
     *   **Exchange tab**: Currency conversion interface (Blue → Silver, Silver → Gold).
 
@@ -89,12 +88,13 @@ The dashboard is divided into three vertical columns plus a full-width history p
 *   **Time-Series Sparklines** (full-width panel below): Historical trajectories for temperature, water/solvent coverage, surface radiation, habitability, O₂, CO₂, N₂, and biomass densities.
 
 ### Right Panel — Biosphere Monitor
-Dedicated entirely to tracking cellular progress:
+Dedicated entirely to tracking biological progress:
 *   **Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic comparison badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
-*   **Biomass Monitor**: Scrollable lists of progressive biomass cards that appear as each species is unlocked across the Water, Ammonia, or Methane solvent lines. Housed directly in the panel for permanent, tab-free monitoring.
+*   **Monitoring Tabs**:
+    *   **Biomasses tab**: Scrollable lists of progressive biomass cards that appear as each species is unlocked across the Water, Ammonia, or Methane solvent lines.
+    *   **Evolution Tree tab**: Branching roadmap with mutation progress and nudge-purchase buttons (using Blue tokens).
 
 ### Global Controls
-*   **Always-Visible Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
 *   **☄️ Trigger Event button**: Opens the interventions modal to purchase Silver-token events (comets, volcanic eruptions, silicate weathering, etc.) that alter the environment.
 *   **Save/Load Persistence**: Full `localStorage` save/load restoring all atmospheric, biological, event, history, and log states.
 *   **Simulation Speed**: 1×, 2×, 5×, 10× with automatic 1× safety lock during active threats.
@@ -131,6 +131,6 @@ No compilers or heavy frameworks are required.
 2. Open `index.html` in any modern web browser to start managing your planet!
 3. Alternatively, run a simple local server:
    ```bash
-   python server.py
+   python3 server.py
    ```
-   and navigate to `http://localhost:8000`.
+   and navigate to `http://localhost:8080`.
