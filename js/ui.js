@@ -122,6 +122,15 @@ export class GameUI {
         this.stripOzoneLayer = document.getElementById('strip-ozone-layer');
         this.stripStarLuminosity = document.getElementById('strip-star-luminosity');
 
+        // Left panel climate pills
+        this.pillTemp = document.getElementById('pill-temp');
+        this.pillTempVal = document.getElementById('pill-temp-val');
+        this.pillWater = document.getElementById('pill-water');
+        this.pillWaterVal = document.getElementById('pill-water-val');
+        this.pillSolventIcon = document.getElementById('pill-solvent-icon');
+        this.pillRad = document.getElementById('pill-rad');
+        this.pillRadVal = document.getElementById('pill-rad-val');
+
         Object.defineProperty(this, 'tokenBalance', {
             get: () => this.tokenBalanceBlue || { textContent: '0' },
             configurable: true
@@ -910,6 +919,25 @@ export class GameUI {
             this.gaugeRadThumb.style.boxShadow = radSafe
                 ? '0 0 6px rgba(16,185,129,0.8)'
                 : '0 0 6px rgba(239,68,68,0.8)';
+        }
+
+        // ── Climate Pills (left panel compact readout) ─────────────────────
+        if (this.pillTempVal) {
+            this.pillTempVal.textContent = `${temp.toFixed(1)}°C`;
+            const inTempZone = (planet.activeSolvent === 'water' && temp >= 0 && temp <= 100) ||
+                               (planet.activeSolvent === 'ammonia' && temp >= -78 && temp <= -33) ||
+                               (planet.activeSolvent === 'methane' && temp >= -183 && temp <= -130);
+            this.pillTemp.className = 'climate-pill ' + (inTempZone ? 'in-zone' : 'out-zone');
+        }
+        if (this.pillWaterVal) {
+            this.pillWaterVal.textContent = `${waterPct.toFixed(0)}%`;
+            const wZone = inWaterZone ? 'in-zone' : (waterPct < 5 || waterPct > 95 ? 'out-zone' : 'marginal-zone');
+            this.pillWater.className = 'climate-pill ' + wZone;
+            if (this.pillSolventIcon) this.pillSolventIcon.textContent = solventIcon;
+        }
+        if (this.pillRadVal) {
+            this.pillRadVal.textContent = `${currentRad.toFixed(1)} / ${effectiveRad.toFixed(1)}`;
+            this.pillRad.className = 'climate-pill ' + (radSafe ? 'in-zone' : (effectiveRad > 4.0 ? 'out-zone' : 'marginal-zone'));
         }
     }
 

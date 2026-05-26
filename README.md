@@ -68,9 +68,9 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 
 The dashboard is divided into three vertical columns plus a full-width history panel below.
 
-### Left Panel — Command & Control
-*   **System Status Cards**: Live readouts for Magnetosphere strength, Ozone layer coverage, Star Luminosity, and Moon presence — displayed as icon-headed cards with colour-coded values.
-*   **Threat Center**: Lists all active planetary threats with countdown timers and Gold-token deflect buttons. The list expands to fill all available panel space, supporting multiple concurrent crises.
+### Left Panel — Threat Center
+*   **Live Climate Pills**: Compact horizontal readouts for Temperature, Solvent Coverage, and Radiation that dynamically show current values and color-code zone status (in-zone, marginal, or out-of-zone) for quick status checks.
+*   **Threats List**: Displays all active planetary threats with countdown timers and Gold-token deflect buttons, expanding to fill the remaining vertical panel space.
 
 ### Center Panel — Planet Viewport & Telemetry Strip
 *   **Interactive Viewport**: Click anywhere on the canvas to toggle between **Planet View (Macro)** and **Microscopic Particle View (Micro)**.

@@ -54,9 +54,9 @@
         <!-- MAIN LAYOUT -->
         <main class="dashboard-grid">
             
-            <!-- LEFT PANEL: COMMAND & CONTROL -->
+            <!-- LEFT PANEL: THREAT CENTER -->
             <section class="panel glass-card" id="control-panel">
-                <h2 class="panel-title">Command & Control</h2>
+                <h2 class="panel-title">Threat Center</h2>
 
                 <!-- Hidden sliders — kept for JS programmatic control only -->
                 <input type="range" id="temp-slider" min="-200" max="150" value="75" class="custom-slider" style="display:none;" aria-hidden="true">
@@ -69,37 +69,31 @@
                 <span id="water-val" style="display:none;">30%</span>
                 <span id="radiation-val" style="display:none;">Space: 3.5</span>
                 <span id="radiation-effective-val" style="display:none;">Surf: 0.9 rad/s</span>
+                <!-- Hidden sys-readout spans (canonical values in Planet Info strip tab) -->
+                <span id="magnet-shield" style="display:none;">100%</span>
+                <span id="ozone-layer" style="display:none;">0%</span>
+                <span id="star-luminosity" style="display:none;">1.00x</span>
+                <div id="moon-indicator" style="display:none;"><span id="moon-status">PRESENT</span></div>
 
-                <!-- SYSTEM STATUS READOUTS -->
-                <div class="sys-readouts-grid">
-                    <div class="sys-readout-card">
-                        <span class="sys-readout-icon">🧲</span>
-                        <span class="sys-readout-label">MAGNETOSPHERE</span>
-                        <span class="sys-readout-value" id="magnet-shield">100%</span>
+                <!-- LIVE CLIMATE PILLS (compact; full gauges in strip Climate tab) -->
+                <div class="climate-pills-row">
+                    <div class="climate-pill" id="pill-temp">
+                        <span class="pill-icon">🌡️</span>
+                        <span class="pill-value" id="pill-temp-val">25°C</span>
                     </div>
-                    <div class="sys-readout-card">
-                        <span class="sys-readout-icon">🌫️</span>
-                        <span class="sys-readout-label">OZONE LAYER</span>
-                        <span class="sys-readout-value" id="ozone-layer">0%</span>
+                    <div class="climate-pill" id="pill-water">
+                        <span class="pill-icon" id="pill-solvent-icon">💧</span>
+                        <span class="pill-value" id="pill-water-val">30%</span>
                     </div>
-                    <div class="sys-readout-card">
-                        <span class="sys-readout-icon">⭐</span>
-                        <span class="sys-readout-label">STAR LUMINOSITY</span>
-                        <span class="sys-readout-value" id="star-luminosity">1.00x</span>
-                    </div>
-                    <div class="sys-readout-card" id="moon-indicator" style="display:none;">
-                        <span class="sys-readout-icon">🌕</span>
-                        <span class="sys-readout-label">MOON</span>
-                        <span class="sys-readout-value text-cyan" id="moon-status">PRESENT</span>
+                    <div class="climate-pill" id="pill-rad">
+                        <span class="pill-icon">☢️</span>
+                        <span class="pill-value" id="pill-rad-val">3.5 / 0.9</span>
                     </div>
                 </div>
 
-                <!-- THREAT CENTRE -->
-                <div class="threat-center">
-                    <h3 class="panel-sub-title">Threat Center</h3>
-                    <div id="threat-list" class="threat-list-box">
-                        <div class="no-threats-msg">No active threats detected.</div>
-                    </div>
+                <!-- THREATS -->
+                <div class="threat-list-box" id="threat-list">
+                    <div class="no-threats-msg">No active threats detected.</div>
                 </div>
 
             </section>
@@ -254,24 +248,17 @@
             <section class="panel glass-card" id="metrics-panel">
                 <h2 class="panel-title">Biological Telemetry</h2>
                 
-                <!-- Planetary Pacing Comparison Card -->
+                <!-- Planetary Pacing — compact single-row card -->
                 <div class="pacing-timeline-card">
-                    <div class="pacing-header">
-                        <span>PLANETARY PACING COMPARISON</span>
+                    <div class="pacing-compact-row">
+                        <span id="pacing-text" class="pacing-text-overlay">Age: 0.0 / 4540 Myr</span>
                         <span id="pacing-status" class="pacing-status-badge primordial">PRIMORDIAL</span>
                     </div>
                     <div class="pacing-bar-container">
                         <div id="pacing-player-fill" class="pacing-player-fill"></div>
-                        <span id="pacing-text" class="pacing-text-overlay">Age: 0.0 / 4540 Myr (Prebiotic Stage)</span>
                     </div>
-                    <div class="pacing-ticks">
-                        <span>0M (Soup)</span>
-                        <span>1500M (Photosynthesis)</span>
-                        <span>3700M (Multicellular)</span>
-                        <span>4540M (Sentient)</span>
-                    </div>
-                    <div id="pacing-gate-wrapper" style="display: none; margin-top: 0.6rem; font-size: 0.7rem; color: var(--accent-cyan); font-family: var(--font-mono); text-align: center; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 0.4rem;">
-                        🧬 OEC GATE STABILITY: <span id="pacing-gate-timer">100.0 / 100.0 Myr</span>
+                    <div id="pacing-gate-wrapper" style="display: none; margin-top: 0.4rem; font-size: 0.65rem; color: var(--accent-cyan); font-family: var(--font-mono); text-align: center;">
+                        🧬 OEC GATE: <span id="pacing-gate-timer">100.0 / 100.0 Myr</span>
                     </div>
                 </div>
 
