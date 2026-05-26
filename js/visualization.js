@@ -38,8 +38,13 @@ export class GameVisualizer {
 
     resize() {
         const container = this.canvas.parentElement;
-        this.canvas.width = container.clientWidth;
-        this.canvas.height = container.clientHeight;
+        if (!container) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w > 0 && h > 0) {
+            this.canvas.width = w;
+            this.canvas.height = h;
+        }
         
         if (this.viewMode === 'micro' && !this.initializedParticles) {
             this.initMicroParticles();
@@ -179,6 +184,15 @@ export class GameVisualizer {
     }
 
     draw(planet, biology) {
+        const container = this.canvas.parentElement;
+        if (container) {
+            const currentW = container.clientWidth;
+            const currentH = container.clientHeight;
+            if (currentW > 0 && currentH > 0 && (this.canvas.width !== currentW || this.canvas.height !== currentH)) {
+                this.resize();
+            }
+        }
+
         const w = this.canvas.width;
         const h = this.canvas.height;
         const ctx = this.ctx;

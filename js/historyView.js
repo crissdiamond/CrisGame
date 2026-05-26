@@ -110,6 +110,7 @@ export class HistoryView {
     }
 
     render() {
+        this._resizeAll();
         const recorder = this.recorder;
         const domain = recorder.getAxisDomain();
         const ages = recorder.getSimAges();
