@@ -60,15 +60,42 @@ The simulator supports three distinct astrobiological solvent pathways, each wit
 *   **Saturation Kinetics**: Biological gas exchanges (such as nitrogen fixation and methanogenesis) scale using Michaelis-Menten kinetics (e.g. $\frac{\text{Gas}}{\text{Gas} + K_m}$) to throttle rates and prevent absolute depletion of critical atmospheric components.
 *   **Evolution Nudges**: Pay Blue Mutagen Tokens (🔹) for evolutionary branch jumps (e.g. vascular systems, amniotic eggs, seed protection, or crystalline collectives) to bypass physical constraints.
 *   **Threat Management**: Deflect incoming disasters (such as Asteroid Impacts, Gamma-Ray Bursts, or Solar Flares) using Gold Deflection Tokens (🛡️). The simulator automatically locks speed to **1x** during threats for safety.
+*   **Environmental Control via Events Only**: Temperature, solvent coverage, and radiation cannot be adjusted by sliders. All environmental changes occur exclusively through triggered events (disasters) or player-activated interventions (Silver token purchases via the ☄️ Trigger Event button).
 
 ---
 
 ## 4. UI Dashboard & QoL Features
 
-*   **Interactive Viewport Toggles**: Click anywhere on the viewport panel to transition between **Planet View (Macro)** and **Microscopic Particle View (Micro)**.
-*   **Always-Visible Pacing Timeline**: Tracks the current planetary age compared to Earth's timeline ($4,540\text{ Myr}$), displaying the latest unlocked milestone and a pacing status badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
-*   **Time-Series Sparklines**: Plot historical trajectories for global temperature, water/solvent coverage, surface effective radiation, habitability, O₂, CO₂, N₂, and biomass densities.
-*   **Save/Load Persistence**: Saves your complete planetary state (including all atmospheres, historical plot data, unlock milestones, and scrollable science log feeds) directly to browser `localStorage` with responsive toast alert notifications.
+The dashboard is divided into three vertical columns plus a full-width history panel below.
+
+### Left Panel — Command & Control
+*   **System Status Cards**: Live readouts for Magnetosphere strength, Ozone layer coverage, Star Luminosity, and Moon presence — displayed as icon-headed cards with colour-coded values.
+*   **Threat Center**: Lists all active planetary threats with countdown timers and Gold-token deflect buttons. The list expands to fill all available panel space, supporting multiple concurrent crises.
+
+### Center Panel — Planet Viewport & Telemetry Strip
+*   **Interactive Viewport**: Click anywhere on the canvas to toggle between **Planet View (Macro)** and **Microscopic Particle View (Micro)**.
+*   **Planet Telemetry Strip** (three tabs below the canvas):
+    *   **🌡️ Climate tab**: Three read-only visual gauge bars for Temperature, Solvent Coverage, and Cosmic Radiation. Each gauge displays:
+        - A **green habitable zone band** marking the compatible range for the active solvent (water 0–100 °C, ammonia −78–−33 °C, methane −183–−130 °C).
+        - A **colour-coded thumb marker** — green inside the zone, red outside, amber on the boundary.
+        - Numerical value readouts; radiation shows both space and surface (effective) values.
+        - Zone label updates automatically when the solvent changes.
+    *   **🌫️ Atmosphere tab**: Horizontal bar charts for CO₂, N₂, O₂, CH₄, and H₂ composition.
+    *   **🪐 Planet Info tab**: Six-cell grid showing Planet Age, Habitability, Solvent State, Magnetosphere, Ozone, and Star Luminosity.
+*   **Time-Series Sparklines** (full-width panel below): Historical trajectories for temperature, water/solvent coverage, surface radiation, habitability, O₂, CO₂, N₂, and biomass densities.
+
+### Right Panel — Biological Telemetry
+Four tabs dedicated to life science:
+*   **Biomass tab**: Progressive biomass cards that appear as each species is unlocked (water, ammonia, and methane branches).
+*   **Evolution Tree tab**: Full branching roadmap with Earth pacing comparison, progress bars, and nudge-purchase buttons.
+*   **Gene Tuning tab**: Upgrade Thermal Resilience, Radiation Shielding, and Metabolic Efficiency with Silver tokens.
+*   **Exchange tab**: Currency conversion interface (Blue → Silver, Silver → Gold).
+
+### Global Controls
+*   **Always-Visible Pacing Timeline**: Tracks current planetary age against Earth's 4,540 Myr timeline with a dynamic badge (`PRIMORDIAL`, `ON TRACK`, `AHEAD`, `BEHIND`).
+*   **☄️ Trigger Event button**: Opens the interventions modal to purchase Silver-token events (comets, volcanic eruptions, silicate weathering, etc.) that alter the environment.
+*   **Save/Load Persistence**: Full `localStorage` save/load restoring all atmospheric, biological, event, history, and log states.
+*   **Simulation Speed**: 1×, 2×, 5×, 10× with automatic 1× safety lock during active threats.
 
 ---
 
