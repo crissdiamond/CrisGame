@@ -391,11 +391,17 @@ export class Planet {
         this.age += tickRate;
         this.starAge += tickRate;
 
-        // Stellar aging: host star luminosity increases by 0.005 every 10 Myr
+        // Stellar aging: host star luminosity increases based on star class (aligned to real stellar physics)
         let baseLuminosity = 1.0;
-        if (this.starClass === 'm_dwarf') baseLuminosity = 0.05;
-        if (this.starClass === 'blue_giant') baseLuminosity = 10.0;
-        this.starLuminosity = (baseLuminosity * this.starSize) * (1.0 + (this.starAge / 10.0) * 0.005);
+        let agingRate = 0.0001; // G-dwarf: ~10% increase per 1 Gyr (0.01% per Myr)
+        if (this.starClass === 'm_dwarf') {
+            baseLuminosity = 0.05;
+            agingRate = 0.000001; // M-dwarf: extremely slow main-sequence evolution (~1% per 10 Gyr)
+        } else if (this.starClass === 'blue_giant') {
+            baseLuminosity = 10.0;
+            agingRate = 0.01;     // Blue Giant: rapid main-sequence brightening (~10% per 10 Myr)
+        }
+        this.starLuminosity = (baseLuminosity * this.starSize) * (1.0 + this.starAge * agingRate);
         
         // Base solar radiation (inverse square)
         let baseRad = 1.5;

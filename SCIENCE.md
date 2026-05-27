@@ -10,15 +10,19 @@ This document describes the mathematical models currently used by the EvoPlanet 
 
 Host-star luminosity increases with simulated stellar age:
 
-$$L(t) = (L_{\text{base}} S_{\text{star}}) \left(1 + \frac{t_{\text{star}}}{10} \cdot 0.005\right)$$
+$$L(t) = (L_{\text{base}} S_{\text{star}}) (1 + t_{\text{star}} \cdot r_{\text{aging}})$$
 
 Where:
 
 * $L_{\text{base}} = 0.05$ for M-dwarfs, $1.0$ for G-dwarfs, and $10.0$ for blue giants.
 * $S_{\text{star}}$ is the selected star-size scalar.
-* $t_{\text{star}}$ is star age in Myr.
+* $t_{\text{star}}$ is the star age in Myr.
+* $r_{\text{aging}}$ is the stellar aging rate per Myr, based on stellar class:
+  * M-dwarf: $r_{\text{aging}} = 10^{-6}$ (extremely slow main-sequence evolution, ~1% increase per 10 Gyr).
+  * G-dwarf: $r_{\text{aging}} = 10^{-4}$ (standard solar main-sequence evolution, ~10% increase per 1 Gyr).
+  * Blue Giant: $r_{\text{aging}} = 10^{-2}$ (rapid main-sequence evolution, ~10% increase per 10 Myr).
 
-This is intentionally faster than real main-sequence brightening so climate change remains visible during gameplay.
+This models real stellar main-sequence evolution, ensuring M-dwarfs remain extremely stable over billions of years, while blue giants brighten rapidly during their short main-sequence lifetimes.
 
 ### 1.2 Cosmic Radiation and Surface Shielding
 

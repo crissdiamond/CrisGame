@@ -105,9 +105,41 @@
 
 ---
 
-### P2 — Refactor for maintainability
+### P2 — Align and correct simulation physics & biology
 
-#### 9. Split `GameUI` into focused view modules
+#### 9. Fix atmospheric gas runaway and implement carbon starvation sinks
+- Add `co2Viability` into the `totalViability` calculations for early photosynthesizers (`photosyntheticPop` and `anoxygenicPhotoPop`) to ensure they starve and decay when CO₂ drops near zero, preventing them from surviving indefinitely at carrying capacity.
+- Calibrate the carbon-oxygen cycle balance so that atmospheric O₂ concentrations do not unrealistically spike past 40% under normal autotrophic growth.
+- Implement an organic carbon burial/sequestration system and enhance geological sinks: increase the mineral oxidation rate at high O₂ or allow it to draw O₂ down more dynamically.
+- Implement a feedback mechanism where high O₂ (wildfires, photo-oxidation) returns carbon to the atmosphere as CO₂ more efficiently when terrestrial plants or marine mats are active.
+- Acceptance criteria:
+  - Cyanobacteria and other photosynthesizers decay when CO₂ is depleted (< 0.1%), creating a natural population feedback cycle.
+  - Atmospheric O₂ levels stabilize at scientifically plausible levels (e.g. 15%–30%) rather than rising to 40%+ under autotroph-only conditions.
+  - CO₂ does not remain completely depleted at absolute zero, maintaining a dynamic geochemical equilibrium.
+
+#### 10. Validate and correct Gaia Hivemind evolution sequence and gates
+- Review the evolutionary gates for `gaia_hivemind` in [waterBiology.js](file:///home/diamond/CrisGame/js/waterBiology.js#L957-L972) and [evolutionData.js](file:///home/diamond/CrisGame/js/evolutionData.js#L471-L487).
+- Currently, Gaia Hivemind (a self-aware mycelial-neural web) can be unlocked if `landPlantsPop > 60` OR `cyborgPop > 45`. This allows a purely plant/algal world with zero complex animals, nervous systems, or brains to unlock a "self-aware neural hivemind" prematurely.
+- Investigate whether the check should require BOTH parents (`cyborg` and `mosses` / land plants) or require a high-tier cognitive/animal node (like `cognitiveSpecies` or `noosphere`) to validate the "neural/self-aware" aspect.
+- Acceptance criteria:
+  - Gaia Biosphere Hivemind cannot be unlocked before complex nervous systems or high cognitive/AI capacity have evolved.
+  - The evolution path is logically and scientifically consistent with the "neural web" and "self-awareness" described.
+
+#### 11. Implement polar ice caps and dynamic glacial cycles
+- Replace the binary `isGlaciated` state with a continuous `iceCapCoverage` (0.0 to 1.0) parameter.
+- Dynamic Polar Cap Model: Ice cap growth/decay scales dynamically based on the global temperature relative to freezing points.
+- Continuous Ice-Albedo Feedback: Calculate planetary albedo dynamically based on `iceCapCoverage` (e.g. `albedoEffect = -35.0 * iceCapCoverage`).
+- Introduce periodic orbital cycles (Milankovitch cycles) that slightly vary effective solar flux over time (e.g., 1–3% sinusoidal variation with a period of 50–100 Myr) to naturally trigger advances and retreats of ice sheets.
+- Acceptance criteria:
+  - Ice cap coverage is tracked and visible in the UI.
+  - The planet can enter and recover from partial glaciation (glacial cycles) naturally rather than via abrupt step-function triggers.
+  - Runaway ice-albedo feedback still locks the planet in a "Snowball" state if global temperatures drop too low, requiring thermal/CO2 interventions to break.
+
+---
+
+### P3 — Refactor for maintainability
+
+#### 12. Split `GameUI` into focused view modules
 - Status: Partially completed 2026-05-27. Extracted `js/views/toastView.js` (`ToastView`) and `js/views/logView.js` (`LogView`); `GameUI` now delegates all toast and log rendering to these classes. Remaining: `setupView.js`, `dashboardView.js`, `evolutionTreeView.js`, `interventionsView.js`.
 - Break the current UI layer into smaller modules, for example:
   - `setupView.js`
@@ -120,22 +152,14 @@
   - Each view module owns a clear section of DOM.
   - `GameUI` becomes an orchestrator/facade rather than a very large class.
 
-#### 10. Split `simulation.js` by biological domain
-- Status: Completed 2026-05-27. Extracted `js/waterBiology.js` (`tickWater`), `js/ammoniaBiology.js` (`tickAmmonia`), `js/methaneBiology.js` (`tickMethane`). `simulation.js` reduced from 2115 to 617 lines and is now a pure orchestrator. Also extracted `js/rarityTiers.js` for shared RARITY constants.
-- Separate water, ammonia, and methane evolution logic.
-- Extract shared mechanics such as growth curves, hazard rolls, transition gates, biomass decay, and biodiversity calculations.
-- Acceptance criteria:
-  - Adding a new solvent line does not require editing one very large simulation file.
-  - Shared transition mechanics are tested once and reused.
-
-#### 11. Split `events.js` into event registry and event engine
+#### 13. Split `events.js` into event registry and event engine
 - Move event definitions into data/registry files.
 - Keep warning lifecycle, deflection logic, and application mechanics in a smaller event engine.
 - Acceptance criteria:
   - Adding a new hazard or intervention does not require editing core event lifecycle code.
   - Event definitions are easier to scan and balance.
 
-#### 12. Reduce inline styles in `index.html`
+#### 14. Reduce inline styles in `index.html`
 - Move token container and repeated visual styles into `style.css`.
 - Keep HTML focused on structure.
 - Acceptance criteria:
@@ -144,9 +168,9 @@
 
 ---
 
-### P3 — Improve player experience
+### P4 — Improve player experience
 
-#### 13. Add a first-run onboarding flow
+#### 15. Add a first-run onboarding flow
 - Add a short guided introduction explaining:
   - the player objective;
   - climate and solvent basics;
@@ -158,7 +182,7 @@
   - A new player understands what to do in the first 2 minutes.
   - Onboarding can be skipped and replayed.
 
-#### 14. Make active objectives visible and measurable
+#### 16. Make active objectives visible and measurable
 - Implement one or more clear success targets, for example:
   - reach stable multicellular life;
   - sustain complex life for a fixed time;
@@ -168,14 +192,14 @@
   - The dashboard always shows the active objective.
   - The player can see progress and failure/recovery conditions.
 
-#### 15. Improve failure, extinction, and recovery clarity
+#### 17. Improve failure, extinction, and recovery clarity
 - Make population crashes, extinction pressure, and recovery phases more obvious.
 - Add severity labels and recovery progress indicators.
 - Acceptance criteria:
   - A player can tell why a biosphere collapsed.
   - The game suggests possible recovery levers without solving the game for the player.
 
-#### 16. Add developer/debug controls
+#### 18. Add developer/debug controls
 - Status: Completed 2026-05-27. Debug panel implemented in `ui.js` (`_createDebugPanel`). Access via `Ctrl+Shift+D` or `?debug=1`. Provides: seed RNG, clear seed, add Blue/Silver/Gold tokens, unlock any graph node, advance planet time. Panel is DOM-guarded (inert in Node.js tests). Remaining from original scope: force event, print state, reset history.
 - Add an optional debug panel for local development:
   - add tokens; ✓ done
@@ -191,9 +215,9 @@
 
 ---
 
-### P4 — Expand content after stabilisation
+### P5 — Expand content and features
 
-#### 17. Complete the interactive SVG cladogram visualiser
+#### 19. Complete the interactive SVG cladogram visualiser
 - Implement pan/drag navigation.
 - Add curved parent-child lines and merger nodes.
 - Add hover/click detail popups.
@@ -202,7 +226,7 @@
   - The tree is readable across water, ammonia, and methane lines.
   - The visualiser uses graph data rather than duplicate hard-coded layout rules where practical.
 
-#### 18. Add scenario presets and challenge modes
+#### 20. Add scenario presets and challenge modes
 - Expand starting presets such as:
   - Frozen Ocean World;
   - Dry Super-Earth;
@@ -214,14 +238,14 @@
   - Each preset creates a meaningfully different strategy.
   - Presets are data-driven and easy to add.
 
-#### 19. Balance token economy and intervention costs
+#### 21. Balance token economy and intervention costs
 - Review Blue, Silver, and Gold token accrual and conversion rates.
 - Balance disaster deflection, genetic upgrades, and environmental interventions.
 - Acceptance criteria:
   - Tokens create meaningful tradeoffs.
   - No token tier becomes irrelevant or trivially abundant.
 
-#### 20. Add scientific glossary and explainability layer
+#### 22. Add scientific glossary and explainability layer
 - Add a compact glossary for terms such as:
   - eukaryogenesis;
   - endosymbiosis;
@@ -237,9 +261,9 @@
 
 ---
 
-### P5 — Packaging and release readiness
+### P6 — Packaging and release readiness
 
-#### 21. Add repository documentation
+#### 23. Add repository documentation
 - Add or update:
   - `README.md`;
   - run instructions;
@@ -250,21 +274,21 @@
 - Acceptance criteria:
   - A new developer can run the project locally in under 5 minutes.
 
-#### 22. Add lightweight linting/formatting
+#### 24. Add lightweight linting/formatting
 - Add a formatter and linter suitable for vanilla JavaScript.
 - Keep configuration minimal.
 - Acceptance criteria:
   - Formatting is consistent.
   - Common JavaScript mistakes are caught early.
 
-#### 23. Add browser compatibility notes
+#### 25. Add browser compatibility notes
 - Define supported browsers.
 - Test at least Chrome/Edge and Firefox.
 - Acceptance criteria:
   - Known browser limitations are documented.
   - Canvas, modules, local storage, and CSS features work in supported browsers.
 
-#### 24. Prepare a playable release build
+#### 26. Prepare a playable release build
 - Create a clean release folder or deployment process.
 - Remove debug-only console noise.
 - Confirm local storage, save/load, and assets work from the release location.
@@ -322,10 +346,10 @@
 
 ## Suggested First Priorities
 
-1. Add a clear objective and progress indicator.
-2. Add planet health history graphs. (Implemented: Completed biomass and environment timeline graphing with dynamic color keys.)
-3. Add planet start presets for replayability. (Implemented: Initial protoplanetary presets and setup config loops.)
-4. Implement the Phylogenetic Graph Database, clade biodiversity model, and interactive SVG Cladogram visualizer across Water, Ammonia, and Methane lines. (DAG database **implemented** in `js/evolutionData.js`; SVG cladogram popup stub implemented; biodiversity model tracking active; full interactive visualizer pending.)
+1. Fix atmospheric gas runaway and carbon starvation feedback loops (high priority simulation accuracy).
+2. Validate and correct evolutionary timeline gating for singular milestones like the Gaia Biosphere Hivemind.
+3. Implement continuous polar cap ice growth models and orbit-driven glacial cycles to replace binary glaciation thresholds.
+4. Add clear player objectives, progress indicators, onboarding, and complete the interactive SVG cladogram visualizer.
 
 ---
 
