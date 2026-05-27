@@ -150,7 +150,7 @@ export class GameUI {
         this.soupCard = document.getElementById('soup-card');
         this.anaerobicCard = document.getElementById('anaerobic-card');
         this.photosyntheticCard = document.getElementById('photosynthetic-card');
-        this.eukaryoticCard = document.getElementById('eukaryotic-card');
+        this.eukaryoticCard = document.getElementById('eukaryotes-card');
         this.multicellularCard = document.getElementById('multicellular-card');
         this.spongesCard = document.getElementById('sponges-card');
         this.medusesCard = document.getElementById('meduses-card');
@@ -160,21 +160,21 @@ export class GameUI {
         this.fernsCard = document.getElementById('ferns-card');
         this.conifersCard = document.getElementById('conifers-card');
         this.angiospermsCard = document.getElementById('angiosperms-card');
-        this.sauropsidCard = document.getElementById('sauropsid-card');
-        this.synapsidCard = document.getElementById('synapsid-card');
+        this.sauropsidCard = document.getElementById('sauropsids-card');
+        this.synapsidCard = document.getElementById('synapsids-card');
 
         // Ammonia Cards
-        this.ammoniaSoupCard = document.getElementById('ammonia-soup-card');
-        this.ammoniaProtoCard = document.getElementById('ammonia-proto-card');
-        this.ammoniaMultiCard = document.getElementById('ammonia-multi-card');
-        this.silicoFloraCard = document.getElementById('silico-flora-card');
-        this.cryoFaunaCard = document.getElementById('cryo-fauna-card');
+        this.ammoniaSoupCard = document.getElementById('ammonic_soup-card');
+        this.ammoniaProtoCard = document.getElementById('ammonic_proto-card');
+        this.ammoniaMultiCard = document.getElementById('ammonic_multi-card');
+        this.silicoFloraCard = document.getElementById('silico_flora-card');
+        this.cryoFaunaCard = document.getElementById('cryo_fauna-card');
 
         // Methane Cards
-        this.methaneSoupCard = document.getElementById('methane-soup-card');
-        this.methaneProtoCard = document.getElementById('methane-proto-card');
-        this.methaneMultiCard = document.getElementById('methane-multi-card');
-        this.cryoOrganismsCard = document.getElementById('cryo-organisms-card');
+        this.methaneSoupCard = document.getElementById('methane_soup-card');
+        this.methaneProtoCard = document.getElementById('methane_proto-card');
+        this.methaneMultiCard = document.getElementById('methane_multi-card');
+        this.cryoOrganismsCard = document.getElementById('cryo_organisms-card');
 
         // List of all 10 interventions with titles and descriptions
         this.interventionsList = [
@@ -297,9 +297,9 @@ export class GameUI {
         this.pacingGateTimer = document.getElementById('pacing-gate-timer');
 
         // Anoxygenic photosynthesizer biomass elements
-        this.anoxygenicPhotoCard = document.getElementById('anoxygenic-photo-card');
-        this.anoxygenicPhotoPop = document.getElementById('anoxygenic-photo-pop');
-        this.anoxygenicPhotoProgress = document.getElementById('anoxygenic-photo-progress');
+        this.anoxygenicPhotoCard = document.getElementById('anoxygenic_photo-card');
+        this.anoxygenicPhotoPop = document.getElementById('anoxygenic_photo-density');
+        this.anoxygenicPhotoProgress = document.getElementById('anoxygenic_photo-progress');
 
         // Gene tuning interface elements
         this.thermalResilienceLevelVal = document.getElementById('thermal-resilience-level-val');
@@ -340,6 +340,24 @@ export class GameUI {
         this.popupDossierToggleIcon = document.getElementById('popup-dossier-toggle-icon');
         
         this.activePopupWarningId = null;
+
+        // Biomass details modal cache
+        this.biomassModal = document.getElementById('biomass-modal');
+        this.biomassCloseBtn = document.getElementById('biomass-close-btn');
+        this.biomassModalTitle = document.getElementById('biomass-modal-title');
+        this.biomassModalClade = document.getElementById('biomass-modal-clade');
+        this.biomassModalPop = document.getElementById('biomass-modal-pop');
+        this.biomassModalCap = document.getElementById('biomass-modal-cap');
+        this.biomassModalUnit = document.getElementById('biomass-modal-unit');
+        this.biomassModalSpecies = document.getElementById('biomass-modal-species');
+        this.biomassModalTrend = document.getElementById('biomass-modal-trend');
+        this.biomassModalDesc = document.getElementById('biomass-modal-desc');
+        this.biomassModalScientific = document.getElementById('biomass-modal-scientific');
+        this.biomassModalFactors = document.getElementById('biomass-modal-factors');
+        this.biomassModalGenotypeSection = document.getElementById('biomass-modal-genotype-section');
+        this.biomassModalGenotype = document.getElementById('biomass-modal-genotype');
+        this.wasPlayingBeforeBiomassPopup = false;
+        this.activeBiomassNodeId = null;
 
         // Setup Modal Elements
         this.setupModal = document.getElementById('setup-modal');
@@ -597,6 +615,233 @@ export class GameUI {
         return this.popupOverlay.style.display === 'flex';
     }
 
+    openBiomassModal(nodeId, node, planet, biology) {
+        if (!this.biomassModal) return;
+        
+        // Pause simulation if it is playing
+        if (this.handlers && this.handlers.isGamePlaying && this.handlers.isGamePlaying()) {
+            this.wasPlayingBeforeBiomassPopup = true;
+            if (this.handlers.pauseGame) this.handlers.pauseGame();
+        } else {
+            this.wasPlayingBeforeBiomassPopup = false;
+        }
+
+        this.activeBiomassNodeId = nodeId;
+
+        // Fill in details
+        this.biomassModalTitle.textContent = node.name;
+        this.biomassModalClade.textContent = `${node.clade} clade`;
+        
+        const biomass = biology.biomassMap[nodeId] || 0.0;
+        let cap = node.cap;
+        if (nodeId === 'eukaryotes') {
+            cap = biology.unlockedSexualReproduction ? 180 : 120;
+        }
+        
+        this.biomassModalPop.textContent = biomass.toFixed(2);
+        this.biomassModalCap.textContent = cap.toFixed(2);
+        this.biomassModalUnit.textContent = node.unit;
+        this.biomassModalSpecies.textContent = Math.floor(biology.biodiversityMap[nodeId] || 0).toLocaleString();
+        
+        const rate = biology.popChangeRates[nodeId] || 0.0;
+        if (rate > 0.005) {
+            this.biomassModalTrend.textContent = `▲ +${rate.toFixed(2)} ${node.unit}/Myr`;
+            this.biomassModalTrend.style.color = 'var(--accent-green)';
+        } else if (rate < -0.005) {
+            this.biomassModalTrend.textContent = `▼ ${rate.toFixed(2)} ${node.unit}/Myr`;
+            this.biomassModalTrend.style.color = 'var(--accent-red)';
+        } else {
+            this.biomassModalTrend.textContent = `■ 0.00 ${node.unit}/Myr`;
+            this.biomassModalTrend.style.color = 'var(--text-secondary)';
+        }
+        
+        this.biomassModalDesc.textContent = node.details?.desc || node.desc || '';
+        this.biomassModalScientific.textContent = node.details?.scientific || node.scientific || 'Scientific dossier is being compiled...';
+        
+        // Calculate viability factors
+        const factors = biology.getViabilityFactors(nodeId, planet);
+        let factorsHTML = "";
+        if (factors && factors.length > 0) {
+            factors.forEach(factor => {
+                const percent = Math.round(factor.value * 100);
+                let barColor = "var(--accent-green)";
+                if (percent < 30) {
+                    barColor = "var(--accent-red)";
+                } else if (percent < 70) {
+                    barColor = "var(--accent-amber)";
+                }
+                
+                factorsHTML += `
+                    <div class="viability-factor-row">
+                        <div class="factor-meta">
+                            <span class="factor-name">${factor.name}</span>
+                            <span class="factor-pct" style="color: ${barColor};">${percent}%</span>
+                        </div>
+                        <div class="factor-bar-container">
+                            <div class="factor-bar-fill" style="width: ${percent}%; background: ${barColor}; box-shadow: 0 0 6px ${barColor}55;"></div>
+                        </div>
+                        <div class="factor-details">${factor.details}</div>
+                    </div>
+                `;
+            });
+        } else {
+            factorsHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; text-align: left;">No active limiting environmental factors. Growth is unconstrained.</div>`;
+        }
+        this.biomassModalFactors.innerHTML = factorsHTML;
+        this.updateGenotypeSection(nodeId, planet, biology);
+        
+        this.biomassModal.style.display = 'flex';
+    }
+
+    closeBiomassModal() {
+        if (!this.biomassModal) return;
+        this.biomassModal.style.display = 'none';
+        this.activeBiomassNodeId = null;
+        
+        // Resume simulation if it was playing before
+        if (this.wasPlayingBeforeBiomassPopup) {
+            if (this.handlers && this.handlers.resumeGame) {
+                this.handlers.resumeGame();
+            }
+            this.wasPlayingBeforeBiomassPopup = false;
+        }
+    }
+
+    updateGenotypeSection(nodeId, planet, biology) {
+        if (!this.biomassModalGenotypeSection || !this.biomassModalGenotype) return;
+
+        const node = EVOLUTION_GRAPH[planet.activeSolvent][nodeId];
+        if (!node || !biology.evolutionEngine) {
+            this.biomassModalGenotypeSection.style.display = 'none';
+            return;
+        }
+
+        const genotype = biology.evolutionEngine.getGenotype(nodeId);
+        if (!genotype) {
+            this.biomassModalGenotypeSection.style.display = 'none';
+            return;
+        }
+
+        this.biomassModalGenotypeSection.style.display = 'block';
+
+        let genotypeHTML = "";
+
+        // 1. Generation Count Badge / Stat
+        const genCount = Math.floor(genotype.generation || 0);
+        const evolvability = node.evolvability || 0.1;
+        
+        genotypeHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.02); border-radius: 6px; font-family: var(--font-mono); font-size: 0.8rem;">
+                <div>
+                    <span style="color: var(--text-muted);">Generations:</span>
+                    <strong style="color: var(--accent-cyan); margin-left: 4px;">${genCount.toLocaleString()}</strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted);">Evolvability:</span>
+                    <strong style="color: var(--accent-purple); margin-left: 4px;">${(evolvability * 100).toFixed(0)}%</strong>
+                </div>
+            </div>
+        `;
+
+        // 2. Optimal Temperature Drift
+        if (genotype.optimalTemp !== null) {
+            const currentOpt = genotype.optimalTemp;
+            const baseOpt = genotype.baseOptimalTemp !== null ? genotype.baseOptimalTemp : currentOpt;
+            const minCap = node.minThermalCap !== undefined ? node.minThermalCap : 0.0;
+            const maxCap = node.thermalCap !== undefined ? node.thermalCap : 50.0;
+
+            const tempSpan = maxCap - minCap;
+            let tempPercent = 50;
+            if (tempSpan > 0) {
+                tempPercent = Math.max(0, Math.min(100, ((currentOpt - minCap) / tempSpan) * 100));
+            }
+            
+            // Format labels nicely
+            const unit = planet.activeSolvent === 'water' ? '°C' : (planet.activeSolvent === 'ammonia' ? '°C (Ammonic)' : '°C (Methane)');
+
+            genotypeHTML += `
+                <div class="viability-factor-row">
+                    <div class="factor-meta">
+                        <span class="factor-name">Optimal Temp Adaptation</span>
+                        <span class="factor-pct" style="color: var(--accent-cyan);">${currentOpt.toFixed(1)}${unit}</span>
+                    </div>
+                    <div class="factor-bar-container" style="position: relative; height: 8px; border-radius: 4px; overflow: visible; background: rgba(255, 255, 255, 0.08);">
+                        <!-- Base marker -->
+                        ${tempSpan > 0 && baseOpt >= minCap && baseOpt <= maxCap ? `
+                            <div style="position: absolute; left: ${((baseOpt - minCap) / tempSpan * 100).toFixed(1)}%; top: -3px; width: 2px; height: 14px; background: var(--text-muted); z-index: 2;" title="Ancestral Base: ${baseOpt.toFixed(1)}${unit}"></div>
+                        ` : ''}
+                        <!-- Current planet temp indicator dot -->
+                        ${tempSpan > 0 && planet.temperature >= minCap && planet.temperature <= maxCap ? `
+                            <div style="position: absolute; left: ${((planet.temperature - minCap) / tempSpan * 100).toFixed(1)}%; top: -4px; width: 6px; height: 16px; background: var(--accent-amber); border-radius: 3px; z-index: 3; box-shadow: 0 0 6px var(--accent-amber);" title="Current Planet Temp: ${planet.temperature.toFixed(1)}${unit}"></div>
+                        ` : ''}
+                        <!-- Range filled up to current opt -->
+                        <div class="factor-bar-fill" style="width: ${tempPercent}%; background: linear-gradient(90deg, #3b82f6, #38bdf8); box-shadow: 0 0 6px rgba(56, 189, 248, 0.4); height: 100%; border-radius: 4px;"></div>
+                    </div>
+                    <div class="factor-details" style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem;">
+                        <span>Min Cap: ${minCap.toFixed(1)}${unit}</span>
+                        <span>Ancestral Base: ${baseOpt.toFixed(1)}${unit}</span>
+                        <span>Max Cap: ${maxCap.toFixed(1)}${unit}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 3. Radiation Resilience
+        if (node.radiationToleranceCap !== undefined) {
+            const currentRes = genotype.radiationResilience || 0.1;
+            const maxCap = node.radiationToleranceCap;
+            
+            let resPercent = 0;
+            if (maxCap > 0) {
+                resPercent = Math.max(0, Math.min(100, (currentRes / maxCap) * 100));
+            }
+
+            genotypeHTML += `
+                <div class="viability-factor-row" style="margin-top: 0.5rem;">
+                    <div class="factor-meta">
+                        <span class="factor-name">Radiation Shielding</span>
+                        <span class="factor-pct" style="color: var(--accent-green);">${(currentRes * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="factor-bar-container" style="position: relative; height: 8px; border-radius: 4px; overflow: visible; background: rgba(255, 255, 255, 0.08);">
+                        <!-- Base marker (10%) -->
+                        ${maxCap > 0.1 ? `
+                            <div style="position: absolute; left: ${(0.1 / maxCap * 100).toFixed(1)}%; top: -3px; width: 2px; height: 14px; background: var(--text-muted); z-index: 2;" title="Base Resilience: 10%"></div>
+                        ` : ''}
+                        <div class="factor-bar-fill" style="width: ${resPercent}%; background: linear-gradient(90deg, #10b981, #34d399); box-shadow: 0 0 6px rgba(52, 211, 153, 0.4); height: 100%; border-radius: 4px;"></div>
+                    </div>
+                    <div class="factor-details" style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem;">
+                        <span>Base: 10%</span>
+                        <span>Limit Cap: ${(maxCap * 100).toFixed(0)}%</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 4. Resource Efficiency
+        const currentEff = genotype.resourceEfficiency || 1.0;
+        const maxEff = 2.0;
+        const baseEff = 1.0;
+        let effPercent = Math.max(0, Math.min(100, ((currentEff - baseEff) / (maxEff - baseEff)) * 100));
+
+        genotypeHTML += `
+            <div class="viability-factor-row" style="margin-top: 0.5rem;">
+                <div class="factor-meta">
+                    <span class="factor-name">Resource Efficiency</span>
+                    <span class="factor-pct" style="color: var(--accent-purple);">${currentEff.toFixed(2)}x</span>
+                </div>
+                <div class="factor-bar-container" style="position: relative; height: 8px; border-radius: 4px; overflow: visible; background: rgba(255, 255, 255, 0.08);">
+                    <div class="factor-bar-fill" style="width: ${effPercent}%; background: linear-gradient(90deg, #8b5cf6, #a78bfa); box-shadow: 0 0 6px rgba(167, 139, 250, 0.4); height: 100%; border-radius: 4px;"></div>
+                </div>
+                <div class="factor-details" style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem;">
+                    <span>Base: 1.00x</span>
+                    <span>Max Limit: 2.00x</span>
+                </div>
+            </div>
+        `;
+
+        this.biomassModalGenotype.innerHTML = genotypeHTML;
+    }
+
     updateSpeedControls(userSpeed, activeSpeed, hasWarnings) {
         const speedBtns = document.querySelectorAll('.speed-btn');
         speedBtns.forEach(btn => {
@@ -733,6 +978,25 @@ export class GameUI {
                 handlers.onDeflectThreat(this.activePopupWarningId);
                 this.hidePopup();
                 if (handlers.onPopupClose) handlers.onPopupClose();
+            }
+        });
+
+        // Biomass Details Modal close listeners
+        if (this.biomassCloseBtn) {
+            this.biomassCloseBtn.addEventListener('click', () => this.closeBiomassModal());
+        }
+        if (this.biomassModal) {
+            this.biomassModal.addEventListener('click', (e) => {
+                if (e.target === this.biomassModal) {
+                    this.closeBiomassModal();
+                }
+            });
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.biomassModal && this.biomassModal.style.display === 'flex') {
+                    this.closeBiomassModal();
+                }
             }
         });
 
@@ -1370,6 +1634,9 @@ export class GameUI {
                         </div>
                     `;
                     parentContainer.appendChild(card);
+                    card.addEventListener('click', () => {
+                        this.openBiomassModal(nodeId, node, planet, biology);
+                    });
                 }
             }
             
@@ -1523,6 +1790,68 @@ export class GameUI {
                 } else {
                     this.btnConvertSilverGold.classList.add('disabled');
                 }
+            }
+        }
+
+        // Update biomass details modal if open
+        if (this.biomassModal && this.biomassModal.style.display === 'flex' && this.activeBiomassNodeId) {
+            const nodeId = this.activeBiomassNodeId;
+            const node = EVOLUTION_GRAPH[planet.activeSolvent][nodeId];
+            if (node) {
+                const biomass = biology.biomassMap[nodeId] || 0.0;
+                let cap = node.cap;
+                if (nodeId === 'eukaryotes') {
+                    cap = biology.unlockedSexualReproduction ? 180 : 120;
+                }
+                if (this.biomassModalPop) this.biomassModalPop.textContent = biomass.toFixed(2);
+                if (this.biomassModalCap) this.biomassModalCap.textContent = cap.toFixed(2);
+                if (this.biomassModalSpecies) this.biomassModalSpecies.textContent = Math.floor(biology.biodiversityMap[nodeId] || 0).toLocaleString();
+
+                const rate = biology.popChangeRates[nodeId] || 0.0;
+                if (this.biomassModalTrend) {
+                    if (rate > 0.005) {
+                        this.biomassModalTrend.textContent = `▲ +${rate.toFixed(2)} ${node.unit}/Myr`;
+                        this.biomassModalTrend.style.color = 'var(--accent-green)';
+                    } else if (rate < -0.005) {
+                        this.biomassModalTrend.textContent = `▼ ${rate.toFixed(2)} ${node.unit}/Myr`;
+                        this.biomassModalTrend.style.color = 'var(--accent-red)';
+                    } else {
+                        this.biomassModalTrend.textContent = `■ 0.00 ${node.unit}/Myr`;
+                        this.biomassModalTrend.style.color = 'var(--text-secondary)';
+                    }
+                }
+
+                // Recalculate viability factors
+                const factors = biology.getViabilityFactors(nodeId, planet);
+                let factorsHTML = "";
+                if (factors && factors.length > 0) {
+                    factors.forEach(factor => {
+                        const percent = Math.round(factor.value * 100);
+                        let barColor = "var(--accent-green)";
+                        if (percent < 30) {
+                            barColor = "var(--accent-red)";
+                        } else if (percent < 70) {
+                            barColor = "var(--accent-amber)";
+                        }
+                        
+                        factorsHTML += `
+                            <div class="viability-factor-row">
+                                <div class="factor-meta">
+                                    <span class="factor-name">${factor.name}</span>
+                                    <span class="factor-pct" style="color: ${barColor};">${percent}%</span>
+                                </div>
+                                <div class="factor-bar-container">
+                                    <div class="factor-bar-fill" style="width: ${percent}%; background: ${barColor}; box-shadow: 0 0 6px ${barColor}55;"></div>
+                                </div>
+                                <div class="factor-details">${factor.details}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    factorsHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; text-align: left;">No active limiting environmental factors. Growth is unconstrained.</div>`;
+                }
+                if (this.biomassModalFactors) this.biomassModalFactors.innerHTML = factorsHTML;
+                this.updateGenotypeSection(nodeId, planet, biology);
             }
         }
 

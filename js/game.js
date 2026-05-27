@@ -226,6 +226,17 @@ export class GameController {
                 this.timeScale = 0.1 * this.activeSpeed;
                 this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
                 this.logEvent("SPEED ADJUSTED", `Simulation speed set to ${speed}x.`, "system");
+            },
+
+            isGamePlaying: () => this.isPlaying,
+            pauseGame: () => {
+                this.isPlaying = false;
+                this.ui.setPlayState(this.isPlaying);
+            },
+            resumeGame: () => {
+                this.isPlaying = true;
+                this.ui.setPlayState(this.isPlaying);
+                this.lastTime = performance.now();
             }
         });
 
@@ -521,7 +532,8 @@ export class GameController {
                     activeAdaptations: Array.from(this.biology.activeAdaptations),
                     pendingNudges: this.biology.pendingNudges,
                     radiationResistance: this.biology.radiationResistance,
-                    unlockAges: this.biology.unlockAges
+                    unlockAges: this.biology.unlockAges,
+                    speciesGenotypes: this.biology.evolutionEngine.speciesGenotypes
                 },
                 eventSystem: {
                     tokensBlue: this.eventSystem.tokensBlue,
@@ -646,13 +658,10 @@ export class GameController {
             if (!this.biology.biomassMap || Object.keys(this.biology.biomassMap).length === 0) {
                 this.biology.biomassMap = {};
                 this.biology.unlockedMap = {};
-                
-                // Setters on the class will have already run and written flat fields into the maps
-                // so we just make sure everything is initialized
             }
+
             if (!this.biology.biodiversityMap || Object.keys(this.biology.biodiversityMap).length === 0) {
                 this.biology.biodiversityMap = {};
-                // Import target to populate
                 import('./evolutionData.js').then(({ EVOLUTION_GRAPH }) => {
                     for (const solvent in EVOLUTION_GRAPH) {
                         for (const nodeId in EVOLUTION_GRAPH[solvent]) {
@@ -665,24 +674,31 @@ export class GameController {
                     }
                 }).catch(() => {});
             }
+
             if (!this.biology.unlockAges) {
                 this.biology.unlockAges = {};
             }
 
-            // Restore EventSystem
+            // Restore genotypes
+            if (data.biology && data.biology.speciesGenotypes) {
+                this.biology.evolutionEngine.speciesGenotypes = data.biology.speciesGenotypes;
+            } else {
+                this.biology.evolutionEngine.speciesGenotypes = {};
+            }
+
+            // Restore Event System
             this.eventSystem.tokensBlue = data.eventSystem.tokensBlue !== undefined ? data.eventSystem.tokensBlue : (data.eventSystem.tokens !== undefined ? data.eventSystem.tokens : 50.0);
             this.eventSystem.tokensSilver = data.eventSystem.tokensSilver !== undefined ? data.eventSystem.tokensSilver : 1.0;
             this.eventSystem.tokensGold = data.eventSystem.tokensGold !== undefined ? data.eventSystem.tokensGold : 0.0;
             this.eventSystem.timeAccumulator = data.eventSystem.timeAccumulator;
             this.eventSystem.prevUnlocks = { ...(data.eventSystem.prevUnlocks || {}) };
             this.eventSystem.triggeredUniqueEvents = new Set(data.eventSystem.triggeredUniqueEvents);
-            this.eventSystem.activeEvents = data.eventSystem.activeEvents.map(e => ({
+            this.eventSystem.activeEvents = (data.eventSystem.activeEvents || []).map(e => ({
                 id: e.id,
                 name: e.name,
                 remainingDuration: e.remainingDuration
             }));
-            
-            // Rebuild warnings
+
             this.eventSystem.warnings = data.eventSystem.warnings.map(savedWarning => {
                 if (savedWarning.id === 'dynamo_decay') {
                     return {

@@ -259,6 +259,83 @@ try {
     }
     console.log("✓ Legacy v1.0 save loaded successfully via fallback handler.");
 
+    // 7. Test EvolutionEngine Drift and Constraints
+    console.log("Testing EvolutionEngine drift and constraints...");
+    const { EvolutionEngine } = await import('../js/evolutionEngine.js');
+    const evolEngine = new EvolutionEngine();
+
+    // Initialize bacteria and check drift under high temperature
+    const bacGen = evolEngine.getGenotype('bacteria');
+    if (!bacGen) throw new Error("Failed to initialize bacteria genotype");
+    
+    // Check initial values
+    if (bacGen.optimalTemp !== 45) throw new Error("Bacteria optimalTemp should start at 45");
+    
+    // Simulate bacteria in high temperature environment (100 degrees C)
+    const testPlanet = {
+        temperature: 100.0,
+        radiation: 10.0,
+        hasMagnetosphere: false,
+        ozone: 0.0,
+        activeSolvent: 'water'
+    };
+    
+    const testBiology = {
+        biomassMap: { bacteria: 10.0 }, // active population
+        organicSoup: 50.0
+    };
+
+    // Update for 100 ticks
+    for (let t = 0; t < 100; t++) {
+        evolEngine.update(testPlanet, testBiology, 1.0);
+    }
+
+    // Bacteria optimal temp should drift toward 90 (its thermalCap) and clamp
+    if (bacGen.optimalTemp > 90.001 || bacGen.optimalTemp < 89.0) {
+        throw new Error(`Bacteria optimalTemp did not drift/clamp correctly: expected ~90, got ${bacGen.optimalTemp}`);
+    }
+
+    // Now test a complex animal: cognitive (e.g. cognitive / mammals)
+    const cogGen = evolEngine.getGenotype('cognitive');
+    if (cogGen.optimalTemp !== 20) throw new Error("Cognitive optimalTemp should start at 20");
+
+    const cogBiology = {
+        biomassMap: { cognitive: 10.0 }, // active population
+        organicSoup: 0.0
+    };
+
+    // Update for 100 ticks under high temperature (100 C)
+    for (let t = 0; t < 100; t++) {
+        evolEngine.update(testPlanet, cogBiology, 1.0);
+    }
+
+    // Cognitive thermalCap is 45, and it has much lower evolvability (0.005 vs 1.0)
+    // So it should have evolved much slower, and under no circumstances exceed 45.0
+    if (cogGen.optimalTemp > 45.001) {
+        throw new Error(`Cognitive optimalTemp exceeded thermalCap: got ${cogGen.optimalTemp}`);
+    }
+    
+    // Check that it's much lower than 45 due to low evolvability (e.g. still adapting slowly)
+    console.log(`Cognitive optimalTemp after 100 ticks: ${cogGen.optimalTemp.toFixed(2)}°C`);
+    if (cogGen.optimalTemp < 20.01 || cogGen.optimalTemp > 35.0) {
+        throw new Error(`Cognitive optimalTemp drift rate is incorrect (evolvability check): got ${cogGen.optimalTemp}`);
+    }
+
+    // Test Radiation Resilience adaptation
+    // Bacteria radiationToleranceCap is 0.90
+    if (bacGen.radiationResilience < 0.85) {
+        throw new Error(`Bacteria radiationResilience did not adapt to high radiation: got ${bacGen.radiationResilience}`);
+    }
+
+    // Cognitive radiationToleranceCap is 0.25
+    if (cogGen.radiationResilience > 0.2501) {
+        throw new Error(`Cognitive radiationResilience exceeded cap: got ${cogGen.radiationResilience}`);
+    }
+    console.log(`Bacteria radiationResilience after radiation exposure: ${(bacGen.radiationResilience*100).toFixed(0)}%`);
+    console.log(`Cognitive radiationResilience after radiation exposure: ${(cogGen.radiationResilience*100).toFixed(0)}%`);
+
+    console.log("✓ EvolutionEngine drift and constraints behave correctly according to biological caps.");
+
     console.log("── Smoke Test Passed Successfully! ──");
     process.exit(0);
 } catch (err) {
