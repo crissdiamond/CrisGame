@@ -150,13 +150,14 @@ export function tickWater(bio, planet, tickRate, ctx, effRad, effDecayMult) {
         const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
         if (totalViability > 0.05) {
-            const nutrientFactor = Math.min(1.0, soupSnapshot / 15.0);
+            // Photolithoautotrophs: use light (stellar radiation proxy), CO2, and inorganic
+            // electron donors (H2S/Fe2+). No organic soup required or consumed.
+            const lightFactor = Math.min(1.0, planet.radiation * 1.5);
             const traitMult = 1.0 + (bio.thermalResilienceLevel * 0.1);
             const nudgeMult = bio.getNudgeGrowthMultiplier('anoxygenic_photo', planet.activeSolvent);
-            const growthRate = 1.1 * totalViability * nutrientFactor * co2Viability * traitMult * nudgeMult;
+            const growthRate = 1.1 * totalViability * lightFactor * co2Viability * traitMult * nudgeMult;
             const dPop = growthRate * bio.anoxygenicPhotoPop * (1 - bio.anoxygenicPhotoPop / 180.0) * tickRate;
             bio.anoxygenicPhotoPop = Math.max(0.01, bio.anoxygenicPhotoPop + dPop);
-            bio.organicSoup = Math.max(0, bio.organicSoup - bio.anoxygenicPhotoPop * 0.08 * effDecayMult * tickRate);
         } else {
             bio.anoxygenicPhotoPop = Math.max(0, bio.anoxygenicPhotoPop - bio.anoxygenicPhotoPop * 0.45 * effDecayMult * tickRate);
         }
