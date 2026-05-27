@@ -11,6 +11,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'organicSoup',
             cap: 100.0,
             unit: 'ppm',
+            earthAge: 600.0,
+            resourceKey: 'organicSoup',
+            resourceThreshold: 20,
             reqs: { waterCoverage: 10.0, tempRange: [10, 90] },
             details: {
                 desc: "Amino acids and organic compounds gather in water basins.",
@@ -26,6 +29,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'membranePop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 700.0,
             reqs: { popThreshold: { soup: 8.0 } },
             details: {
                 desc: "Lipid bilayers assemble spontaneously, isolating prebiotic compounds.",
@@ -40,6 +44,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'bacteriaPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 800.0,
+            resourceKey: 'organicSoup',
+            resourceThreshold: 20,
             reqs: { popThreshold: { soup: 15.0 }, unlocked: ['membrane'] },
             details: {
                 desc: "First cellular prokaryotes emerge, establishing metabolism.",
@@ -54,6 +61,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'anaerobicPop',
             cap: 150.0,
             unit: 'M/mL',
+            earthAge: 1000.0,
+            resourceKey: 'organicSoup',
+            resourceThreshold: 20,
             reqs: { unlocked: ['bacteria'] },
             details: {
                 desc: "Early anaerobes metabolize dissolved environmental sulfur and sulfurous compounds.",
@@ -68,6 +78,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'anoxygenicPhotoPop',
             cap: 180.0,
             unit: 'M/mL',
+            earthAge: 1200.0,
             reqs: { popThreshold: { anaerobic: 20.0 }, solarRadiance: 0.2 },
             details: {
                 desc: "Early phototrophs capture starlight using bacteriochlorophyll, without venting oxygen.",
@@ -82,6 +93,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'photosyntheticPop',
             cap: 200.0,
             unit: 'M/mL',
+            earthAge: 1500.0,
             reqs: { popThreshold: { anoxygenic_photo: 15.0 }, oecGate: true },
             details: {
                 desc: "Cyanobacteria strains mutate, harvesting starlight to split water, venting O₂ gas.",
@@ -97,6 +109,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'nucleusPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 2100.0,
             reqs: { popThreshold: { photosynthetic: 15.0 } },
             details: {
                 desc: "A protective nuclear envelope wraps around chromosomal strands, organizing genetic code.",
@@ -112,6 +125,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'mitochondriaPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 2500.0,
             reqs: { unlocked: ['nucleus'], minO2: 1.2 },
             nudge: { id: 'endosymbiosis', name: 'Promote Endosymbiosis', cost: 60 },
             details: {
@@ -123,10 +137,12 @@ export const EVOLUTION_GRAPH = {
             id: 'eukaryotes',
             name: 'Eukaryotic Cells',
             clade: 'Eukaryota',
+            unlockProp: 'unlockedEukaryotic',
             parents: ['nucleus', 'mitochondria'], // Merger
             popKey: 'eukaryoticPop',
             cap: 120.0, // Dynamic (upgraded by sexual)
             unit: 'M/mL',
+            earthAge: 2700.0,
             reqs: { unlocked: ['mitochondria'] },
             details: {
                 desc: "High-energy eukaryotic cells radiate, supporting massive genomes.",
@@ -138,10 +154,12 @@ export const EVOLUTION_GRAPH = {
             name: 'Sexual Reproduction',
             clade: 'Eukaryota',
             monitorable: false,
+            unlockProp: 'unlockedSexualReproduction',
             parents: ['eukaryotes'],
             popKey: 'sexualPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3300.0,
             reqs: { popThreshold: { eukaryotes: 20.0 } },
             details: {
                 desc: "DNA recombination is introduced, exponentially accelerating gene diversity.",
@@ -156,6 +174,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'multicellularPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3700.0,
             reqs: { unlocked: ['sexual'], popThreshold: { eukaryotes: 45.0 } },
             details: {
                 desc: "Individual cells cluster and coordinate, specializing tissues.",
@@ -170,6 +189,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'algaePop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3850.0,
             reqs: { popThreshold: { multicellular: 15.0 }, solarRadiance: 0.1 },
             details: {
                 desc: "Photosynthetic marine eukaryotes diversify into red and green algae beds.",
@@ -184,6 +204,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'spongesPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3900.0,
             reqs: { popThreshold: { algae: 20.0 }, minO2: 10.0 },
             details: {
                 desc: "Simple sessile multicellular organisms filter organic soup from ocean water.",
@@ -198,6 +219,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'medusesPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3950.0,
             reqs: { popThreshold: { sponges: 25.0 }, minO2: 12.0 },
             details: {
                 desc: "Free-swimming cnidarians develop stinging cells, introducing early marine predation.",
@@ -212,6 +234,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'wormsPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3980.0,
             reqs: { popThreshold: { meduses: 30.0 }, minO2: 14.0 },
             details: {
                 desc: "Burrowing marine worms introduce bilateral symmetry, head-tail polarization, and central nerves.",
@@ -226,6 +249,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'fishPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4000.0,
             reqs: { popThreshold: { worms: 30.0 }, minO2: 15.0 },
             details: {
                 desc: "Jawless and jawed fish develop spinal columns, internal skeletons, and gills.",
@@ -240,6 +264,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cambrianPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4000.0,
             reqs: { popThreshold: { worms: 20.0 }, minO2: 15.0 },
             details: {
                 desc: "Massive biological radiation of ocean invertebrates (trilobites, mollusks, early arthropods).",
@@ -254,6 +279,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'mossesPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4100.0,
             reqs: { popThreshold: { algae: 25.0 }, ozone: 0.5, magnetosphere: true },
             nudge: { id: 'vascular_tissue', name: 'Develop Vascular Tissue', cost: 75 },
             details: {
@@ -269,6 +295,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'fernsPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4150.0,
             reqs: { popThreshold: { mosses: 30.0 }, minO2: 16.0 },
             details: {
                 desc: "Ferns develop vascular networks (xylem/phloem), growing tall and creating early coal forests.",
@@ -283,6 +310,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'conifersPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4250.0,
             reqs: { popThreshold: { ferns: 30.0 } },
             nudge: { id: 'seed_evolution', name: 'Develop Seed Protection', cost: 90 },
             details: {
@@ -298,6 +326,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'angiospermsPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4400.0,
             reqs: { popThreshold: { conifers: 30.0 }, minO2: 18.0 },
             details: {
                 desc: "Angiosperms develop enclosed seeds, flowers, and insect-attracting pigments.",
@@ -312,6 +341,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'insectsPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4120.0,
             reqs: { popThreshold: { mosses: 25.0 } },
             details: {
                 desc: "Terrestrial arthropods adapt to dry air, developing protective chitin skeletons.",
@@ -322,10 +352,12 @@ export const EVOLUTION_GRAPH = {
             id: 'tetrapods',
             name: 'Tetrapods (Amphibia)',
             clade: 'Tetrapoda',
+            unlockProp: 'unlockedTetrapod',
             parents: ['fish', 'mosses'],
             popKey: 'tetrapodPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4180.0,
             reqs: { popThreshold: { fish: 30.0, mosses: 30.0 } },
             nudge: { id: 'amniotic_egg', name: 'Synthesize Amniotic Egg', cost: 90 },
             details: {
@@ -337,10 +369,12 @@ export const EVOLUTION_GRAPH = {
             id: 'sauropsids',
             name: 'Sauropsida (Dinosaurs)',
             clade: 'Diapsida',
+            unlockProp: 'unlockedSauropsid',
             parents: ['tetrapods'],
             popKey: 'sauropsidPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4300.0,
             reqs: { popThreshold: { tetrapods: 30.0 }, minTemp: 28.0 },
             nudge: { id: 'scales', name: 'Nudge Scale Shielding', cost: 90 },
             details: {
@@ -352,10 +386,12 @@ export const EVOLUTION_GRAPH = {
             id: 'synapsids',
             name: 'Synapsida (Mammals)',
             clade: 'Synapsida',
+            unlockProp: 'unlockedSynapsid',
             parents: ['tetrapods'],
             popKey: 'synapsidPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4320.0,
             reqs: { popThreshold: { tetrapods: 30.0 }, minO2: 20.0 },
             nudge: { id: 'endthermy', name: 'Nudge Endothermy (Hair)', cost: 110 },
             details: {
@@ -372,6 +408,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cognitiveSpeciesPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { synapsidOrSauropsidThreshold: 45.0, minO2: 19.0 },
             nudge: { id: 'cognitive', name: 'Nudge Neural Networking', cost: 110 },
             details: {
@@ -388,6 +425,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cyborgPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { cognitive: 40.0 }, minO2: 18.0 },
             nudge: { id: 'cybernetic_implants', name: 'Promote Cybernetic Implants', cost: 130 },
             details: {
@@ -400,10 +438,12 @@ export const EVOLUTION_GRAPH = {
             name: 'Post-Biological AI',
             clade: 'Technological',
             monitorable: false,
+            unlockProp: 'unlockedAI',
             parents: ['cognitive'],
             popKey: 'aiPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { cognitive: 35.0 }, magnetosphere: true },
             nudge: { id: 'technological_singularity', name: 'Buy Singularity core', cost: 110 },
             details: {
@@ -420,6 +460,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'noospherePop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { aiOrCyborgThreshold: 45.0, magnetosphere: true },
             nudge: { id: 'global_consciousness', name: 'Sync Planetary Cloud', cost: 150 },
             details: {
@@ -436,6 +477,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'gaiaHivemindPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { cyborgOrMossesThreshold: true, minO2: 20.0 },
             nudge: { id: 'ecological_integration', name: 'Weave Mycelium Synapses', cost: 150 },
             details: {
@@ -453,6 +495,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'ammonicSoup',
             cap: 100.0,
             unit: 'ppm',
+            earthAge: 600.0,
+            resourceKey: 'ammonicSoup',
+            resourceThreshold: 15,
             reqs: { ammoniaCoverage: 10.0, tempRange: [-80, -30] },
             details: {
                 desc: "Nitrogenous compounds pool in cold liquid ammonia oceans.",
@@ -467,6 +512,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'ammonicProtoPop',
             cap: 120.0,
             unit: 'M/mL',
+            earthAge: 800.0,
+            resourceKey: 'ammonicSoup',
+            resourceThreshold: 15,
             reqs: { popThreshold: { ammonic_soup: 10.0 } },
             details: {
                 desc: "Single-celled entities with cold-active enzymes adapt to cryogenic ammonia.",
@@ -481,6 +529,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'ammonicMultiPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3700.0,
             reqs: { popThreshold: { ammonic_proto: 35.0 } },
             details: {
                 desc: "Ammonic cells cluster, specializing structures into cold-active tissues.",
@@ -495,6 +544,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'silicoFloraPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4100.0,
             reqs: { maxTemp: -45.0 },
             nudge: { id: 'silicon_chains', name: 'Promote Silicon Chains', cost: 90 },
             details: {
@@ -510,6 +560,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cryoFaunaPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4000.0,
             reqs: { popThreshold: { silico_flora: 30.0 } },
             details: {
                 desc: "Mobile ammonic consumers graze on shore-line silico-flora beds.",
@@ -525,6 +576,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'crystallineCognitivePop',
             cap: 80.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { cryo_fauna: 35.0 }, maxTemp: -40.0 },
             nudge: { id: 'crystalline_collective', name: 'Ignite Crystalline Collective', cost: 110 },
             details: {
@@ -537,10 +589,12 @@ export const EVOLUTION_GRAPH = {
             name: 'Quantum Lattices',
             clade: 'Technological',
             monitorable: false,
+            unlockProp: 'unlockedQuantumLattice',
             parents: ['crystalline_cognitive'],
             popKey: 'quantumLatticePop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { crystalline_cognitive: 40.0 }, maxTemp: -50.0 },
             nudge: { id: 'quantum_alignment', name: 'Align Quantum Crystals', cost: 130 },
             details: {
@@ -557,6 +611,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cryoHivemindPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { crystalline_cognitive: 40.0, silico_flora: 45.0 } },
             nudge: { id: 'cryo_neural_webs', name: 'Glacier Neural Synapses', cost: 130 },
             details: {
@@ -574,6 +629,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'methaneSoup',
             cap: 100.0,
             unit: 'ppm',
+            earthAge: 600.0,
+            resourceKey: 'methaneSoup',
+            resourceThreshold: 15,
             reqs: { methaneCoverage: 10.0, tempRange: [-183, -140] },
             details: {
                 desc: "Aerosols and volatile hydrocarbons gather in cold methane seas.",
@@ -588,6 +646,9 @@ export const EVOLUTION_GRAPH = {
             popKey: 'methaneProtoPop',
             cap: 100.0,
             unit: 'M/mL',
+            earthAge: 800.0,
+            resourceKey: 'methaneSoup',
+            resourceThreshold: 15,
             reqs: { popThreshold: { methane_soup: 10.0 } },
             details: {
                 desc: "Prokaryotes metabolize environmental acetylene and hydrogen gas, venting methane.",
@@ -602,6 +663,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'methaneMultiPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 3700.0,
             reqs: { popThreshold: { methane_proto: 30.0 } },
             details: {
                 desc: "Azotosome-based cell networks specialize into early cryo-tissues.",
@@ -616,6 +678,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cryoOrganismsPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4000.0,
             reqs: { popThreshold: { methane_multi: 30.0 } },
             details: {
                 desc: "Complex multicellular organisms swim through apolar methane tides.",
@@ -630,6 +693,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cryoPolymerNetworkPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4100.0,
             reqs: { popThreshold: { cryo_organisms: 30.0 } },
             nudge: { id: 'cryo_polymer_network', name: 'Synthesize Cryo-Polymers', cost: 90 },
             details: {
@@ -646,6 +710,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'thinkingOceanPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { cryo_polymer_network: 40.0 }, methaneCoverage: 40.0 },
             nudge: { id: 'colloidal_solids', name: 'Dissolve Computing Polymers', cost: 130 },
             details: {
@@ -662,6 +727,7 @@ export const EVOLUTION_GRAPH = {
             popKey: 'cryoColloidPop',
             cap: 100.0,
             unit: 'Idx',
+            earthAge: 4540.0,
             reqs: { popThreshold: { cryo_polymer_network: 40.0, cryo_organisms: 45.0 } },
             nudge: { id: 'macromolecular_assembly', name: 'Assemble Colloidal structures', cost: 130 },
             details: {

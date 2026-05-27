@@ -1,57 +1,11 @@
-import { EVOLUTION_GRAPH, getEvolutionNodes, getNodeBiomass, isNodeUnlocked } from './evolutionData.js';
+import { EVOLUTION_GRAPH, getEvolutionNode, getEvolutionNodes, getNodeBiomass, isNodeUnlocked } from './evolutionData.js';
+import { ToastView } from './views/toastView.js';
+import { LogView } from './views/logView.js';
 
 /**
  * Manages UI interactions, DOM updates, tab switches, threat alerts,
  * and the interactive evolution tree rendering.
  */
-// Geological Earth ages (in Myr from planet formation) for pacing comparison.
-// Node names and details are resolved from EVOLUTION_GRAPH.
-const earthTimeline = {
-    soup: { age: 600.0 },
-    membrane: { age: 700.0 },
-    bacteria: { age: 800.0 },
-    anaerobic: { age: 1000.0 },
-    anoxygenic_photo: { age: 1200.0 },
-    photosynthetic: { age: 1500.0 },
-    nucleus: { age: 2100.0 },
-    mitochondria: { age: 2500.0 },
-    eukaryotes: { age: 2700.0 },
-    sexual: { age: 3300.0 },
-    multicellular: { age: 3700.0 },
-    sponges: { age: 3900.0 },
-    meduses: { age: 3950.0 },
-    worms: { age: 3980.0 },
-    fish: { age: 4000.0 },
-    cambrian: { age: 4000.0 },
-    mosses: { age: 4100.0 },
-    insects: { age: 4120.0 },
-    ferns: { age: 4150.0 },
-    tetrapods: { age: 4180.0 },
-    conifers: { age: 4250.0 },
-    sauropsids: { age: 4300.0 },
-    synapsids: { age: 4320.0 },
-    angiosperms: { age: 4400.0 },
-    cognitive: { age: 4540.0 },
-    ai: { age: 4540.0 },
-    cyborg: { age: 4540.0 },
-    noosphere: { age: 4540.0 },
-    gaia_hivemind: { age: 4540.0 },
-    ammonic_soup: { age: 600.0 },
-    ammonic_proto: { age: 800.0 },
-    ammonic_multi: { age: 3700.0 },
-    cryo_fauna: { age: 4000.0 },
-    silico_flora: { age: 4100.0 },
-    crystalline_cognitive: { age: 4540.0 },
-    quantum_lattices: { age: 4540.0 },
-    cryo_hivemind: { age: 4540.0 },
-    methane_soup: { age: 600.0 },
-    methane_proto: { age: 800.0 },
-    methane_multi: { age: 3700.0 },
-    cryo_organisms: { age: 4000.0 },
-    cryo_polymer_network: { age: 4100.0 },
-    thinking_ocean: { age: 4540.0 },
-    cryo_colloid: { age: 4540.0 }
-};
 
 export class GameUI {
     constructor() {
@@ -323,7 +277,9 @@ export class GameUI {
         
         this.selectedNodeId = null;
         this.scienceLog = document.getElementById('science-log');
-        
+        this._toastView = new ToastView();
+        this._logView = new LogView(this.scienceLog);
+
         // Popup Overlay Cache
         this.popupOverlay = document.getElementById('milestone-popup');
         this.popupTitle = document.getElementById('popup-title');
@@ -1052,33 +1008,97 @@ export class GameUI {
                 }
             });
         }
+
+        this._createDebugPanel(handlers);
     }
 
     /**
      * Add entry to scientific feed console
      */
     logEvent(title, desc, type = 'system', meta = null, timestamp = null) {
-        const entry = document.createElement('div');
-        const tierClass = meta && meta.tier ? ` tier-${meta.tier.toLowerCase()}` : '';
-        entry.className = `log-entry ${type}${tierClass}`;
-
-        const tierPrefix = meta && meta.tier
-            ? `[${meta.tier}${typeof meta.tokens === 'number' ? ` +${meta.tokens}T` : ''}] `
-            : '';
-        const ts = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        entry.innerHTML = `<span>[${ts}]</span> <strong>${tierPrefix}${title}:</strong> ${desc}`;
-
-        this.scienceLog.appendChild(entry);
-        this.scienceLog.scrollTop = this.scienceLog.scrollHeight;
+        this._logView.logEvent(title, desc, type, meta, timestamp);
     }
 
     /**
      * Clear all entries from the scientific feed console
      */
     clearLog() {
-        if (this.scienceLog) {
-            this.scienceLog.innerHTML = '';
+        this._logView.clearLog();
+    }
+
+    /**
+     * Build and attach the hidden developer debug panel.
+     * Activated by ?debug=1 in the URL or Ctrl+Shift+D.
+     */
+    _createDebugPanel(handlers) {
+        if (!document.body) return;
+        const panel = document.createElement('div');
+        panel.id = 'debug-panel';
+        panel.style.cssText = `
+            position:fixed;top:10px;right:10px;z-index:99999;
+            background:rgba(10,10,20,0.97);border:1px solid rgba(250,204,21,0.6);
+            border-radius:8px;padding:14px 16px;min-width:260px;
+            font-family:var(--font-mono,monospace);font-size:0.78rem;color:#facc15;
+            display:none;flex-direction:column;gap:10px;
+        `;
+        panel.innerHTML = `
+            <div style="font-weight:700;letter-spacing:0.08em;border-bottom:1px solid rgba(250,204,21,0.3);padding-bottom:6px;">
+                ⚙ DEBUG PANEL <span style="font-weight:400;color:rgba(255,255,255,0.4);font-size:0.72rem;">(Ctrl+Shift+D)</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <input id="dbg-seed" type="number" placeholder="Seed" style="width:90px;background:#111;border:1px solid #444;color:#fff;padding:3px 6px;border-radius:4px;font-size:0.78rem;">
+                <button id="dbg-set-seed" style="flex:1;background:#1e293b;border:1px solid #facc15;color:#facc15;padding:3px 8px;border-radius:4px;cursor:pointer;">Set Seed</button>
+                <button id="dbg-clear-seed" style="flex:1;background:#1e293b;border:1px solid #888;color:#aaa;padding:3px 8px;border-radius:4px;cursor:pointer;">Clear</button>
+            </div>
+            <button id="dbg-add-tokens" style="background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;padding:4px 8px;border-radius:4px;cursor:pointer;">+100 Blue  +10 Silver  +1 Gold</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <select id="dbg-node-select" style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:3px 6px;border-radius:4px;font-size:0.75rem;"></select>
+                <button id="dbg-unlock-node" style="background:#1e293b;border:1px solid #4ade80;color:#4ade80;padding:3px 8px;border-radius:4px;cursor:pointer;">Unlock</button>
+            </div>
+            <button id="dbg-advance-time" style="background:#1e293b;border:1px solid #c084fc;color:#c084fc;padding:4px 8px;border-radius:4px;cursor:pointer;">Advance Time +100 Myr</button>
+        `;
+        document.body.appendChild(panel);
+
+        // Populate node select from graph
+        const nodeSelect = panel.querySelector('#dbg-node-select');
+        for (const solvent in EVOLUTION_GRAPH) {
+            for (const nodeId in EVOLUTION_GRAPH[solvent]) {
+                const opt = document.createElement('option');
+                opt.value = nodeId;
+                opt.textContent = `[${solvent}] ${nodeId}`;
+                nodeSelect.appendChild(opt);
+            }
         }
+
+        // Wire controls
+        panel.querySelector('#dbg-set-seed').addEventListener('click', () => {
+            const seed = parseInt(panel.querySelector('#dbg-seed').value);
+            if (!isNaN(seed) && handlers.onDebugSetSeed) handlers.onDebugSetSeed(seed);
+        });
+        panel.querySelector('#dbg-clear-seed').addEventListener('click', () => {
+            panel.querySelector('#dbg-seed').value = '';
+            if (handlers.onDebugClearSeed) handlers.onDebugClearSeed();
+        });
+        panel.querySelector('#dbg-add-tokens').addEventListener('click', () => {
+            if (handlers.onDebugAddTokens) handlers.onDebugAddTokens(100, 10, 1);
+        });
+        panel.querySelector('#dbg-unlock-node').addEventListener('click', () => {
+            const id = nodeSelect.value;
+            if (id && handlers.onDebugUnlockNode) handlers.onDebugUnlockNode(id);
+        });
+        panel.querySelector('#dbg-advance-time').addEventListener('click', () => {
+            if (handlers.onDebugAdvanceTime) handlers.onDebugAdvanceTime(100);
+        });
+
+        // Show/hide logic
+        const show = () => { panel.style.display = 'flex'; };
+        const hide = () => { panel.style.display = 'none'; };
+        const toggle = () => { panel.style.display === 'none' ? show() : hide(); };
+
+        if (new URLSearchParams(window.location.search).get('debug') === '1') show();
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') { e.preventDefault(); toggle(); }
+        });
     }
 
     /**
@@ -1894,12 +1914,11 @@ export class GameUI {
         let milestoneName = "Prebiotic Stage";
 
         if (latestUnlocked) {
-            const earthMilestone = earthTimeline[latestUnlocked];
             const latestNode = EVOLUTION_GRAPH[solvent]?.[latestUnlocked];
             milestoneName = latestNode ? latestNode.name : latestUnlocked;
-            
-            if (earthMilestone) {
-                const earthAge = earthMilestone.age;
+            const earthAge = getEvolutionNode(latestUnlocked)?.earthAge ?? null;
+
+            if (earthAge !== null) {
                 const diff = earthAge - latestUnlockAge;
                 if (Math.abs(diff) < 15.0) {
                     statusText = "ON TRACK";
@@ -1939,69 +1958,7 @@ export class GameUI {
      * Shows a temporary, non-blocking toast notification on screen.
      */
     showToast(message, type = 'success') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.position = 'fixed';
-            container.style.bottom = '24px';
-            container.style.right = '24px';
-            container.style.zIndex = '10000';
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.gap = '12px';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        
-        toast.style.background = 'rgba(15, 23, 42, 0.9)';
-        toast.style.backdropFilter = 'blur(8px)';
-        toast.style.border = '1px solid rgba(255, 255, 255, 0.08)';
-        toast.style.color = 'var(--text-primary)';
-        toast.style.padding = '0.75rem 1.25rem';
-        toast.style.borderRadius = '8px';
-        toast.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5)';
-        toast.style.fontSize = '0.85rem';
-        toast.style.fontFamily = 'var(--font-sans)';
-        toast.style.fontWeight = '600';
-        toast.style.display = 'flex';
-        toast.style.alignItems = 'center';
-        toast.style.gap = '10px';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(15px)';
-        toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-
-        let icon = '🎉';
-        if (type === 'success') {
-            toast.style.borderLeft = '4px solid var(--accent-green)';
-            icon = '💾';
-        } else if (type === 'hazard' || type === 'error') {
-            toast.style.borderLeft = '4px solid var(--accent-red)';
-            icon = '⚠️';
-        } else if (type === 'info') {
-            toast.style.borderLeft = '4px solid var(--accent-cyan)';
-            icon = 'ℹ️';
-        }
-
-        toast.innerHTML = `<span style="font-size: 1.1rem; display: flex; align-items: center;">${icon}</span> <span>${message}</span>`;
-        container.appendChild(toast);
-
-        // Animate in
-        setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0)';
-        }, 20);
-
-        // Auto remove
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-15px)';
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, 3000);
+        this._toastView.showToast(message, type);
     }
 
     /**
@@ -2009,56 +1966,7 @@ export class GameUI {
      * Does NOT pause the game — auto-dismisses after 5 seconds.
      */
     showBoostToast(nodeLabel, durationMyr, multiplier) {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:12px;';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            background: linear-gradient(135deg, rgba(20,20,45,0.97), rgba(10,10,30,0.97));
-            border: 1px solid rgba(250,204,21,0.5);
-            border-left: 4px solid #facc15;
-            color: var(--text-primary);
-            padding: 14px 18px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.6), 0 0 20px rgba(250,204,21,0.1);
-            font-family: var(--font-sans);
-            min-width: 320px;
-            max-width: 420px;
-            opacity: 0;
-            transform: translateY(15px);
-            transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
-        `;
-        toast.innerHTML = `
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:1.5rem;line-height:1;">⚡</span>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:0.88rem;color:#facc15;letter-spacing:0.06em;margin-bottom:3px;">EVOLUTION BOOST ACTIVE</div>
-                    <div style="font-size:0.82rem;color:rgba(255,255,255,0.85);">
-                        <strong>${nodeLabel}</strong>: ×${multiplier} growth rate for <strong>${durationMyr} Myr</strong>
-                    </div>
-                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:4px;">Select node in Evolution Tree to track remaining time.</div>
-                </div>
-            </div>
-        `;
-        container.appendChild(toast);
-
-        // Animate in
-        setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0)';
-        }, 20);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-15px)';
-            setTimeout(() => toast.remove(), 360);
-        }, 5000);
+        this._toastView.showBoostToast(nodeLabel, durationMyr, multiplier);
     }
 
     /**

@@ -6,6 +6,7 @@ import { EventSystem } from './events.js';
 import { HistoryRecorder } from './history.js';
 import { HistoryView } from './historyView.js';
 import { getEvolutionNudge } from './evolutionData.js';
+import { setDebugSeed, clearDebugSeed } from './rng.js';
 
 export class GameController {
     constructor() {
@@ -237,6 +238,32 @@ export class GameController {
                 this.isPlaying = true;
                 this.ui.setPlayState(this.isPlaying);
                 this.lastTime = performance.now();
+            },
+
+            // Debug-only callbacks (activated via ?debug=1 or Ctrl+Shift+D)
+            onDebugSetSeed: (seed) => {
+                setDebugSeed(seed);
+                this.logEvent("DEBUG", `Seeded RNG set to ${seed}. Transition rolls are now deterministic.`, "system");
+            },
+            onDebugClearSeed: () => {
+                clearDebugSeed();
+                this.logEvent("DEBUG", "Seeded RNG cleared. Using Math.random().", "system");
+            },
+            onDebugAddTokens: (blue, silver, gold) => {
+                this.eventSystem.tokensBlue = Math.min(9999, (this.eventSystem.tokensBlue || 0) + blue);
+                this.eventSystem.tokensSilver = Math.min(9999, (this.eventSystem.tokensSilver || 0) + silver);
+                this.eventSystem.tokensGold = Math.min(9999, (this.eventSystem.tokensGold || 0) + gold);
+                this.logEvent("DEBUG", `Injected +${blue} Blue, +${silver} Silver, +${gold} Gold tokens.`, "system");
+            },
+            onDebugUnlockNode: (nodeId) => {
+                if (this.biology.unlockedMap) {
+                    this.biology.unlockedMap[nodeId] = true;
+                    this.logEvent("DEBUG", `Force-unlocked node: ${nodeId}.`, "system");
+                }
+            },
+            onDebugAdvanceTime: (myr) => {
+                this.planet.age = (this.planet.age || 0) + myr;
+                this.logEvent("DEBUG", `Advanced planet age by ${myr} Myr → ${this.planet.age.toFixed(1)} Myr.`, "system");
             }
         });
 

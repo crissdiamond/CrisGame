@@ -158,14 +158,11 @@ export class EvolutionEngine {
             }
 
             // 4. Resource Efficiency Selection (starvation pressures optimize resource usage)
-            // Determine if food/nutrients are scarce
+            // Resource pool is declared in node.resourceKey; parent biomass used for consumers.
             let resourceFactor = 1.0;
-            if (nodeId === 'soup' || nodeId === 'bacteria' || nodeId === 'anaerobic') {
-                resourceFactor = Math.min(1.0, biology.organicSoup / 20.0);
-            } else if (nodeId === 'ammonic_soup' || nodeId === 'ammonic_proto') {
-                resourceFactor = Math.min(1.0, biology.ammonicSoup / 15.0);
-            } else if (nodeId === 'methane_soup' || nodeId === 'methane_proto') {
-                resourceFactor = Math.min(1.0, biology.methaneSoup / 15.0);
+            if (node.resourceKey) {
+                const pool = biology[node.resourceKey] ?? 0;
+                resourceFactor = Math.min(1.0, pool / (node.resourceThreshold ?? 20));
             } else if (node.reqs && node.reqs.popThreshold) {
                 // Predator/herbivore - check food parents
                 let totalFood = 0;
