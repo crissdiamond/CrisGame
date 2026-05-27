@@ -90,7 +90,13 @@ $$\frac{dT_{\text{actual}}}{dt} = \left(T_{\text{target}} - T_{\text{actual}}\ri
 ### 3.1 Prebiotic Soup Synthesis
 Under ultraviolet starlight and radiation, simple atmospheric compounds are synthesized into organic compounds (prebiotic soup) in surface basins:
 
-$$\text{Rate}_{\text{synthesis}} = \begin{cases} \max(0, 1 - \frac{|T - 50|}{45}) \cdot \min(2.0, R_{\text{surface}} \cdot 0.5) \cdot \frac{\text{waterCoverage}}{100} \cdot 5.0 & \text{(Water World)} \\ \max(0, 1 - \frac{|T - (-55)|}{25}) \cdot \min(2.0, R_{\text{surface}} \cdot 0.5) \cdot \frac{\text{ammoniaCoverage}}{100} \cdot 6.0 & \text{(Ammonia World)} \\ \max(0, 1 - \frac{|T - (-160)|}{25}) \cdot \frac{\text{methaneCoverage}}{100} \cdot 5.0 & \text{(Methane World)} \end{cases}$$
+* **Water Worlds ($10^\circ\text{C} < T < 90^\circ\text{C}$):**
+  $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - 50|}{45}\right) \cdot \min(2.0, R_{\text{cosmic}} \cdot 0.4) \cdot \frac{\text{waterCoverage}}{100} \cdot 8.0 \cdot \text{Tide}_{\text{boost}}$$
+  $$\text{Tide}_{\text{boost}} = \begin{cases} 2.5 & \text{if Moon is present} \\ 1.0 & \text{otherwise} \end{cases}$$
+* **Ammonia Worlds ($-80^\circ\text{C} < T < -30^\circ\text{C}$):**
+  $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - (-55)|}{25}\right) \cdot \min(2.0, R_{\text{cosmic}} \cdot 0.5) \cdot \frac{\text{ammoniaCoverage}}{100} \cdot 6.0$$
+* **Methane Worlds ($-185^\circ\text{C} < T < -135^\circ\text{C}$):**
+  $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - (-160)|}{25}\right) \cdot \frac{\text{methaneCoverage}}{100} \cdot 5.0$$
 
 ### 3.2 Atmospheric Photolysis
 Ionizing radiation photolyzes (splits) solvent vapors in the upper atmosphere:
@@ -150,7 +156,11 @@ $$r = r_{\text{base}} \cdot V_{\text{total}} \cdot F_{\text{nutrient}} \cdot M_{
 
 Where:
 * $K$ is the carrying capacity cap of the clade.
-* $V_{\text{total}} = V_{\text{temp}} \cdot \left(\frac{\text{solventCoverage}}{100.0}\right)$.
+* $V_{\text{total}} = V_{\text{temp}} \cdot V_{\text{oxygen}} \cdot V_{\text{radiation}} \cdot \left(\frac{\text{solventCoverage}}{100.0}\right)$.
+  * **Oxygen Toxicity (Anaerobic):** $V_{\text{oxygen}} = \max\left(0.01, 1 - \frac{\text{O}_2}{25.0}\right)$
+  * **Oxygen Dependency (Aerobic Eukaryotes/Fauna):** $V_{\text{oxygen}} = \min\left(1.0, \frac{\text{O}_2}{\text{threshold}}\right)$ *(threshold is $5.0$ to $18.0$ depending on complexity)*
+  * **Radiation Viability (Prokaryotes):** $V_{\text{radiation}} = \max\left(0, 1 - \frac{R_{\text{surface}} \cdot (1 - R_{\text{res}})}{\text{threshold}}\right)$ *(threshold is $5.0$ or $6.0$)*
+  * **Radiation Viability (Eukaryotes):** $V_{\text{radiation}} = \max\left(0, 1 - \frac{R_{\text{surface}}}{\text{threshold}}\right)$ *(threshold is $2.0$ to $4.0$)*
 * $F_{\text{nutrient}}$ is the resource constraint factor (e.g., nitrogen limits plants, soup limits bacteria).
 * $M_{\text{nudge}}$ is the **🔹 Blue Mutagen Token** multiplier ($3.0\times$ during active nudge periods).
 
@@ -169,19 +179,20 @@ In water-based ecosystems, nitrogen gas ($\text{N}_2$) is biologically fixed and
   $$\frac{d\text{N}_2}{dt} = \text{Denitrification} - \text{Fixation}_{\text{bio}} - \text{Fixation}_{\text{atmospheric}}$$
 
 ### 4.4 Biodiversity & Speciation Model
-Speciation and extinction rates are simulated using differential equations based on living biomass ($M$) and evolutionary speed modifiers:
+Speciation and extinction rates are simulated using discrete difference updates per tick based on living biomass ($M$) and evolutionary speed modifiers:
 
 * **Extinction Mode ($M < 0.05$):**
-  $$\frac{dS}{dt} = -\max\left(1, \lfloor S \cdot 0.25 \rfloor\right)$$
+  $$\Delta S = -\max\left(1, \lfloor S_t \cdot 0.25 \cdot dt \rfloor\right)$$
+  $$S_{t+1} = \max(0, S_t + \Delta S)$$
   *(represents exponential population decay and species extinction)*
 * **Speciation Mode ($M \ge 0.05$):**
   $$S_{\text{target}} = \lfloor 1.5 \cdot M \rfloor$$
-  $$\text{Rate}_{\text{speciation}} = 0.1 \cdot M_{\text{nudge}}$$
-  $$\frac{dS}{dt} = (S_{\text{target}} - S) \cdot \text{Rate}_{\text{speciation}}$$
+  $$\text{Rate}_{\text{speciation}} = 0.1 \cdot dt \cdot M_{\text{nudge}}$$
+  $$S_{t+1} = \text{round}\left(S_t + (S_{\text{target}} - S_t) \cdot \text{Rate}_{\text{speciation}}\right)$$
 
 Where $S$ is the species count of the clade. For evolutionary dead-ends (such as single-celled end-nodes), species count is capped at $S \le 100$.
 
 ### 4.5 Meiotic Sexual Reproduction Recombination Boost
 Evolving **Sexual Reproduction** provides meiotic advantages:
-* **fisher-Muller / Red Queen Effect:** Eukaryotic carrying capacity cap $K$ is increased from $120$ to $180\text{ M/mL}$.
+* **Fisher-Muller / Red Queen Effect:** Eukaryotic carrying capacity cap $K$ is increased from $120$ to $180\text{ M/mL}$.
 * **Evolution Speed Booster:** All subsequent complex biological transition rates (unlocks) are boosted by **$30\%$** due to rapid genetic recombination.
