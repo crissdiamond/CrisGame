@@ -31,7 +31,8 @@ The **Effective Surface Radiation** $R_{\text{surface}}$ represents the ionizing
 
 $$R_{\text{surface}} = R_{\text{cosmic}} \cdot \text{Shield}_{\text{mag}} \cdot (1.0 - \text{O}_3 \cdot 0.9)$$
 
-$$\text{Shield}_{\text{mag}} = \begin{cases} 0.25 & \text{if magnetosphere is active } (M \ge 20\%) \\ 1.0 & \text{if magnetosphere is lost } (M \lt 20\%) \end{cases}$$
+$$\text{Shield}_{\text{mag}} = 0.25 \quad (\text{if magnetosphere is active: } M \ge 20\text{ percent})$$
+$$\text{Shield}_{\text{mag}} = 1.00 \quad (\text{if magnetosphere is lost: } M \lt 20\text{ percent})$$
 
 ### 1.3 Magnetic Core Decay and Lunar Tidal Flexing
 The planetary magnetic strength $M(t)$ cools down and decays. If $M \lt 20\%$, the planet loses its magnetosphere. If a massive Moon is present, **gravitational tidal flexing** provides tidal heating to the planetary mantle/core, slowing thermal cooling by $50\%$:
