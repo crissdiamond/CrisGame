@@ -1435,12 +1435,11 @@ export class GameUI {
         this.nodeDetailsTitle.textContent = node.name;
         
         let comparisonHTML = "";
-        let earthMilestone = earthTimeline[node.id];
+        const earthAge = getEvolutionNode(node.id)?.earthAge ?? null;
 
-        if (earthMilestone) {
-            const earthAge = earthMilestone.age;
+        if (earthAge !== null) {
             let unlockAge = biology.unlockAges ? biology.unlockAges[node.id] : null;
-            
+
             if (unlockAge !== undefined && unlockAge !== null) {
                 const diff = earthAge - unlockAge;
                 if (Math.abs(diff) < 15.0) {
@@ -1648,27 +1647,32 @@ export class GameUI {
                         <div class="progress-bar-container">
                             <div class="progress-bar ${node.clade.toLowerCase()}" id="${nodeId}-progress" style="width: 0%"></div>
                         </div>
-                        <div class="metric-species-row" id="${nodeId}-species-row" style="font-size: 0.65rem; color: var(--text-secondary); text-align: right; margin-top: 0.25rem; display: flex; justify-content: space-between; font-family: var(--font-mono);">
-                            <span class="boost-indicator" id="${nodeId}-boost-indicator" style="color: var(--accent-cyan); display: none; font-weight: bold; text-shadow: 0 0 4px var(--accent-cyan);">⚡ BOOSTED</span>
-                            <span>Species: <strong id="${nodeId}-species-val" style="color: var(--text-primary);">0</strong></span>
+                        <div class="metric-species-row" id="${nodeId}-species-row">
+                            <span class="boost-indicator" id="${nodeId}-boost-indicator">⚡ BOOSTED</span>
+                            <span>Species: <strong id="${nodeId}-species-val">0</strong></span>
                         </div>
                     `;
                     parentContainer.appendChild(card);
-                    card.addEventListener('click', () => {
-                        this.openBiomassModal(nodeId, node, planet, biology);
-                    });
                 }
             }
-            
+
+            // Bind click handler once, covering both pre-existing and newly created cards
+            if (card && !card._clickBound) {
+                card.addEventListener('click', () => {
+                    this.openBiomassModal(nodeId, node, planet, biology);
+                });
+                card._clickBound = true;
+            }
+
             if (card) {
-                card.style.display = isUnlocked ? 'block' : 'none';
-                
+                card.style.display = isUnlocked ? 'flex' : 'none';
+
                 if (isUnlocked) {
                     const densitySpan = document.getElementById(`${nodeId}-density`);
                     const progressBar = document.getElementById(`${nodeId}-progress`);
                     const speciesVal = document.getElementById(`${nodeId}-species-val`);
                     const boostIndicator = document.getElementById(`${nodeId}-boost-indicator`);
-                    
+
                     if (densitySpan) {
                         densitySpan.textContent = `${biomass.toFixed(2)} ${node.unit}`;
                     }
@@ -1680,7 +1684,7 @@ export class GameUI {
                         }
                         const percent = Math.min(100, (biomass / cap) * 100);
                         progressBar.style.width = `${percent}%`;
-                        
+
                         // Check if mutagen boost is active on this node
                         const hasBoost = biology.pendingNudges[nodeId] || (node.nudge && biology.pendingNudges[node.nudge.id]);
                         if (hasBoost) {
@@ -1689,12 +1693,12 @@ export class GameUI {
                             if (boostIndicator) {
                                 const remaining = (biology.pendingNudges[nodeId]?.remainingMyr || biology.pendingNudges[node.nudge?.id]?.remainingMyr || 0);
                                 boostIndicator.textContent = `⚡ BOOSTED (${remaining.toFixed(1)}M)`;
-                                boostIndicator.style.display = 'inline';
+                                boostIndicator.classList.add('active');
                             }
                         } else {
                             progressBar.style.boxShadow = 'none';
-                            progressBar.style.background = ''; // reset to default
-                            if (boostIndicator) boostIndicator.style.display = 'none';
+                            progressBar.style.background = ''; // reset to CSS class styling
+                            if (boostIndicator) boostIndicator.classList.remove('active');
                         }
                     }
                     if (speciesVal) {
