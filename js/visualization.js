@@ -90,7 +90,7 @@ export class GameVisualizer {
             if (biology.unlockedSauropsid) targetCounts['sauropsid'] = Math.max(1, Math.min(5, Math.floor(biology.sauropsidPop / 20)));
             if (biology.unlockedSynapsid) targetCounts['synapsid'] = Math.max(1, Math.min(5, Math.floor(biology.synapsidPop / 20)));
             if (biology.unlockedCognitive) targetCounts['cognitive'] = Math.max(1, Math.min(5, Math.floor(biology.cognitiveSpeciesPop / 20)));
-            if (biology.unlockedTechnologicalAI) targetCounts['ai'] = Math.max(1, Math.min(5, Math.floor(biology.technologicalAIPop / 20)));
+            if (biology.unlockedAI) targetCounts['ai'] = Math.max(1, Math.min(5, Math.floor(biology.aiPop / 20)));
             if (biology.unlockedCyborg) targetCounts['cyborg'] = Math.max(1, Math.min(5, Math.floor(biology.cyborgPop / 20)));
             if (biology.unlockedNoosphere) targetCounts['noosphere'] = Math.max(1, Math.min(4, Math.floor(biology.noospherePop / 25)));
             if (biology.unlockedGaiaHivemind) targetCounts['gaia_hivemind'] = Math.max(1, Math.min(4, Math.floor(biology.gaiaHivemindPop / 25)));
@@ -386,7 +386,7 @@ export class GameVisualizer {
         }
 
         // Draw Technosphere & Noosphere (AI/Quantum/Cyborg grids overlay on continents)
-        if (biology.technologicalAIPop > 0.5 || biology.noospherePop > 0.5) {
+        if (biology.aiPop > 0.5 || biology.noospherePop > 0.5) {
             ctx.save();
             ctx.beginPath();
             ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -395,8 +395,8 @@ export class GameVisualizer {
             const isNoosphere = biology.noospherePop > 0.5;
             const density = isNoosphere ? 5 : 3;
             const opacity = isNoosphere 
-                ? Math.min(0.85, (biology.noospherePop + biology.technologicalAIPop) / 100.0)
-                : Math.min(0.65, biology.technologicalAIPop / 80.0);
+                ? Math.min(0.85, (biology.noospherePop + biology.aiPop) / 100.0)
+                : Math.min(0.65, biology.aiPop / 80.0);
             
             ctx.strokeStyle = isNoosphere ? `rgba(245, 158, 11, ${opacity * 0.8})` : `rgba(0, 242, 254, ${opacity})`;
             ctx.lineWidth = isNoosphere ? 1.5 : 1;

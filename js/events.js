@@ -46,9 +46,9 @@ export class EventSystem {
             unlockedConifers: false,
             unlockedAngiosperms: false,
             unlockedCambrian: false,
-            unlockedLandPlants: false, unlockedArthropod: false, unlockedTetrapod: false,
+            unlockedLandPlants: false, unlockedInsects: false, unlockedTetrapod: false,
             unlockedSauropsid: false, unlockedSynapsid: false,
-            unlockedCognitive: false, unlockedTechnologicalAI: false,
+            unlockedCognitive: false, unlockedAI: false,
             unlockedCyborg: false, unlockedNoosphere: false, unlockedGaiaHivemind: false,
             unlockedAmmonicSoup: false, unlockedAmmonicProto: false, unlockedAmmonicMulti: false,
             unlockedSilicoFlora: false, unlockedCryoFauna: false, unlockedCrystallineCognitive: false,
@@ -275,7 +275,7 @@ export class EventSystem {
                         b.conifersPop *= 0.02;
                         b.angiospermsPop *= 0.02;
                     }
-                    if (b.arthropodPop > 0) b.arthropodPop *= 0.01;
+                    if (b.insectsPop > 0) b.insectsPop *= 0.01;
                     if (b.sauropsidPop > 0) b.sauropsidPop *= 0.02;
                     if (b.synapsidPop > 0) b.synapsidPop *= 0.01;
                     
@@ -318,7 +318,7 @@ export class EventSystem {
             biology.fishPop,
             biology.cambrianPop,
             biology.landPlantsPop,
-            biology.arthropodPop,
+            biology.insectsPop,
             biology.tetrapodPop,
             biology.sauropsidPop,
             biology.synapsidPop,
@@ -350,12 +350,12 @@ export class EventSystem {
             'conifersPop',
             'angiospermsPop',
             'cambrianPop',
-            'arthropodPop',
+            'insectsPop',
             'tetrapodPop',
             'sauropsidPop',
             'synapsidPop',
             'cognitiveSpeciesPop',
-            'technologicalAIPop',
+            'aiPop',
             'cyborgPop',
             'noospherePop',
             'gaiaHivemindPop',
@@ -643,12 +643,12 @@ export class EventSystem {
                 biology.multicellularPop * 0.08 +
                 biology.cambrianPop * 0.12 +
                 biology.landPlantsPop * 0.12 +
-                biology.arthropodPop * 0.15 +
+                biology.insectsPop * 0.15 +
                 biology.tetrapodPop * 0.18 +
                 biology.sauropsidPop * 0.25 +
                 biology.synapsidPop * 0.25 +
                 biology.cognitiveSpeciesPop * 0.35 +
-                biology.technologicalAIPop * 0.45 +
+                biology.aiPop * 0.45 +
                 biology.cyborgPop * 0.40 +
                 biology.noospherePop * 0.50 +
                 biology.gaiaHivemindPop * 0.50

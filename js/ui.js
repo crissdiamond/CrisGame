@@ -644,7 +644,7 @@ export class GameUI {
                     details: "Cybernetic integration linking silicon-neural interfaces directly to nerve fibers, bypassing slow biological Darwinian evolutionary bottlenecks."
                 };
             }
-            if (biology.unlockedTechnologicalAI) {
+            if (biology.unlockedAI) {
                 return {
                     name: "Technological AI",
                     details: "Autonomous silicon-substrate neural architectures that mimic biological synapses but run at clock-rates 10,000 times faster, decoupling intelligence from carbon."
@@ -668,7 +668,7 @@ export class GameUI {
                     details: "Terrestrial vertebrates with dry, keratinous scales to shield moisture loss and water-efficient uric acid excretion, highly resilient to warm, arid climates."
                 };
             }
-            if (biology.unlockedArthropod) {
+            if (biology.unlockedInsects) {
                 return {
                     name: "Terrestrial Arthropods",
                     details: "Invertebrates with chitinous exoskeletons to prevent desiccation and tracheal tube networks to directly oxygenate tissues, enabling land gigantism."

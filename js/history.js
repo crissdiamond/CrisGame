@@ -94,8 +94,8 @@ export class HistoryRecorder {
             anaerobicVal = biology.anaerobicPop + biology.eukaryoticPop;
             photosyntheticVal = biology.photosyntheticPop;
             multicellularVal = biology.multicellularPop + biology.spongesPop + biology.medusesPop + biology.wormsPop;
-            complexVal = biology.fishPop + biology.mossesPop + biology.fernsPop + biology.conifersPop + biology.angiospermsPop + biology.cambrianPop + biology.landPlantsPop + biology.arthropodPop + biology.tetrapodPop + biology.sauropsidPop + biology.synapsidPop;
-            sentientVal = biology.cognitiveSpeciesPop + biology.technologicalAIPop + biology.cyborgPop + biology.noospherePop + biology.gaiaHivemindPop;
+            complexVal = biology.fishPop + biology.mossesPop + biology.fernsPop + biology.conifersPop + biology.angiospermsPop + biology.cambrianPop + biology.landPlantsPop + biology.insectsPop + biology.tetrapodPop + biology.sauropsidPop + biology.synapsidPop;
+            sentientVal = biology.cognitiveSpeciesPop + biology.aiPop + biology.cyborgPop + biology.noospherePop + biology.gaiaHivemindPop;
         } else if (planet.activeSolvent === 'ammonia') {
             anaerobicVal = biology.ammonicProtoPop;
             photosyntheticVal = biology.silicoFloraPop;

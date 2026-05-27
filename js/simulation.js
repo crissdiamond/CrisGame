@@ -62,13 +62,13 @@ export class BiologySimulation {
             fernsPop: 'ferns',
             conifersPop: 'conifers',
             angiospermsPop: 'angiosperms',
-            arthropodPop: 'insects',
+            insectsPop: 'insects',
             tetrapodPop: 'tetrapods',
             sauropsidPop: 'sauropsids',
             synapsidPop: 'synapsids',
             cognitiveSpeciesPop: 'cognitive',
             cyborgPop: 'cyborg',
-            technologicalAIPop: 'ai',
+            aiPop: 'ai',
             noospherePop: 'noosphere',
             gaiaHivemindPop: 'gaia_hivemind',
 
@@ -121,12 +121,12 @@ export class BiologySimulation {
             unlockedFerns: 'ferns',
             unlockedConifers: 'conifers',
             unlockedAngiosperms: 'angiosperms',
-            unlockedArthropod: 'insects',
+            unlockedInsects: 'insects',
             unlockedTetrapod: 'tetrapods',
             unlockedSauropsid: 'sauropsids',
             unlockedSynapsid: 'synapsids',
             unlockedCognitive: 'cognitive',
-            unlockedTechnologicalAI: 'ai',
+            unlockedAI: 'ai',
             unlockedCyborg: 'cyborg',
             unlockedNoosphere: 'noosphere',
             unlockedGaiaHivemind: 'gaia_hivemind',
@@ -170,6 +170,32 @@ export class BiologySimulation {
             set: (v) => { this.unlockedMap['mosses'] = !!v; },
             configurable: true,
             enumerable: true
+        });
+
+        // Deprecated aliases for backward-compatibility with older save formats
+        Object.defineProperty(this, 'arthropodPop', {
+            get: () => this.insectsPop,
+            set: (v) => { this.insectsPop = v; },
+            configurable: true,
+            enumerable: false
+        });
+        Object.defineProperty(this, 'unlockedArthropod', {
+            get: () => this.unlockedInsects,
+            set: (v) => { this.unlockedInsects = v; },
+            configurable: true,
+            enumerable: false
+        });
+        Object.defineProperty(this, 'technologicalAIPop', {
+            get: () => this.aiPop,
+            set: (v) => { this.aiPop = v; },
+            configurable: true,
+            enumerable: false
+        });
+        Object.defineProperty(this, 'unlockedTechnologicalAI', {
+            get: () => this.unlockedAI,
+            set: (v) => { this.unlockedAI = v; },
+            configurable: true,
+            enumerable: false
         });
 
         // --- Genetic Adaptations / Nudges (unlocked via tokens) ---
@@ -930,10 +956,10 @@ export class BiologySimulation {
             this.unlockedLandPlants = this.unlockedMosses;
 
             // Terrestrial Invertebrates (Insects / Arthropods)
-            if (this.unlockedMosses && this.mossesPop > 25.0 && !this.unlockedArthropod) {
+            if (this.unlockedMosses && this.mossesPop > 25.0 && !this.unlockedInsects) {
                 if (this.tryFire('arthropods', RARITY.NOTABLE, 1.0, tickRate, planet)) {
-                    this.arthropodPop = 0.1;
-                    this.unlockedArthropod = true;
+                    this.insectsPop = 0.1;
+                    this.unlockedInsects = true;
                     events.push({
                         title: "🕷️ INSECT COLONIZATION",
                         desc: "Arthropods migrate to land. Higher O₂ enables gigantism (e.g. giant centipedes).",
@@ -941,12 +967,12 @@ export class BiologySimulation {
                         type: "success",
                         tier: RARITY.NOTABLE.name,
                         tokens: RARITY.NOTABLE.award,
-                        unlockKey: 'unlockedArthropod'
+                        unlockKey: 'unlockedInsects'
                     });
                 }
             }
 
-            if (this.arthropodPop > 0) {
+            if (this.insectsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 24, 42);
                 const foodViability = Math.min(1.0, this.mossesPop / 20.0);
                 const radViability = Math.max(0, 1 - effRad / 2.2);
@@ -955,10 +981,10 @@ export class BiologySimulation {
 
                 if (totalViability > 0.05) {
                     const nudgeMult = this.getNudgeGrowthMultiplier('insects', planet.activeSolvent);
-                    const dPop = 0.5 * totalViability * this.arthropodPop * (1 - this.arthropodPop / 100.0) * nudgeMult * tickRate;
-                    this.arthropodPop = Math.max(0.01, this.arthropodPop + dPop);
+                    const dPop = 0.5 * totalViability * this.insectsPop * (1 - this.insectsPop / 100.0) * nudgeMult * tickRate;
+                    this.insectsPop = Math.max(0.01, this.insectsPop + dPop);
                 } else {
-                    this.arthropodPop = Math.max(0, this.arthropodPop - this.arthropodPop * 0.7 * effDecayMult * tickRate);
+                    this.insectsPop = Math.max(0, this.insectsPop - this.insectsPop * 0.7 * effDecayMult * tickRate);
                 }
             }
 
@@ -1110,10 +1136,10 @@ export class BiologySimulation {
             }
 
             // Technological Silicon AI (Post-Biological Intelligence) — MAJOR.
-            if (this.unlockedCognitive && this.cognitiveSpeciesPop > 35.0 && !this.unlockedTechnologicalAI) {
+            if (this.unlockedCognitive && this.cognitiveSpeciesPop > 35.0 && !this.unlockedAI) {
                 if (this.tryFire('technological_singularity', RARITY.MAJOR, 1.0, tickRate, planet)) {
-                    this.technologicalAIPop = 0.1;
-                    this.unlockedTechnologicalAI = true;
+                    this.aiPop = 0.1;
+                    this.unlockedAI = true;
                     events.push({
                         title: "🤖 TECHNOLOGICAL SINGULARITY",
                         desc: "Cognitive beings code autonomous self-replicating silicon neural networks. Post-biological evolution begins.",
@@ -1121,12 +1147,12 @@ export class BiologySimulation {
                         type: "success",
                         tier: RARITY.MAJOR.name,
                         tokens: RARITY.MAJOR.award,
-                        unlockKey: 'unlockedTechnologicalAI'
+                        unlockKey: 'unlockedAI'
                     });
                 }
             }
 
-            if (this.technologicalAIPop > 0) {
+            if (this.aiPop > 0) {
                 // AI does not require oxygen or food, but requires stable magnetic field to shield microprocessors!
                 const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
                 const radViability = Math.max(0.1, 1 - effRad / 4.0); // radiation harms circuitry
@@ -1134,11 +1160,11 @@ export class BiologySimulation {
 
                 if (totalViability > 0.05) {
                     const nudgeMult = this.getNudgeGrowthMultiplier('ai', planet.activeSolvent);
-                    const dPop = 0.3 * totalViability * this.technologicalAIPop * (1 - this.technologicalAIPop / 100.0) * nudgeMult * tickRate;
-                    this.technologicalAIPop = Math.max(0.01, this.technologicalAIPop + dPop);
+                    const dPop = 0.3 * totalViability * this.aiPop * (1 - this.aiPop / 100.0) * nudgeMult * tickRate;
+                    this.aiPop = Math.max(0.01, this.aiPop + dPop);
                 } else {
                     // AI decays if magnetic field is lost and radiation is high
-                    this.technologicalAIPop = Math.max(0, this.technologicalAIPop - this.technologicalAIPop * 0.5 * effDecayMult * tickRate);
+                    this.aiPop = Math.max(0, this.aiPop - this.aiPop * 0.5 * effDecayMult * tickRate);
                 }
             }
 
@@ -1175,7 +1201,7 @@ export class BiologySimulation {
             }
 
             // Planetary AI Noosphere — MAJOR phase shift.
-            if (((this.unlockedTechnologicalAI && this.technologicalAIPop > 45.0) || (this.unlockedCyborg && this.cyborgPop > 45.0)) && planet.hasMagnetosphere && !this.unlockedNoosphere) {
+            if (((this.unlockedAI && this.aiPop > 45.0) || (this.unlockedCyborg && this.cyborgPop > 45.0)) && planet.hasMagnetosphere && !this.unlockedNoosphere) {
                 if (this.tryFire('global_consciousness', RARITY.MAJOR, 1.0, tickRate, planet)) {
                     this.noospherePop = 0.1;
                     this.unlockedNoosphere = true;

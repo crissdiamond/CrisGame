@@ -35,6 +35,7 @@
   - UI labels and simulation IDs are generated consistently from the graph.
 
 #### 3. Add graph integrity validation
+- Status: Completed 2026-05-26. Added `scripts/validate_evolution_graph.mjs` validator script to perform comprehensive graph checks.
 - Create a lightweight development validation script for `EVOLUTION_GRAPH`.
 - Check that:
   - every parent ID exists;
@@ -47,6 +48,7 @@
   - Invalid graph changes fail loudly during development.
 
 #### 4. Fix naming inconsistencies across graph, UI, controller, and simulation
+- Status: Completed 2026-05-27. Standardized biological node IDs to `insects` (for `insectsPop`/`unlockedInsects`) and `ai` (for `aiPop`/`unlockedAI`) across the simulation, event system, dashboard, historical telemetry, and validator, with non-enumerable getters/setters for older save backward compatibility.
 - Review aliases such as `cryo_beasts` vs `cryo_organisms`, `ai` vs `technologicalAI`, `insects` vs `arthropod`, and any other graph/UI naming drift.
 - Introduce a deliberate alias/display-name layer if needed.
 - Acceptance criteria:
@@ -59,6 +61,7 @@
 ### P1 — Stabilise the core game loop
 
 #### 5. Add basic runtime smoke tests
+- Status: Completed 2026-05-27. Added `scripts/smoke_test.mjs` which validates headless module imports, tick updates, and backward-compatibility shims.
 - Add a simple test or script that loads core modules and instantiates:
   - `Planet`;
   - `BiologySimulation`;
