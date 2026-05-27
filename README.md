@@ -119,17 +119,28 @@ CrisGame/
 ├── css/
 │   └── style.css        # Glassmorphic and retro sci-fi panel styling
 ├── js/
-│   ├── game.js          # Controller loop, save/load state, game lifecycle
+│   ├── game.js          # Controller loop, save/load state, game lifecycle, debug handlers
 │   ├── planet.js        # Physical, geological, and atmospheric physics formulas
-│   ├── simulation.js    # Biological growth, decay fluxes, and ecosystem formulas
 │   ├── evolutionData.js # Phylogenetic DAG schemas for Water, Ammonia, and Methane lines
-│   ├── ui.js            # DOM caches, pacing calculations, modal popups, and toast systems
+│   ├── rarityTiers.js   # RARITY tier constants and SOLVENT_RATE_FACTOR
+│   ├── rng.js           # Seeded LCG random number generator for deterministic debug mode
+│   ├── simulation.js    # Orchestrator: Poisson transitions, fitness wiring, gas accounting
+│   ├── waterBiology.js  # Water-solvent full biochemistry cycle (tickWater)
+│   ├── ammoniaBiology.js # Ammonia-solvent biochemistry cycle (tickAmmonia)
+│   ├── methaneBiology.js # Methane-solvent biochemistry cycle (tickMethane)
+│   ├── evolutionEngine.js # Genetic trait system, fitness calculations, resource gating
+│   ├── ui.js            # DOM caches, pacing calculations, modal popups, debug panel
 │   ├── visualization.js # Canvas visualizers for planet macro / microscopic views
 │   ├── history.js       # Background time-series metrics data recorder
 │   ├── historyView.js   # Canvas drawing for historic telemetry graphs
-│   └── events.js        # Event registry, disaster systems, and intervention mechanics
+│   ├── events.js        # Event registry, disaster systems, and intervention mechanics
+│   └── views/
+│       ├── toastView.js # Toast notification rendering
+│       └── logView.js   # Science log entry rendering
 └── scripts/
-    └── validate_structure.mjs # Local CSS/JS path and module import validation
+    ├── validate_evolution_graph.mjs # DAG integrity validator (run after graph edits)
+    ├── smoke_test.mjs               # Headless module import and tick tests
+    └── validate_structure.mjs      # Local CSS/JS path and module import validation
 ```
 
 ---

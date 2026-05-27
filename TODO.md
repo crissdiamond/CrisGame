@@ -96,6 +96,7 @@
   - Log styling can change without breaking old saves.
 
 #### 8. Add deterministic debug mode
+- Status: Completed 2026-05-27. Added `js/rng.js` (LCG seeded RNG with `random()`, `setDebugSeed(n)`, `clearDebugSeed()`). All simulation-path random rolls in `simulation.js` use `random()`. Debug panel in `ui.js` exposes seed control, token injection, node unlock, and time advance via `Ctrl+Shift+D` or `?debug=1`; handlers wired in `game.js`.
 - Add an optional seeded random number generator for development.
 - Use it for event rolls, biological transition rolls, hotspot generation, and other random simulation behaviours.
 - Acceptance criteria:
@@ -107,18 +108,20 @@
 ### P2 — Refactor for maintainability
 
 #### 9. Split `GameUI` into focused view modules
+- Status: Partially completed 2026-05-27. Extracted `js/views/toastView.js` (`ToastView`) and `js/views/logView.js` (`LogView`); `GameUI` now delegates all toast and log rendering to these classes. Remaining: `setupView.js`, `dashboardView.js`, `evolutionTreeView.js`, `interventionsView.js`.
 - Break the current UI layer into smaller modules, for example:
   - `setupView.js`
   - `dashboardView.js`
   - `evolutionTreeView.js`
   - `interventionsView.js`
-  - `toastView.js`
-  - `logView.js`
+  - `toastView.js` ✓ done
+  - `logView.js` ✓ done
 - Acceptance criteria:
   - Each view module owns a clear section of DOM.
   - `GameUI` becomes an orchestrator/facade rather than a very large class.
 
 #### 10. Split `simulation.js` by biological domain
+- Status: Completed 2026-05-27. Extracted `js/waterBiology.js` (`tickWater`), `js/ammoniaBiology.js` (`tickAmmonia`), `js/methaneBiology.js` (`tickMethane`). `simulation.js` reduced from 2115 to 617 lines and is now a pure orchestrator. Also extracted `js/rarityTiers.js` for shared RARITY constants.
 - Separate water, ammonia, and methane evolution logic.
 - Extract shared mechanics such as growth curves, hazard rolls, transition gates, biomass decay, and biodiversity calculations.
 - Acceptance criteria:
@@ -173,11 +176,13 @@
   - The game suggests possible recovery levers without solving the game for the player.
 
 #### 16. Add developer/debug controls
+- Status: Completed 2026-05-27. Debug panel implemented in `ui.js` (`_createDebugPanel`). Access via `Ctrl+Shift+D` or `?debug=1`. Provides: seed RNG, clear seed, add Blue/Silver/Gold tokens, unlock any graph node, advance planet time. Panel is DOM-guarded (inert in Node.js tests). Remaining from original scope: force event, print state, reset history.
 - Add an optional debug panel for local development:
-  - add tokens;
+  - add tokens; ✓ done
   - force event;
-  - unlock node;
-  - advance time;
+  - unlock node; ✓ done
+  - advance time; ✓ done
+  - seed/deterministic RNG; ✓ done
   - print current planet/biology state;
   - reset history.
 - Acceptance criteria:
