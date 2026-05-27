@@ -14,8 +14,12 @@ This guide documents the development commands, code conventions, and testing gui
 *   **Class Architecture**: Use object-oriented classes matching files (`Planet`, `BiologySimulation`, `GameUI`, `GameVisualizer`, `EventSystem`).
 *   **UI Controls**: Environmental changes (temperature, water, radiation) must interpolate smoothly using target targets in `planet.js` rather than changing instantly.
 *   **Biological Math**: Model populations using Logistic growth functions (`dN/dt = r * N * (1 - N/K)`) to simulate carrying capacity realistically.
+*   **Evolution Graph Registry**: Treat `js/evolutionData.js` as the central registry for species, milestones, clades, parent relationships, nudges, monitorability, labels, caps, units, requirements, and transition-to-node mappings. Add or rename evolutionary elements there first, then derive UI, simulation links, save/load behavior, and visualization state from that registry.
+*   **No Duplicate In-Code Evolution Metadata**: Do not introduce hard-coded species arrays, duplicate nudge maps, parallel node IDs, UI-only milestone definitions, or visualization-only aliases when the graph can provide the data. Use `EVOLUTION_GRAPH`, `TRANSITION_TO_NODE_ID`, `getEvolutionNode`, `getNodeIdForTransition`, and `getEvolutionNudge`.
+*   **Refactor Boundaries**: Preserve current module ownership. `evolutionData.js` owns identity/metadata; `simulation.js` owns transition equations and biomass dynamics; `events.js` owns event/intervention mechanics and token spending; `game.js` coordinates; `ui.js` renders DOM; `visualization.js` renders canvas. Avoid fixes that solve a local symptom by duplicating ownership in another module.
 *   **Styling**: Use pure Vanilla CSS with variables in `css/style.css`. Do not install Tailwind or other UI libraries. Maintain a dark, sci-fi glassmorphic lab console design theme.
 *   **Verification**: Test changes directly by opening `http://localhost:8080` in the browser. Verify the scrolling console feed in the UI for milestone updates.
+*   **Graph Validation**: Run `node scripts/validate_evolution_graph.mjs` after graph-related changes. Correct graph registry inconsistencies at the source rather than adding compatibility patches across UI/controller/simulation code.
 
 ## Core Directives for Agents (Mandatory)
 
@@ -23,3 +27,4 @@ This guide documents the development commands, code conventions, and testing gui
 *   **Information Gathering**: Actively query local files and search the web for up-to-date scientific references and API specifications when needed.
 *   **Verify Execution**: Check server responses, browser rendering inputs, and terminal execution outputs rather than assuming changes compile or run correctly.
 *   **Documentation Synchronization**: Whenever you modify, add, or refactor any physical, chemical, astronomical, or biological formulas or laws (e.g., in `js/planet.js`, `js/simulation.js`), you must immediately update `SCIENCE.md` and `README.md` to keep all mathematical models and scientific explanations perfectly in sync.
+*   **Registry Before Implementation**: Before implementing new features, species, milestones, nudges, fixes, or general changes that touch evolutionary concepts, inspect and use the graph registry. Avoid adding in-code elements outside the registry unless the behavior is genuinely local and cannot be represented as graph metadata.

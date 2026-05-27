@@ -1,3 +1,5 @@
+import { EVOLUTION_GRAPH, getNodeBiomass, isNodeUnlocked } from './evolutionData.js';
+
 /**
  * Handles canvas drawing for both Planet (macro) and Microscope (micro) views.
  * Incorporates ozone halos, magnetosphere lines, warning tracks, solvent color scales,
@@ -66,6 +68,23 @@ export class GameVisualizer {
         this.initializedParticles = true;
     }
 
+    getParticleTypeForNode(node) {
+        if (node.id === 'eukaryotes') return 'eukaryotic';
+        if (node.id === 'tetrapods') return 'tetrapod';
+        if (node.id === 'sauropsids') return 'sauropsid';
+        if (node.id === 'synapsids') return 'synapsid';
+        if (node.clade === 'Flora' && ['water'].includes(this.lastSolvent)) return 'plants';
+        return node.id;
+    }
+
+    getParticleMaxForNode(node) {
+        if (node.clade === 'Prebiotic') return 8;
+        if (node.clade === 'Prokaryota' || node.clade === 'Eukaryota') return 6;
+        if (node.clade === 'Flora') return 6;
+        if (node.clade === 'Intelligence' || node.clade === 'Technological') return 4;
+        return 5;
+    }
+
     syncParticles(planet, biology, cx, cy, microRad) {
         if (planet.activeSolvent !== this.lastSolvent) {
             this.particles = [];
@@ -73,55 +92,24 @@ export class GameVisualizer {
         }
 
         const targetCounts = {};
+        const graphNodes = EVOLUTION_GRAPH[planet.activeSolvent] || {};
 
-        if (planet.activeSolvent === 'water') {
-            if (biology.unlockedSoup) targetCounts['soup'] = Math.max(1, Math.min(8, Math.floor(biology.organicSoup / 12)));
-            if (biology.unlockedAnaerobic) targetCounts['anaerobic'] = Math.max(1, Math.min(6, Math.floor(biology.anaerobicPop / 20)));
-            if (biology.unlockedPhotosynthetic) targetCounts['photosynthetic'] = Math.max(1, Math.min(6, Math.floor(biology.photosyntheticPop / 25)));
-            if (biology.unlockedEukaryotic) targetCounts['eukaryotic'] = Math.max(1, Math.min(6, Math.floor(biology.eukaryoticPop / 20)));
-            if (biology.unlockedMulticellular) targetCounts['multicellular'] = Math.max(1, Math.min(6, Math.floor(biology.multicellularPop / 15)));
-            if (biology.unlockedSponges) targetCounts['sponges'] = Math.max(1, Math.min(5, Math.floor(biology.spongesPop / 20)));
-            if (biology.unlockedMeduses) targetCounts['meduses'] = Math.max(1, Math.min(5, Math.floor(biology.medusesPop / 20)));
-            if (biology.unlockedWorms) targetCounts['worms'] = Math.max(1, Math.min(5, Math.floor(biology.wormsPop / 20)));
-            if (biology.unlockedFish) targetCounts['fish'] = Math.max(1, Math.min(5, Math.floor(biology.fishPop / 20)));
-            if (biology.unlockedCambrian) targetCounts['cambrian'] = Math.max(1, Math.min(5, Math.floor(biology.cambrianPop / 20)));
-            if (biology.unlockedLandPlants) targetCounts['plants'] = Math.max(1, Math.min(6, Math.floor(biology.landPlantsPop / 30)));
-            if (biology.unlockedTetrapod) targetCounts['tetrapod'] = Math.max(1, Math.min(5, Math.floor(biology.tetrapodPop / 20)));
-            if (biology.unlockedSauropsid) targetCounts['sauropsid'] = Math.max(1, Math.min(5, Math.floor(biology.sauropsidPop / 20)));
-            if (biology.unlockedSynapsid) targetCounts['synapsid'] = Math.max(1, Math.min(5, Math.floor(biology.synapsidPop / 20)));
-            if (biology.unlockedCognitive) targetCounts['cognitive'] = Math.max(1, Math.min(5, Math.floor(biology.cognitiveSpeciesPop / 20)));
-            if (biology.unlockedAI) targetCounts['ai'] = Math.max(1, Math.min(5, Math.floor(biology.aiPop / 20)));
-            if (biology.unlockedCyborg) targetCounts['cyborg'] = Math.max(1, Math.min(5, Math.floor(biology.cyborgPop / 20)));
-            if (biology.unlockedNoosphere) targetCounts['noosphere'] = Math.max(1, Math.min(4, Math.floor(biology.noospherePop / 25)));
-            if (biology.unlockedGaiaHivemind) targetCounts['gaia_hivemind'] = Math.max(1, Math.min(4, Math.floor(biology.gaiaHivemindPop / 25)));
-        } else if (planet.activeSolvent === 'ammonia') {
-            if (biology.unlockedAmmonicSoup) targetCounts['ammonic_soup'] = Math.max(1, Math.min(8, Math.floor(biology.ammonicSoup / 12)));
-            if (biology.unlockedAmmonicProto) targetCounts['ammonic_proto'] = Math.max(1, Math.min(6, Math.floor(biology.ammonicProtoPop / 20)));
-            if (biology.unlockedAmmonicMulti) targetCounts['ammonic_multi'] = Math.max(1, Math.min(6, Math.floor(biology.ammonicMultiPop / 15)));
-            if (biology.unlockedSilicoFlora) targetCounts['silico_flora'] = Math.max(1, Math.min(6, Math.floor(biology.silicoFloraPop / 20)));
-            if (biology.unlockedCryoFauna) targetCounts['cryo_fauna'] = Math.max(1, Math.min(5, Math.floor(biology.cryoFaunaPop / 20)));
-            if (biology.unlockedCrystallineCognitive) targetCounts['crystalline_cognitive'] = Math.max(1, Math.min(5, Math.floor(biology.crystallineCognitivePop / 16)));
-            if (biology.unlockedQuantumLattice) targetCounts['quantum_lattices'] = Math.max(1, Math.min(4, Math.floor(biology.quantumLatticePop / 25)));
-            if (biology.unlockedCryoHivemind) targetCounts['cryo_hivemind'] = Math.max(1, Math.min(4, Math.floor(biology.cryoHivemindPop / 25)));
-        } else if (planet.activeSolvent === 'methane') {
-            if (biology.unlockedMethaneSoup) targetCounts['methane_soup'] = Math.max(1, Math.min(8, Math.floor(biology.methaneSoup / 12)));
-            if (biology.unlockedMethaneProto) targetCounts['methane_proto'] = Math.max(1, Math.min(6, Math.floor(biology.methaneProtoPop / 20)));
-            if (biology.unlockedMethaneMulti) targetCounts['methane_multi'] = Math.max(1, Math.min(6, Math.floor(biology.methaneMultiPop / 15)));
-            if (biology.unlockedCryoOrganisms) targetCounts['cryo_organisms'] = Math.max(1, Math.min(5, Math.floor(biology.cryoOrganismsPop / 15)));
-            if (biology.unlockedCryoPolymerNetwork) targetCounts['cryo_polymer_network'] = Math.max(1, Math.min(5, Math.floor(biology.cryoPolymerNetworkPop / 12)));
-            if (biology.unlockedThinkingOcean) targetCounts['thinking_ocean'] = Math.max(1, Math.min(4, Math.floor(biology.thinkingOceanPop / 25)));
-            if (biology.unlockedCryoColloid) targetCounts['cryo_colloid'] = Math.max(1, Math.min(4, Math.floor(biology.cryoColloidPop / 25)));
+        for (const node of Object.values(graphNodes)) {
+            if (!isNodeUnlocked(biology, node)) continue;
+            const biomass = getNodeBiomass(biology, node);
+            if (biomass <= 0) continue;
+
+            const particleType = this.getParticleTypeForNode(node);
+            const maxCount = this.getParticleMaxForNode(node);
+            const scale = Math.max(1, (node.cap || 100) / maxCount);
+            const count = Math.max(1, Math.min(maxCount, Math.floor(biomass / scale)));
+            targetCounts[particleType] = (targetCounts[particleType] || 0) + count;
         }
 
-        const allTypes = [
-            'soup', 'anaerobic', 'photosynthetic', 'eukaryotic', 'multicellular',
-            'sponges', 'meduses', 'worms', 'fish', 'cambrian', 'plants', 'tetrapod',
-            'sauropsid', 'synapsid', 'cognitive', 'ai', 'cyborg', 'noosphere', 'gaia_hivemind',
-            'ammonic_soup', 'ammonic_proto', 'ammonic_multi', 'silico_flora', 'cryo_fauna',
-            'crystalline_cognitive', 'quantum_lattices', 'cryo_hivemind',
-            'methane_soup', 'methane_proto', 'methane_multi', 'cryo_organisms',
-            'cryo_polymer_network', 'thinking_ocean', 'cryo_colloid'
-        ];
+        const allTypes = new Set([
+            ...Object.keys(targetCounts),
+            ...this.particles.map(p => p.type)
+        ]);
 
         allTypes.forEach(type => {
             const targetCount = targetCounts[type] || 0;

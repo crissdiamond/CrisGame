@@ -1,3 +1,5 @@
+import { getEvolutionNodes, getNodeBiomass } from './evolutionData.js';
+
 /**
  * Handles checking conditions, rolling probabilities, applying effects,
  * managing warnings/threats, and processing player token spending.
@@ -26,37 +28,7 @@ export class EventSystem {
         this.warnings = []; // Array of { id, name, description, durationRemaining, cost, apply, type }
 
         // Last state of unlocks to detect new milestones
-        this.prevUnlocks = {
-            unlockedSoup: false,
-            unlockedMembrane: false,
-            unlockedBacteria: false,
-            unlockedAnaerobic: false,
-            unlockedPhotosynthetic: false,
-            unlockedNucleus: false,
-            unlockedMitochondria: false,
-            unlockedSexualReproduction: false,
-            unlockedEukaryotic: false,
-            unlockedMulticellular: false,
-            unlockedSponges: false,
-            unlockedMeduses: false,
-            unlockedWorms: false,
-            unlockedFish: false,
-            unlockedMosses: false,
-            unlockedFerns: false,
-            unlockedConifers: false,
-            unlockedAngiosperms: false,
-            unlockedCambrian: false,
-            unlockedLandPlants: false, unlockedInsects: false, unlockedTetrapod: false,
-            unlockedSauropsid: false, unlockedSynapsid: false,
-            unlockedCognitive: false, unlockedAI: false,
-            unlockedCyborg: false, unlockedNoosphere: false, unlockedGaiaHivemind: false,
-            unlockedAmmonicSoup: false, unlockedAmmonicProto: false, unlockedAmmonicMulti: false,
-            unlockedSilicoFlora: false, unlockedCryoFauna: false, unlockedCrystallineCognitive: false,
-            unlockedQuantumLattice: false, unlockedCryoHivemind: false,
-            unlockedMethaneSoup: false, unlockedMethaneProto: false, unlockedMethaneMulti: false,
-            unlockedCryoOrganisms: false, unlockedCryoPolymerNetwork: false,
-            unlockedThinkingOcean: false, unlockedCryoColloid: false
-        };
+        this.prevUnlocks = {};
         
         // Define our registry of events (with their normal application logic)
         this.eventsRegistry = [
@@ -310,72 +282,43 @@ export class EventSystem {
     }
 
     hasMulticellularLife(biology) {
-        return [
-            biology.multicellularPop,
-            biology.spongesPop,
-            biology.medusesPop,
-            biology.wormsPop,
-            biology.fishPop,
-            biology.cambrianPop,
-            biology.landPlantsPop,
-            biology.insectsPop,
-            biology.tetrapodPop,
-            biology.sauropsidPop,
-            biology.synapsidPop,
-            biology.cognitiveSpeciesPop,
-            biology.ammonicMultiPop,
-            biology.cryoFaunaPop,
-            biology.methaneMultiPop,
-            biology.cryoOrganismsPop
-        ].some(pop => pop > 0);
+        return getEvolutionNodes().some(node => {
+            if (!['Eukaryota', 'Metazoa', 'Chordata', 'Tetrapoda', 'Diapsida', 'Synapsida', 'Arthropoda', 'Fauna'].includes(node.clade)) {
+                return false;
+            }
+            return getNodeBiomass(biology, node) > 0;
+        });
     }
 
     scaleProkaryotes(biology, factor) {
-        biology.anaerobicPop *= factor;
-        biology.photosyntheticPop *= factor;
-        biology.ammonicProtoPop *= factor;
-        biology.methaneProtoPop *= factor;
+        for (const node of getEvolutionNodes()) {
+            if (node.clade === 'Prokaryota') {
+                biology[node.popKey] *= factor;
+            }
+        }
     }
 
     scaleAdvancedLife(biology, factor) {
-        const populations = [
-            'eukaryoticPop',
-            'multicellularPop',
-            'spongesPop',
-            'medusesPop',
-            'wormsPop',
-            'fishPop',
-            'mossesPop',
-            'fernsPop',
-            'conifersPop',
-            'angiospermsPop',
-            'cambrianPop',
-            'insectsPop',
-            'tetrapodPop',
-            'sauropsidPop',
-            'synapsidPop',
-            'cognitiveSpeciesPop',
-            'aiPop',
-            'cyborgPop',
-            'noospherePop',
-            'gaiaHivemindPop',
-            'ammonicMultiPop',
-            'silicoFloraPop',
-            'cryoFaunaPop',
-            'crystallineCognitivePop',
-            'quantumLatticePop',
-            'cryoHivemindPop',
-            'methaneMultiPop',
-            'cryoOrganismsPop',
-            'cryoPolymerNetworkPop',
-            'thinkingOceanPop',
-            'cryoColloidPop'
-        ];
-
-        populations.forEach(key => {
-            biology[key] *= factor;
-        });
+        for (const node of getEvolutionNodes()) {
+            if (node.clade !== 'Prebiotic' && node.clade !== 'Prokaryota') {
+                biology[node.popKey] *= factor;
+            }
+        }
         biology.landPlantsPop = biology.mossesPop + biology.fernsPop + biology.conifersPop + biology.angiospermsPop;
+    }
+
+    getTokenBiomassWeight(node) {
+        if (node.clade === 'Prebiotic') return 0.0;
+        if (node.clade === 'Prokaryota') return node.id === 'photosynthetic' ? 0.02 : 0.01;
+        if (node.clade === 'Eukaryota') return node.id === 'eukaryotes' ? 0.04 : 0.08;
+        if (node.clade === 'Flora') return 0.12;
+        if (node.clade === 'Metazoa') return node.id === 'cambrian' ? 0.12 : 0.08;
+        if (node.clade === 'Arthropoda') return 0.15;
+        if (node.clade === 'Tetrapoda') return 0.18;
+        if (node.clade === 'Diapsida' || node.clade === 'Synapsida' || node.clade === 'Fauna') return 0.25;
+        if (node.clade === 'Intelligence') return 0.35;
+        if (node.clade === 'Technological') return 0.45;
+        return 0.0;
     }
 
     /**
@@ -635,43 +578,8 @@ export class EventSystem {
         
         // 1. Earn tokens based on biosphere biomass / complexity
         let biomassRating = 0;
-        if (planet.activeSolvent === 'water') {
-            biomassRating = (
-                biology.anaerobicPop * 0.01 +
-                biology.photosyntheticPop * 0.02 +
-                biology.eukaryoticPop * 0.04 +
-                biology.multicellularPop * 0.08 +
-                biology.cambrianPop * 0.12 +
-                biology.landPlantsPop * 0.12 +
-                biology.insectsPop * 0.15 +
-                biology.tetrapodPop * 0.18 +
-                biology.sauropsidPop * 0.25 +
-                biology.synapsidPop * 0.25 +
-                biology.cognitiveSpeciesPop * 0.35 +
-                biology.aiPop * 0.45 +
-                biology.cyborgPop * 0.40 +
-                biology.noospherePop * 0.50 +
-                biology.gaiaHivemindPop * 0.50
-            );
-        } else if (planet.activeSolvent === 'ammonia') {
-            biomassRating = (
-                biology.ammonicProtoPop * 0.02 +
-                biology.ammonicMultiPop * 0.08 +
-                biology.silicoFloraPop * 0.15 +
-                biology.cryoFaunaPop * 0.25 +
-                biology.crystallineCognitivePop * 0.35 +
-                biology.quantumLatticePop * 0.40 +
-                biology.cryoHivemindPop * 0.45
-            );
-        } else if (planet.activeSolvent === 'methane') {
-            biomassRating = (
-                biology.methaneProtoPop * 0.02 +
-                biology.methaneMultiPop * 0.08 +
-                biology.cryoOrganismsPop * 0.25 +
-                biology.cryoPolymerNetworkPop * 0.35 +
-                biology.thinkingOceanPop * 0.40 +
-                biology.cryoColloidPop * 0.45
-            );
+        for (const node of getEvolutionNodes(planet.activeSolvent)) {
+            biomassRating += getNodeBiomass(biology, node) * this.getTokenBiomassWeight(node);
         }
 
         // Accrual rate: flat base rate + biomass boost
@@ -680,9 +588,9 @@ export class EventSystem {
 
         // Milestone token awards moved to the per-event tier system. This loop
         // only marks the seen-set so a stale flag flip won't re-emit a popup.
-        for (const k in this.prevUnlocks) {
-            if (biology[k] && !this.prevUnlocks[k]) {
-                this.prevUnlocks[k] = true;
+        for (const nodeId in biology.unlockedMap) {
+            if (biology.unlockedMap[nodeId] && !this.prevUnlocks[nodeId]) {
+                this.prevUnlocks[nodeId] = true;
             }
         }
 

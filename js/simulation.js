@@ -40,55 +40,13 @@ export class BiologySimulation {
         }
 
         // Define dynamic properties with getters and setters for backward-compatibility
-        const popMappings = {
-            organicSoup: 'soup',
-            membranePop: 'membrane',
-            bacteriaPop: 'bacteria',
-            anaerobicPop: 'anaerobic',
-            anoxygenicPhotoPop: 'anoxygenic_photo',
-            photosyntheticPop: 'photosynthetic',
-            nucleusPop: 'nucleus',
-            mitochondriaPop: 'mitochondria',
-            eukaryoticPop: 'eukaryotes',
-            sexualPop: 'sexual',
-            multicellularPop: 'multicellular',
-            algaePop: 'algae',
-            spongesPop: 'sponges',
-            medusesPop: 'meduses',
-            wormsPop: 'worms',
-            fishPop: 'fish',
-            cambrianPop: 'cambrian',
-            mossesPop: 'mosses',
-            fernsPop: 'ferns',
-            conifersPop: 'conifers',
-            angiospermsPop: 'angiosperms',
-            insectsPop: 'insects',
-            tetrapodPop: 'tetrapods',
-            sauropsidPop: 'sauropsids',
-            synapsidPop: 'synapsids',
-            cognitiveSpeciesPop: 'cognitive',
-            cyborgPop: 'cyborg',
-            aiPop: 'ai',
-            noospherePop: 'noosphere',
-            gaiaHivemindPop: 'gaia_hivemind',
-
-            ammonicSoup: 'ammonic_soup',
-            ammonicProtoPop: 'ammonic_proto',
-            ammonicMultiPop: 'ammonic_multi',
-            silicoFloraPop: 'silico_flora',
-            cryoFaunaPop: 'cryo_fauna',
-            crystallineCognitivePop: 'crystalline_cognitive',
-            quantumLatticePop: 'quantum_lattices',
-            cryoHivemindPop: 'cryo_hivemind',
-
-            methaneSoup: 'methane_soup',
-            methaneProtoPop: 'methane_proto',
-            methaneMultiPop: 'methane_multi',
-            cryoOrganismsPop: 'cryo_organisms',
-            cryoPolymerNetworkPop: 'cryo_polymer_network',
-            thinkingOceanPop: 'thinking_ocean',
-            cryoColloidPop: 'cryo_colloid'
-        };
+        const popMappings = {};
+        for (const solvent in EVOLUTION_GRAPH) {
+            for (const nodeId in EVOLUTION_GRAPH[solvent]) {
+                const node = EVOLUTION_GRAPH[solvent][nodeId];
+                popMappings[node.popKey] = nodeId;
+            }
+        }
 
         for (const [propName, nodeKey] of Object.entries(popMappings)) {
             Object.defineProperty(this, propName, {

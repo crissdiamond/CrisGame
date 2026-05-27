@@ -753,3 +753,42 @@ export function getEvolutionNudge(nodeId, preferredSolvent = null) {
         nodeName: node.name
     };
 }
+
+export function getEvolutionNodes(solvent = null) {
+    if (solvent) {
+        return Object.values(EVOLUTION_GRAPH[solvent] || {});
+    }
+
+    return Object.values(EVOLUTION_GRAPH).flatMap(nodes => Object.values(nodes));
+}
+
+export function getNodeBiomass(biology, node) {
+    if (!biology || !node) return 0.0;
+    if (biology.biomassMap && typeof biology.biomassMap[node.id] === 'number') {
+        return biology.biomassMap[node.id];
+    }
+    return typeof biology[node.popKey] === 'number' ? biology[node.popKey] : 0.0;
+}
+
+export function isNodeUnlocked(biology, node) {
+    if (!biology || !node) return false;
+    if (biology.unlockedMap && typeof biology.unlockedMap[node.id] === 'boolean') {
+        return biology.unlockedMap[node.id];
+    }
+    return getNodeBiomass(biology, node) > 0.0;
+}
+
+export function getUnlockedEvolutionNodes(biology, solvent = null, options = {}) {
+    const { requireBiomass = false } = options;
+    return getEvolutionNodes(solvent).filter(node => {
+        if (!isNodeUnlocked(biology, node)) return false;
+        return !requireBiomass || getNodeBiomass(biology, node) > 0.0;
+    });
+}
+
+export function sumEvolutionBiomass(biology, solvent, predicate) {
+    return getEvolutionNodes(solvent).reduce((sum, node) => {
+        if (!predicate(node)) return sum;
+        return sum + getNodeBiomass(biology, node);
+    }, 0.0);
+}

@@ -1,3 +1,5 @@
+import { getEvolutionNodes, getNodeBiomass } from './evolutionData.js';
+
 /**
  * HistoryRecorder
  *
@@ -84,31 +86,12 @@ export class HistoryRecorder {
         this.series.o2[i] = planet.o2;
         this.latestActiveSolvent = planet.activeSolvent;
 
-        let anaerobicVal = 0.0;
-        let photosyntheticVal = 0.0;
-        let multicellularVal = 0.0;
-        let complexVal = 0.0;
-        let sentientVal = 0.0;
-
-        if (planet.activeSolvent === 'water') {
-            anaerobicVal = biology.anaerobicPop + biology.eukaryoticPop;
-            photosyntheticVal = biology.photosyntheticPop;
-            multicellularVal = biology.multicellularPop + biology.spongesPop + biology.medusesPop + biology.wormsPop;
-            complexVal = biology.fishPop + biology.mossesPop + biology.fernsPop + biology.conifersPop + biology.angiospermsPop + biology.cambrianPop + biology.landPlantsPop + biology.insectsPop + biology.tetrapodPop + biology.sauropsidPop + biology.synapsidPop;
-            sentientVal = biology.cognitiveSpeciesPop + biology.aiPop + biology.cyborgPop + biology.noospherePop + biology.gaiaHivemindPop;
-        } else if (planet.activeSolvent === 'ammonia') {
-            anaerobicVal = biology.ammonicProtoPop;
-            photosyntheticVal = biology.silicoFloraPop;
-            multicellularVal = biology.ammonicMultiPop;
-            complexVal = biology.cryoFaunaPop;
-            sentientVal = biology.crystallineCognitivePop + biology.quantumLatticePop + biology.cryoHivemindPop;
-        } else if (planet.activeSolvent === 'methane') {
-            anaerobicVal = biology.methaneProtoPop;
-            photosyntheticVal = biology.cryoPolymerNetworkPop;
-            multicellularVal = biology.methaneMultiPop;
-            complexVal = biology.cryoOrganismsPop;
-            sentientVal = biology.thinkingOceanPop + biology.cryoColloidPop;
-        }
+        const biomassBuckets = this._getBiomassBuckets(planet.activeSolvent, biology);
+        const anaerobicVal = biomassBuckets.anaerobic;
+        const photosyntheticVal = biomassBuckets.photosynthetic;
+        const multicellularVal = biomassBuckets.multicellular;
+        const complexVal = biomassBuckets.complex;
+        const sentientVal = biomassBuckets.sentient;
 
         this.series.anaerobic[i] = anaerobicVal;
         this.series.photosynthetic[i] = photosyntheticVal;
@@ -127,6 +110,35 @@ export class HistoryRecorder {
             const oldestIdx = this.count < this.capacity ? 0 : this.writeIndex;
             this.firstSimAgeMyr = this.simAges[oldestIdx];
         }
+    }
+
+    _getBiomassBuckets(solvent, biology) {
+        const buckets = {
+            anaerobic: 0.0,
+            photosynthetic: 0.0,
+            multicellular: 0.0,
+            complex: 0.0,
+            sentient: 0.0
+        };
+
+        for (const node of getEvolutionNodes(solvent)) {
+            const biomass = getNodeBiomass(biology, node);
+            if (biomass <= 0) continue;
+
+            if (node.clade === 'Intelligence' || node.clade === 'Technological') {
+                buckets.sentient += biomass;
+            } else if (['Chordata', 'Tetrapoda', 'Diapsida', 'Synapsida', 'Arthropoda', 'Fauna'].includes(node.clade)) {
+                buckets.complex += biomass;
+            } else if (node.clade === 'Metazoa' || node.clade === 'Eukaryota') {
+                buckets.multicellular += biomass;
+            } else if (node.clade === 'Flora' || node.id === 'photosynthetic' || node.id === 'anoxygenic_photo') {
+                buckets.photosynthetic += biomass;
+            } else if (node.clade === 'Prokaryota') {
+                buckets.anaerobic += biomass;
+            }
+        }
+
+        return buckets;
     }
 
     recordEvent(eventObj, simAgeMyr) {
