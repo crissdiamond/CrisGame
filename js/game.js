@@ -33,6 +33,7 @@ export class GameController {
         this.activeSpeed = 1;
         this.speedLockedMessageLogged = false;
         this.popupQueue = [];
+        this.logs = [];
         
         // Time scale: 1 real second = 0.1 Million Years (Myr) * activeSpeed
         this.timeScale = 0.1; 
@@ -43,6 +44,12 @@ export class GameController {
 
         // Initialize bindings and setup initial state
         this.init();
+    }
+
+    logEvent(title, desc, type = 'system', meta = null, timestamp = null) {
+        const ts = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        this.logs.push({ title, desc, type, meta, timestamp: ts });
+        this.ui.logEvent(title, desc, type, meta, ts);
     }
 
     init() {
@@ -63,8 +70,8 @@ export class GameController {
                 
                 const sizeLabel = config.planetSize.toUpperCase();
                 const starLabel = config.starClass.replace('_', ' ').toUpperCase();
-                this.ui.logEvent("PROTOPLANET INJECTED", `Star: ${starLabel} (${config.starSize}x), Orbit: ${config.orbitDistance} AU, Size: ${sizeLabel}`, "success");
-                this.ui.logEvent("ENVIRONMENT DYNAMICS LOCKED", "Direct parameter controls disabled. Manage parameters via Interventions and Hazard deflections.", "system");
+                this.logEvent("PROTOPLANET INJECTED", `Star: ${starLabel} (${config.starSize}x), Orbit: ${config.orbitDistance} AU, Size: ${sizeLabel}`, "success");
+                this.logEvent("ENVIRONMENT DYNAMICS LOCKED", "Direct parameter controls disabled. Manage parameters via Interventions and Hazard deflections.", "system");
                 
                 // Force a render tick
                 this.lastTime = performance.now();
@@ -73,11 +80,11 @@ export class GameController {
             onIntervention: (type) => {
                 const res = this.eventSystem.triggerIntervention(type, this.planet, this.biology);
                 if (res.success) {
-                    this.ui.logEvent(res.title, res.msg, "success");
+                    this.logEvent(res.title, res.msg, "success");
                     this.triggerPopup(res.title, res.msg, res.scientificDetails);
                     this.ui.syncSliders(this.planet);
                 } else {
-                    this.ui.logEvent("INTERVENTION FAILED", res.msg, "hazard");
+                    this.logEvent("INTERVENTION FAILED", res.msg, "hazard");
                 }
                 return res;
             },
@@ -86,12 +93,12 @@ export class GameController {
             onDeflectThreat: (threatId) => {
                 const res = this.eventSystem.deflectWarning(threatId);
                 if (res.success) {
-                    this.ui.logEvent("THREAT AVERTED", res.msg, "success");
+                    this.logEvent("THREAT AVERTED", res.msg, "success");
                     // Immediately refresh the threat panel so the card disappears now,
                     // not on the next animation frame (important when paused).
                     this.ui.updateThreats(this.eventSystem.warnings, this.eventSystem, this.biology, this.planet);
                 } else {
-                    this.ui.logEvent("DEFLECTION FAILED", res.msg, "hazard");
+                    this.logEvent("DEFLECTION FAILED", res.msg, "hazard");
                 }
                 return res;
             },
@@ -102,11 +109,11 @@ export class GameController {
                 if (nudge) {
                     const res = this.eventSystem.nudgeEvolution(nudge.id, nudge.cost, this.biology);
                     if (res.success) {
-                        this.ui.logEvent("EVOLUTION NUDGED", res.msg, "success");
+                        this.logEvent("EVOLUTION NUDGED", res.msg, "success");
                         const nodeLabel = nudge.name || nudge.nodeName;
                         this.ui.showBoostToast(nodeLabel, 5, 3);
                     } else {
-                        this.ui.logEvent("NUDGE FAILED", res.msg, "hazard");
+                        this.logEvent("NUDGE FAILED", res.msg, "hazard");
                         this.ui.showToast(res.msg, "hazard");
                     }
                     return res;
@@ -120,7 +127,7 @@ export class GameController {
                     if (this.eventSystem.tokensBlue >= 50.0) {
                         this.eventSystem.tokensBlue -= 50.0;
                         this.eventSystem.tokensSilver = Math.min(200.0, this.eventSystem.tokensSilver + 1.0);
-                        this.ui.logEvent("TOKEN EXCHANGE", "🔹 Converted 50 Mutagen tokens into 1 Silver Adaptation token.", "success");
+                        this.logEvent("TOKEN EXCHANGE", "🔹 Converted 50 Mutagen tokens into 1 Silver Adaptation token.", "success");
                         return { success: true, msg: "Converted 50 Blue ➔ 1 Silver" };
                     }
                     return { success: false, msg: "Insufficient Mutagen tokens." };
@@ -128,7 +135,7 @@ export class GameController {
                     if (this.eventSystem.tokensSilver >= 50.0) {
                         this.eventSystem.tokensSilver -= 50.0;
                         this.eventSystem.tokensGold = Math.min(50.0, this.eventSystem.tokensGold + 1.0);
-                        this.ui.logEvent("TOKEN EXCHANGE", "⚙️ Converted 50 Adaptation tokens into 1 Gold Deflection token.", "success");
+                        this.logEvent("TOKEN EXCHANGE", "⚙️ Converted 50 Adaptation tokens into 1 Gold Deflection token.", "success");
                         return { success: true, msg: "Converted 50 Silver ➔ 1 Gold" };
                     }
                     return { success: false, msg: "Insufficient Adaptation tokens." };
@@ -211,27 +218,27 @@ export class GameController {
 
             onChangeSpeed: (speed) => {
                 if (this.eventSystem.warnings.length > 0 && speed > 1) {
-                    this.ui.logEvent("SPEED LOCKED", "⚠️ Simulation speed restricted to 1x during active planetary threats.", "hazard");
+                    this.logEvent("SPEED LOCKED", "⚠️ Simulation speed restricted to 1x during active planetary threats.", "hazard");
                     return;
                 }
                 this.userSpeed = speed;
                 this.activeSpeed = speed;
                 this.timeScale = 0.1 * this.activeSpeed;
                 this.ui.updateSpeedControls(this.userSpeed, this.activeSpeed, this.eventSystem.warnings.length > 0);
-                this.ui.logEvent("SPEED ADJUSTED", `Simulation speed set to ${speed}x.`, "system");
+                this.logEvent("SPEED ADJUSTED", `Simulation speed set to ${speed}x.`, "system");
             }
         });
 
         // Log opening console message
-        this.ui.logEvent("CURATOR TERMINAL ONLINE", "Awaiting Protoplanetary Configuration injection from Setup Terminal...", "system");
+        this.logEvent("CURATOR TERMINAL ONLINE", "Awaiting Protoplanetary Configuration injection from Setup Terminal...", "system");
 
         // Scan for saved states
         try {
             if (localStorage.getItem('evoplanet_save')) {
-                this.ui.logEvent("LOCAL SCAN", "Saved state detected. Click 'Load' to restore previous configuration.", "success");
+                this.logEvent("LOCAL SCAN", "Saved state detected. Click 'Load' to restore previous configuration.", "success");
                 this.ui.setupLoadBtn.style.display = 'block';
             } else {
-                this.ui.logEvent("LOCAL SCAN", "No saved states found. Initialize a protoplanet to start.", "system");
+                this.logEvent("LOCAL SCAN", "No saved states found. Initialize a protoplanet to start.", "system");
                 this.ui.setupLoadBtn.style.display = 'none';
             }
         } catch (e) {
@@ -258,14 +265,14 @@ export class GameController {
             if (hasWarnings) {
                 if (this.activeSpeed !== 1) {
                     if (!this.speedLockedMessageLogged) {
-                        this.ui.logEvent("SPEED RESTRICTED", "⚠️ Simulation speed locked to 1x during active planetary threats.", "alert");
+                        this.logEvent("SPEED RESTRICTED", "⚠️ Simulation speed locked to 1x during active planetary threats.", "alert");
                         this.speedLockedMessageLogged = true;
                     }
                     this.activeSpeed = 1;
                 }
             } else {
                 if (this.activeSpeed !== this.userSpeed) {
-                    this.ui.logEvent("SPEED RESTORED", `🟢 Crisis resolved. Restoring simulation speed to ${this.userSpeed}x.`, "success");
+                    this.logEvent("SPEED RESTORED", `🟢 Crisis resolved. Restoring simulation speed to ${this.userSpeed}x.`, "success");
                     this.activeSpeed = this.userSpeed;
                     this.speedLockedMessageLogged = false;
                 }
@@ -299,7 +306,7 @@ export class GameController {
                         rewardText = "+30 Adapt (🥈), +5 Deflect (🛡️)";
                     }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
+                    this.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
                     // Major and Singular breakthroughs always get the popup.
                     // Other 'success' (non-tiered) events keep their existing popup behavior.
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || (evt.type === 'success' && !evt.tier)) {
@@ -331,7 +338,7 @@ export class GameController {
                         rewardText = "+30 Adapt (🥈), +5 Deflect (🛡️)";
                     }
                     this.history.recordEvent(evt, this.planet.age);
-                    this.ui.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
+                    this.logEvent(evt.title, evt.desc, evt.type, { tier: evt.tier, tokens: rewardText });
                     if (evt.tier === 'MAJOR' || evt.tier === 'SINGULAR' || evt.type === 'success' || evt.type === 'hazard' || evt.type === 'alert') {
                         const isDetection = evt.title.includes("DETECTED");
                         const warningMeta = isDetection ? { id: evt.warningId, cost: evt.warningCost } : null;
@@ -382,7 +389,7 @@ export class GameController {
                     }
                     
                     this.visualizer.spawnHotspot(lon, yFactor, value, type);
-                    this.ui.logEvent("BIOSPHERE HOTSPOT", `${symbol} A genetic hotspot emerged, yielding +${value} ${currencyName} Tokens.`, "success");
+                    this.logEvent("BIOSPHERE HOTSPOT", `${symbol} A genetic hotspot emerged, yielding +${value} ${currencyName} Tokens.`, "success");
                 }
             }
         }
@@ -444,7 +451,8 @@ export class GameController {
     saveGame() {
         try {
             const data = {
-                version: 1.0,
+                version: 1.1,
+                saveVersion: 1.1,
                 timestamp: Date.now(),
                 userSpeed: this.userSpeed,
                 isPlaying: this.isPlaying,
@@ -548,19 +556,17 @@ export class GameController {
                     ),
                     markers: this.history.markers.slice(0, this.history.markerCount)
                 },
-                ui: {
-                    scienceLogHTML: this.ui.scienceLog.innerHTML
-                },
+                logs: this.logs,
                 visualizer: {
                     viewMode: this.visualizer.viewMode
                 }
             };
             localStorage.setItem('evoplanet_save', JSON.stringify(data));
-            this.ui.logEvent("STATE ENCRYPTED", "Simulation progress saved successfully to local archives.", "success");
+            this.logEvent("STATE ENCRYPTED", "Simulation progress saved successfully to local archives.", "success");
             this.ui.showToast("Simulation progress saved successfully!", "success");
         } catch (err) {
             console.error("Save state failed:", err);
-            this.ui.logEvent("SAVE FAILED", "Storage error encountered during serialization.", "hazard");
+            this.logEvent("SAVE FAILED", "Storage error encountered during serialization.", "hazard");
             this.ui.showToast("Save progress failed!", "hazard");
         }
     }
@@ -569,11 +575,41 @@ export class GameController {
         try {
             const raw = localStorage.getItem('evoplanet_save');
             if (!raw) {
-                this.ui.logEvent("RESTORE FAILED", "No saved state detected in local storage.", "hazard");
+                this.logEvent("RESTORE FAILED", "No saved state detected in local storage.", "hazard");
                 this.ui.showToast("No saved game state detected!", "hazard");
                 return;
             }
             const data = JSON.parse(raw);
+
+            // Validation: Ensure main sections exist and are valid objects
+            if (!data || typeof data !== 'object') {
+                throw new Error("Save data is not a valid object.");
+            }
+            if (!data.planet || typeof data.planet !== 'object') {
+                throw new Error("Planet parameters missing or corrupted.");
+            }
+            if (!data.biology || typeof data.biology !== 'object') {
+                throw new Error("Biology parameters missing or corrupted.");
+            }
+            if (!data.eventSystem || typeof data.eventSystem !== 'object') {
+                throw new Error("Event parameters missing or corrupted.");
+            }
+            if (!data.history || typeof data.history !== 'object') {
+                throw new Error("History telemetry parameters missing or corrupted.");
+            }
+
+            // Sanitize planet numeric properties to prevent NaNs or non-finite values
+            const criticalPlanetKeys = ['temperature', 'waterCoverage', 'ammoniaCoverage', 'methaneCoverage', 'radiation', 'age'];
+            for (const key of criticalPlanetKeys) {
+                if (data.planet[key] !== undefined) {
+                    const val = Number(data.planet[key]);
+                    if (!Number.isFinite(val)) {
+                        data.planet[key] = key === 'temperature' ? 15.0 : (key === 'waterCoverage' ? 30.0 : 0.0);
+                    } else {
+                        data.planet[key] = val;
+                    }
+                }
+            }
 
             if (typeof data.isPlaying === 'boolean') {
                 this.isPlaying = data.isPlaying;
@@ -697,14 +733,27 @@ export class GameController {
             
             // Reconstruct markers array
             this.history.markers = new Array(this.history.markerCapacity);
-            data.history.markers.forEach((m, idx) => {
-                if (m) this.history.markers[idx] = m;
-            });
+            if (data.history.markers && Array.isArray(data.history.markers)) {
+                data.history.markers.forEach((m, idx) => {
+                    if (m) this.history.markers[idx] = m;
+                });
+            }
 
             // Restore UI and Visuals
-            this.ui.scienceLog.innerHTML = data.ui.scienceLogHTML;
-            this.visualizer.setViewMode(data.visualizer.viewMode);
-            this.ui.updateViewModeLabel(data.visualizer.viewMode);
+            this.ui.clearLog();
+            this.logs = [];
+            if (data.logs && Array.isArray(data.logs)) {
+                this.logs = data.logs;
+                this.logs.forEach(log => {
+                    this.ui.logEvent(log.title, log.desc, log.type, log.meta, log.timestamp);
+                });
+            } else if (data.ui && typeof data.ui.scienceLogHTML === 'string') {
+                this.ui.scienceLog.innerHTML = data.ui.scienceLogHTML;
+            }
+
+            const viewMode = (data.visualizer && data.visualizer.viewMode) || 'planet';
+            this.visualizer.setViewMode(viewMode);
+            this.ui.updateViewModeLabel(viewMode);
             
             // Sync dashboard & controls
             this.ui.syncSliders(this.planet);
@@ -717,11 +766,11 @@ export class GameController {
             this.ui.updateDashboard(this.planet, this.biology);
             this.historyView.render();
 
-            this.ui.logEvent("STATE RESTORED", "Simulation state successfully synchronized to local storage archive.", "success");
+            this.logEvent("STATE RESTORED", "Simulation state successfully synchronized to local storage archive.", "success");
             this.ui.showToast("Simulation progress loaded successfully!", "success");
         } catch (err) {
             console.error("Load state failed:", err);
-            this.ui.logEvent("RECOVERY ERROR", "Saved file corrupted or incompatible.", "hazard");
+            this.logEvent("RECOVERY ERROR", "Saved file corrupted or incompatible.", "hazard");
             this.ui.showToast("Load progress failed!", "hazard");
         }
     }

@@ -72,6 +72,7 @@
   - The simulation can advance for a small number of ticks without throwing errors.
 
 #### 6. Add save/load migration and validation
+- Status: Completed 2026-05-27. Added payload validation, sanitization of critical parameters, version checking, and non-crashing recovery warnings.
 - Save structured state, not raw or fragile UI representations where avoidable.
 - Add a `saveVersion` field.
 - Validate loaded state before applying it.
@@ -82,6 +83,7 @@
   - Save/load restores planet, biology, event, token, history, and timeline state consistently.
 
 #### 7. Replace saved `scienceLogHTML` with structured log entries
+- Status: Completed 2026-05-27. Replaced DOM HTML serialization with a structured `logs` array, populated dynamically via `GameController`, and added fallback shims for legacy v1.0 HTML logs.
 - Store log entries as structured data:
   - timestamp / simulation age;
   - title;
