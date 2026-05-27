@@ -693,6 +693,7 @@ export const TRANSITION_TO_NODE_ID = {
     seed_evolution: 'conifers',
     angiosperms: 'angiosperms',
     arthropods: 'insects',
+    amniotic_egg: 'tetrapods',
     tetrapods: 'tetrapods',
     scales: 'sauropsids',
     endthermy: 'synapsids',
