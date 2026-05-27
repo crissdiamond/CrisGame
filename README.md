@@ -2,6 +2,9 @@
 
 `Planet Cris` is a real-time, scientifically detailed, and interactive planetary laboratory simulator. Play the role of a planetary curator by managing stellar configurations, environmental pressures, solvent coverages, and chemical feedback loops to guide life from prebiotic chemistry to complex multicellularity, advanced intelligence, and post-biological networks.
 
+> [!NOTE]
+> For a complete, mathematically rigorous breakdown of all the physical, chemical, and biological formulas running under the hood (along with their real-world scientific theories), check out the [SCIENCE.md](file:///home/diamond/CrisGame/SCIENCE.md) guide.
+
 ---
 
 ## 1. Advanced Physical & Geological Cycles
@@ -109,6 +112,7 @@ CrisGame/
 ├── index.html           # Main lab dashboard layout
 ├── LICENCE              # MIT License
 ├── README.md            # Scientific documentation and user guide
+├── SCIENCE.md           # Mathematical formulas and astrobiological equations reference
 ├── TODO.md              # Feature roadmap and implementation details
 ├── EVOLUTION_DESIGNS.md # Phylogenetic graph database design blueprint
 ├── server.py            # Simple Python developmental server
