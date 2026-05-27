@@ -2418,4 +2418,134 @@ body {
     transform: none;
 }
 
+/* Biomass Details Modal Custom CSS */
+.biomass-modal-content {
+    width: 90vw;
+    max-width: 480px;
+    text-align: left !important;
+    padding: 2rem;
+    border: 1px solid rgba(0, 242, 254, 0.3) !important;
+    box-shadow: 0 12px 40px rgba(0, 242, 254, 0.25) !important;
+}
+
+.biomass-stats-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+.biomass-stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.biomass-stats-label {
+    color: var(--text-muted);
+}
+
+.biomass-stats-value {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.biomass-section-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--accent-cyan);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.biomass-desc {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    font-style: italic;
+}
+
+.biomass-scientific {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.75rem;
+    border-left: 2px solid var(--accent-cyan);
+    border-radius: 0 6px 6px 0;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.viability-factors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.viability-factor-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.factor-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.factor-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.factor-pct {
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+
+.factor-bar-container {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.factor-bar-fill {
+    height: 100%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.factor-details {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: left;
+}
+
+/* Hover effects for active metric cards */
+.metric-card {
+    transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+    cursor: pointer;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 242, 254, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.15) !important;
+}
+
 

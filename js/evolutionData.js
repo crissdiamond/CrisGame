@@ -672,6 +672,74 @@ export const EVOLUTION_GRAPH = {
     }
 };
 
+// ---------------------------------------------------------------------------
+// Scientific Evolutionary and Thermodynamic Constraints per Species
+// ---------------------------------------------------------------------------
+const EVOL_PARAMS = {
+    // --- Water Line (Standard Biochemistry) ---
+    soup: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    membrane: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    bacteria: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    anaerobic: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    anoxygenic_photo: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    photosynthetic: { evolvability: 1.0, thermalCap: 90.0, minThermalCap: 0.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    nucleus: { evolvability: 0.4, thermalCap: 60.0, minThermalCap: 0.0, radiationToleranceCap: 0.60, radDivisor: 4.0 },
+    mitochondria: { evolvability: 0.4, thermalCap: 60.0, minThermalCap: 0.0, radiationToleranceCap: 0.60, radDivisor: 4.0 },
+    eukaryotes: { evolvability: 0.4, thermalCap: 60.0, minThermalCap: 0.0, radiationToleranceCap: 0.60, radDivisor: 4.0 },
+    sexual: { evolvability: 0.4, thermalCap: 60.0, minThermalCap: 0.0, radiationToleranceCap: 0.60, radDivisor: 4.0 },
+    multicellular: { evolvability: 0.15, thermalCap: 55.0, minThermalCap: 0.0, radiationToleranceCap: 0.50, radDivisor: 3.5 },
+    algae: { evolvability: 0.15, thermalCap: 55.0, minThermalCap: 0.0, radiationToleranceCap: 0.85, radDivisor: 4.0 },
+    sponges: { evolvability: 0.05, thermalCap: 48.0, minThermalCap: 0.0, radiationToleranceCap: 0.40, radDivisor: 3.0 },
+    meduses: { evolvability: 0.05, thermalCap: 48.0, minThermalCap: 0.0, radiationToleranceCap: 0.40, radDivisor: 2.8 },
+    worms: { evolvability: 0.05, thermalCap: 48.0, minThermalCap: 0.0, radiationToleranceCap: 0.40, radDivisor: 2.8 },
+    fish: { evolvability: 0.02, thermalCap: 45.0, minThermalCap: 0.0, radiationToleranceCap: 0.30, radDivisor: 2.5 },
+    cambrian: { evolvability: 0.05, thermalCap: 48.0, minThermalCap: 0.0, radiationToleranceCap: 0.40, radDivisor: 2.8 },
+    mosses: { evolvability: 0.05, thermalCap: 50.0, minThermalCap: 0.0, radiationToleranceCap: 0.50, radDivisor: 3.0 },
+    ferns: { evolvability: 0.05, thermalCap: 50.0, minThermalCap: 0.0, radiationToleranceCap: 0.50, radDivisor: 3.0 },
+    conifers: { evolvability: 0.02, thermalCap: 50.0, minThermalCap: -15.0, radiationToleranceCap: 0.40, radDivisor: 2.5 },
+    angiosperms: { evolvability: 0.02, thermalCap: 50.0, minThermalCap: 0.0, radiationToleranceCap: 0.40, radDivisor: 2.5 },
+    insects: { evolvability: 0.05, thermalCap: 48.0, minThermalCap: 0.0, radiationToleranceCap: 0.50, radDivisor: 3.0 },
+    tetrapods: { evolvability: 0.02, thermalCap: 45.0, minThermalCap: 0.0, radiationToleranceCap: 0.30, radDivisor: 2.5 },
+    sauropsids: { evolvability: 0.01, thermalCap: 45.0, minThermalCap: 0.0, radiationToleranceCap: 0.25, radDivisor: 2.0 },
+    synapsids: { evolvability: 0.01, thermalCap: 45.0, minThermalCap: -5.0, radiationToleranceCap: 0.25, radDivisor: 2.0 },
+    cognitive: { evolvability: 0.005, thermalCap: 45.0, minThermalCap: 0.0, radiationToleranceCap: 0.25, radDivisor: 2.0 },
+    cyborg: { evolvability: 0.5, thermalCap: 80.0, minThermalCap: 0.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+    ai: { evolvability: 0.5, thermalCap: 80.0, minThermalCap: 0.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+    noosphere: { evolvability: 0.5, thermalCap: 80.0, minThermalCap: 0.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+    gaia_hivemind: { evolvability: 0.5, thermalCap: 80.0, minThermalCap: 0.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+
+    // --- Ammonia Line (Cryogenic Worlds) ---
+    ammonic_soup: { evolvability: 1.0, thermalCap: -10.0, minThermalCap: -90.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    ammonic_proto: { evolvability: 1.0, thermalCap: -10.0, minThermalCap: -90.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    ammonic_multi: { evolvability: 0.15, thermalCap: -25.0, minThermalCap: -90.0, radiationToleranceCap: 0.50, radDivisor: 3.5 },
+    silico_flora: { evolvability: 0.05, thermalCap: -20.0, minThermalCap: -90.0, radiationToleranceCap: 0.50, radDivisor: 3.0 },
+    cryo_fauna: { evolvability: 0.02, thermalCap: -25.0, minThermalCap: -90.0, radiationToleranceCap: 0.30, radDivisor: 2.5 },
+    crystalline_cognitive: { evolvability: 0.005, thermalCap: -25.0, minThermalCap: -90.0, radiationToleranceCap: 0.25, radDivisor: 2.0 },
+    quantum_lattices: { evolvability: 0.5, thermalCap: -15.0, minThermalCap: -90.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+    cryo_hivemind: { evolvability: 0.5, thermalCap: -15.0, minThermalCap: -90.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+
+    // --- Methane Line (Titan-like Worlds) ---
+    methane_soup: { evolvability: 1.0, thermalCap: -130.0, minThermalCap: -190.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    methane_proto: { evolvability: 1.0, thermalCap: -130.0, minThermalCap: -190.0, radiationToleranceCap: 0.90, radDivisor: 6.0 },
+    methane_multi: { evolvability: 0.15, thermalCap: -140.0, minThermalCap: -190.0, radiationToleranceCap: 0.50, radDivisor: 3.5 },
+    cryo_organisms: { evolvability: 0.02, thermalCap: -140.0, minThermalCap: -190.0, radiationToleranceCap: 0.30, radDivisor: 2.5 },
+    cryo_polymer_network: { evolvability: 0.05, thermalCap: -135.0, minThermalCap: -190.0, radiationToleranceCap: 0.50, radDivisor: 3.0 },
+    thinking_ocean: { evolvability: 0.5, thermalCap: -120.0, minThermalCap: -190.0, radiationToleranceCap: 0.95, radDivisor: 5.0 },
+    cryo_colloid: { evolvability: 0.5, thermalCap: -120.0, minThermalCap: -190.0, radiationToleranceCap: 0.95, radDivisor: 5.0 }
+};
+
+// Enrich EVOLUTION_GRAPH nodes dynamically
+for (const [solvent, nodes] of Object.entries(EVOLUTION_GRAPH)) {
+    for (const [id, node] of Object.entries(nodes)) {
+        const params = EVOL_PARAMS[id] || { evolvability: 0.1, thermalCap: 50.0, minThermalCap: 0.0, radiationToleranceCap: 0.50, radDivisor: 4.0 };
+        node.evolvability = params.evolvability;
+        node.thermalCap = params.thermalCap;
+        node.minThermalCap = params.minThermalCap;
+        node.radiationToleranceCap = params.radiationToleranceCap;
+        node.radDivisor = params.radDivisor;
+    }
+}
+
 export const TRANSITION_TO_NODE_ID = {
     // Water line
     soup: 'soup',

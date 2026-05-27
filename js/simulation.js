@@ -1,4 +1,5 @@
 import { EVOLUTION_GRAPH, getEvolutionNode, getNodeIdForTransition } from './evolutionData.js';
+import { EvolutionEngine } from './evolutionEngine.js';
 
 /**
  * Handles the biological progression calculations for three solvent systems:
@@ -164,7 +165,7 @@ export class BiologySimulation {
         this.pendingNudges = {};
 
         // General Mutation / Adaptation Level
-        this.radiationResistance = 0.1;
+        this._radiationResistance = 0.1;
         this.unlockAges = {};
 
         // --- Stability Gate ---
@@ -175,9 +176,13 @@ export class BiologySimulation {
         this.radiationDefenseLevel = 0;
         this.metabolicEfficiencyLevel = 0;
 
+        // Instantiate Trait-Based Evolution and Natural Selection Engine
+        this.evolutionEngine = new EvolutionEngine();
+
         // --- Legacy/dummy attributes ---
         this.chemoProkaryotePop = 0.0;
         this.unlockedChemoProkaryote = false;
+        this.popChangeRates = {};
     }
 
     /**
@@ -216,12 +221,11 @@ export class BiologySimulation {
         const node = getEvolutionNode(nodeId, planet.activeSolvent);
         const nudge = this.pendingNudges[transitionKey] || (node?.nudge && this.pendingNudges[node.nudge.id]);
         const nudgeMult = nudge ? nudge.multiplier : 1.0;
-
         let sexBoost = 1.0;
         if (this.unlockedSexualReproduction) {
             const earlyKeys = ['soup', 'anaerobic', 'photosynthesis', 'nucleus', 'endosymbiosis', 'sexual_reproduction', 'ammonic_soup', 'ammonic_proto', 'methane_soup', 'methane_proto'];
             if (!earlyKeys.includes(transitionKey)) {
-                sexBoost = 1.30; // 30% speed boost from genetic recombination
+                sexBoost = 1.30;
             }
         }
 
@@ -243,7 +247,6 @@ export class BiologySimulation {
                 this.unlockedMap['eukaryotes'] = true;
             }
         }
-
         return success;
     }
 
@@ -251,10 +254,25 @@ export class BiologySimulation {
      * Compute biological updates over one simulation step
      */
     update(tickRate, planet) {
+        this.currentSimulatingNodeId = null;
+        // Run selection pressures and genotype evolution
+        this.evolutionEngine.update(planet, this, tickRate);
+
+        const prevBiomass = { ...this.biomassMap };
         this._decayPendingNudges(tickRate);
 
         const effRad = planet.getEffectiveRadiation() * Math.max(0.2, 1.0 - this.radiationDefenseLevel * 0.15);
-        const effDecayMult = Math.max(0.25, 1.0 - this.metabolicEfficiencyLevel * 0.15);
+        const baseDecayMult = Math.max(0.25, 1.0 - this.metabolicEfficiencyLevel * 0.15);
+        const effDecayMult = {
+            valueOf: () => {
+                if (this.currentSimulatingNodeId) {
+                    const genotype = this.evolutionEngine.getGenotype(this.currentSimulatingNodeId);
+                    const resEff = genotype ? genotype.resourceEfficiency : 1.0;
+                    return baseDecayMult / resEff;
+                }
+                return baseDecayMult;
+            }
+        };
 
         const events = [];
         let o2Prod = 0;
@@ -318,6 +336,8 @@ export class BiologySimulation {
                 }
             }
 
+            const soupSnapshot = this.organicSoup;
+
             // Bacteria / Archea (strict anaerobes)
             if (this.unlockedMembrane && this.organicSoup > 15.0 && this.anaerobicPop === 0) {
                 // Abiogenesis-equivalent. Condition richness from soup concentration.
@@ -338,6 +358,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'anaerobic';
             if (this.anaerobicPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 0, 45, 80);
                 const o2Toxicity = Math.max(0.01, 1 - (planet.o2 / 25.0));
@@ -345,7 +366,7 @@ export class BiologySimulation {
                 const totalViability = tempViability * o2Toxicity * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
+                    const nutrientFactor = Math.min(1.0, soupSnapshot / 20.0);
                     // Apply upgrade factors: thermal resilience multiplier
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
                     const nudgeMult = this.getNudgeGrowthMultiplier('anaerobic', planet.activeSolvent);
@@ -362,13 +383,14 @@ export class BiologySimulation {
             if (this.unlockedBacteria && this.bacteriaPop === 0) {
                 this.bacteriaPop = 0.1;
             }
+            this.currentSimulatingNodeId = 'bacteria';
             if (this.bacteriaPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 0, 45, 80);
                 const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 6.0);
                 const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
+                    const nutrientFactor = Math.min(1.0, soupSnapshot / 20.0);
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
                     const nudgeMult = this.getNudgeGrowthMultiplier('bacteria', planet.activeSolvent);
                     const growthRate = 1.4 * totalViability * nutrientFactor * traitMult * nudgeMult;
@@ -399,13 +421,14 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'anoxygenic_photo';
             if (this.anoxygenicPhotoPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 35, 70);
                 const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 5.0);
                 const totalViability = tempViability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const nutrientFactor = Math.min(1.0, this.organicSoup / 15.0);
+                    const nutrientFactor = Math.min(1.0, soupSnapshot / 15.0);
                     const traitMult = 1.0 + (this.thermalResilienceLevel * 0.1);
                     const nudgeMult = this.getNudgeGrowthMultiplier('anoxygenic_photo', planet.activeSolvent);
                     const growthRate = 1.1 * totalViability * nutrientFactor * co2Viability * traitMult * nudgeMult;
@@ -455,6 +478,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'photosynthetic';
             if (this.photosyntheticPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 30, 60);
                 const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 5.0);
@@ -519,10 +543,11 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'eukaryotes';
             if (this.eukaryoticPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 25, 50);
                 const o2Viability = Math.min(1.0, planet.o2 / 5.0);
-                const radViability = Math.max(0, 1 - effRad / 4.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 4.0);
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
@@ -574,9 +599,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'multicellular';
             if (this.multicellularPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 22, 42);
-                const radViability = Math.max(0, 1 - effRad / 3.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 3.0);
                 const o2Viability = Math.min(1.0, planet.o2 / 12.0);
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
@@ -608,9 +634,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'algae';
             if (this.algaePop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 45);
-                const radViability = Math.max(0, 1 - effRad / 4.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 4.0);
                 const co2Viability = clamp01(planet.co2 / 2.0);
                 const totalViability = tempViability * radViability * co2Viability * (planet.waterCoverage / 100);
 
@@ -642,9 +669,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'sponges';
             if (this.spongesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 22, 40);
-                const radViability = Math.max(0, 1 - effRad / 2.8);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.8);
                 const o2Viability = Math.min(1.0, planet.o2 / 10.0);
                 const totalViability = tempViability * radViability * o2Viability * (planet.waterCoverage / 100);
 
@@ -674,6 +702,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'meduses';
             if (this.medusesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 10, 22, 38);
                 const o2Viability = Math.min(1.0, planet.o2 / 12.0);
@@ -704,6 +733,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'worms';
             if (this.wormsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 8, 20, 38);
                 const o2Viability = Math.min(1.0, planet.o2 / 14.0);
@@ -734,6 +764,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'fish';
             if (this.fishPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 8, 20, 36);
                 const o2Viability = Math.min(1.0, planet.o2 / 15.0);
@@ -765,10 +796,11 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cambrian';
             if (this.cambrianPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 8, 20, 38);
                 const o2Viability = Math.min(1.0, planet.o2 / 18.0);
-                const radViability = Math.max(0, 1 - effRad / 2.5);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.5);
                 const totalViability = tempViability * o2Viability * radViability * (planet.waterCoverage / 100);
 
                 if (totalViability > 0.05) {
@@ -798,9 +830,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'mosses';
             if (this.mossesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 0, 20, 38);
-                const radViability = Math.max(0, 1 - effRad / 2.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.0);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -830,9 +863,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'ferns';
             if (this.fernsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 2, 22, 40);
-                const radViability = Math.max(0, 1 - effRad / 2.2);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.2);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -862,9 +896,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'conifers';
             if (this.conifersPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -10, 18, 36);
-                const radViability = Math.max(0, 1 - effRad / 2.5);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -894,9 +929,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'angiosperms';
             if (this.angiospermsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 42);
-                const radViability = Math.max(0, 1 - effRad / 2.5);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.5);
                 const landViability = (100 - planet.waterCoverage) / 100;
                 const totalViability = tempViability * radViability * landViability * nitrogenViability * co2Viability;
 
@@ -930,10 +966,11 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'insects';
             if (this.insectsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 24, 42);
                 const foodViability = Math.min(1.0, this.mossesPop / 20.0);
-                const radViability = Math.max(0, 1 - effRad / 2.2);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.2);
                 const sizeScale = planet.o2 > 25.0 ? 1.5 : 1.0;
                 const totalViability = tempViability * foodViability * radViability * sizeScale;
 
@@ -966,11 +1003,12 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'tetrapods';
             if (this.tetrapodPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 8, 22, 38);
                 const plantViability = Math.min(1.0, this.mossesPop / 30.0);
                 const o2Viability = planet.o2 >= 15.0 ? 1.0 : planet.o2 / 15.0;
-                const radViability = Math.max(0, 1 - effRad / 2.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.0);
                 const totalViability = tempViability * plantViability * o2Viability * radViability;
 
                 if (totalViability > 0.05) {
@@ -1078,10 +1116,11 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cognitive';
             if (this.cognitiveSpeciesPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 20, 35);
                 const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 30.0);
-                const radViability = Math.max(0, 1 - effRad / 2.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.0);
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
@@ -1113,7 +1152,7 @@ export class BiologySimulation {
             if (this.aiPop > 0) {
                 // AI does not require oxygen or food, but requires stable magnetic field to shield microprocessors!
                 const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
-                const radViability = Math.max(0.1, 1 - effRad / 4.0); // radiation harms circuitry
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 4.0); // radiation harms circuitry
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
@@ -1143,10 +1182,11 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cyborg';
             if (this.cyborgPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 20, 38);
                 const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 20.0 + 0.3); // partly machine, less reliant on food
-                const radViability = Math.max(0.1, 1 - effRad / 3.0); // shielding makes them radiation resistant
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 3.0); // shielding makes them radiation resistant
                 const totalViability = tempViability * foodViability * radViability;
 
                 if (totalViability > 0.05) {
@@ -1175,9 +1215,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'noosphere';
             if (this.noospherePop > 0) {
                 const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.2;
-                const radViability = Math.max(0.05, 1 - effRad / 5.0);
+                const radViability = Math.max(0.05, 1 - (effRad * (1 - this.radiationResistance)) / 5.0);
                 const totalViability = magnetShieldFactor * radViability;
 
                 if (totalViability > 0.05) {
@@ -1207,6 +1248,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'gaia_hivemind';
             if (this.gaiaHivemindPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, 5, 22, 45);
                 const moistureViability = planet.waterCoverage > 15.0 ? 1.0 : (planet.waterCoverage / 15.0);
@@ -1224,6 +1266,7 @@ export class BiologySimulation {
 
             // Homeostatic oxygen stabilization feedback from Gaia
             let o2ProdRaw = 0;
+            this.currentSimulatingNodeId = 'gaia_hivemind';
             if (this.gaiaHivemindPop > 0) {
                 if (planet.co2 > 1.0) {
                     o2ProdRaw = (this.photosyntheticPop * 0.06 + this.algaePop * 0.08 + this.landPlantsPop * 0.12 + this.gaiaHivemindPop * 0.15) * co2Viability;
@@ -1324,6 +1367,8 @@ export class BiologySimulation {
                 this.ammonicSoup = Math.max(0, this.ammonicSoup - this.ammonicSoup * 0.05 * tickRate);
             }
 
+            const ammoniaSoupSnapshot = this.ammonicSoup;
+
             // Ammonic Anaerobes
             if (this.unlockedAmmonicSoup && this.ammonicSoup > 10.0 && this.ammonicProtoPop === 0) {
                 if (this.tryFire('ammonic_proto', RARITY.NOTABLE, 1.0, tickRate, planet)) {
@@ -1341,12 +1386,13 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'ammonic_proto';
             if (this.ammonicProtoPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -80, -50, -30);
                 const totalViability = tempViability * (planet.ammoniaCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const nutrientFactor = Math.min(1.0, this.ammonicSoup / 20.0);
+                    const nutrientFactor = Math.min(1.0, ammoniaSoupSnapshot / 20.0);
                     const nudgeMult = this.getNudgeGrowthMultiplier('ammonic_proto', planet.activeSolvent);
                     const dPop = 1.0 * totalViability * nutrientFactor * this.ammonicProtoPop * (1 - this.ammonicProtoPop / 120.0) * nudgeMult * tickRate;
                     this.ammonicProtoPop = Math.max(0.01, this.ammonicProtoPop + dPop);
@@ -1373,9 +1419,10 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'ammonic_multi';
             if (this.ammonicMultiPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -78, -55, -33);
-                const radViability = Math.max(0, 1 - effRad / 3.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 3.0);
                 const totalViability = tempViability * radViability * (planet.ammoniaCoverage / 100);
 
                 if (totalViability > 0.05) {
@@ -1404,6 +1451,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'silico_flora';
             if (this.silicoFloraPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -85, -60, -35);
                 const landViability = (100 - planet.ammoniaCoverage) / 100;
@@ -1435,6 +1483,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cryo_fauna';
             if (this.cryoFaunaPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -80, -58, -35);
                 const plantFood = Math.min(1.0, this.silicoFloraPop / 25.0);
@@ -1466,6 +1515,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'crystalline_cognitive';
             if (this.crystallineCognitivePop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -80, -60, -40);
                 const totalViability = tempViability * Math.min(1.0, this.cryoFaunaPop / 20.0);
@@ -1496,6 +1546,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'quantum_lattices';
             if (this.quantumLatticePop > 0) {
                 // Must be cold to maintain superconductivity!
                 const tempViability = this.getTempViability(planet.temperature, -100, -65, -45); // dies if it warms up past -45°C
@@ -1527,6 +1578,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cryo_hivemind';
             if (this.cryoHivemindPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -80, -58, -30);
                 const ammoniaViability = planet.ammoniaCoverage > 15.0 ? 1.0 : (planet.ammoniaCoverage / 15.0);
@@ -1554,6 +1606,7 @@ export class BiologySimulation {
 
             // Ammonic life produces N2 as photosynthesis byproduct, boosted by Cryo Hivemind
             let n2ProdRaw = 0;
+            this.currentSimulatingNodeId = 'cryo_hivemind';
             if (this.cryoHivemindPop > 0) {
                 n2ProdRaw = this.ammonicProtoPop * 0.05 + this.silicoFloraPop * 0.1 + this.cryoHivemindPop * 0.12;
             } else {
@@ -1595,6 +1648,8 @@ export class BiologySimulation {
                 this.methaneSoup = Math.max(0, this.methaneSoup - this.methaneSoup * 0.05 * tickRate);
             }
 
+            const methaneSoupSnapshot = this.methaneSoup;
+
             // Methanotrophic Proto-cells — MAJOR (azotosome stability hypothetical).
             if (this.unlockedMethaneSoup && this.methaneSoup > 10.0 && this.methaneProtoPop === 0) {
                 if (this.tryFire('methane_proto', RARITY.MAJOR, 1.0, tickRate, planet)) {
@@ -1612,12 +1667,13 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'methane_proto';
             if (this.methaneProtoPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -185, -160, -140);
                 const totalViability = tempViability * (planet.methaneCoverage / 100);
 
                 if (totalViability > 0.05) {
-                    const nutrientFactor = Math.min(1.0, this.methaneSoup / 20.0);
+                    const nutrientFactor = Math.min(1.0, methaneSoupSnapshot / 20.0);
                     const nudgeMult = this.getNudgeGrowthMultiplier('methane_proto', planet.activeSolvent);
                     const dPop = 0.9 * totalViability * nutrientFactor * nudgeMult * this.methaneProtoPop * (1 - this.methaneProtoPop / 100.0) * tickRate;
                     this.methaneProtoPop = Math.max(0.01, this.methaneProtoPop + dPop);
@@ -1644,6 +1700,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'methane_multi';
             if (this.methaneMultiPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -183, -160, -140);
                 const totalViability = tempViability * (planet.methaneCoverage / 100);
@@ -1674,6 +1731,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cryo_organisms';
             if (this.cryoOrganismsPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -183, -162, -140);
                 const landViability = (100 - planet.methaneCoverage) / 100;
@@ -1705,6 +1763,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cryo_polymer_network';
             if (this.cryoPolymerNetworkPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -185, -165, -145);
                 const totalViability = tempViability;
@@ -1735,6 +1794,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'thinking_ocean';
             if (this.thinkingOceanPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -185, -165, -145);
                 const coverageViability = planet.methaneCoverage / 100;
@@ -1766,6 +1826,7 @@ export class BiologySimulation {
                 }
             }
 
+            this.currentSimulatingNodeId = 'cryo_colloid';
             if (this.cryoColloidPop > 0) {
                 const tempViability = this.getTempViability(planet.temperature, -183, -162, -140);
                 const h2Viability = Math.min(1.0, planet.h2 / 15.0);
@@ -1854,17 +1915,263 @@ export class BiologySimulation {
             }
         }
 
+        this.popChangeRates = {};
+        for (const nodeId in this.biomassMap) {
+            const prev = prevBiomass[nodeId] || 0;
+            const current = this.biomassMap[nodeId] || 0;
+            this.popChangeRates[nodeId] = (current - prev) / (tickRate || 1.0);
+        }
+
+        this.currentSimulatingNodeId = null;
         return {
             events,
             biologicalImpact
         };
     }
 
+    getViabilityFactors(nodeId, planet) {
+        this.currentSimulatingNodeId = nodeId;
+        const factors = [];
+        const effRad = planet.getEffectiveRadiation() * Math.max(0.2, 1.0 - this.radiationDefenseLevel * 0.15);
+        const isWater = planet.activeSolvent === 'water';
+        const isAmmonia = planet.activeSolvent === 'ammonia';
+        const isMethane = planet.activeSolvent === 'methane';
+
+        // Helper to push a factor description
+        const addFactor = (name, value, details) => {
+            factors.push({ name, value: Math.max(0, Math.min(1, value)), details });
+        };
+
+        if (isWater) {
+            if (nodeId === 'soup') {
+                if (planet.temperature > 10 && planet.temperature < 90 && planet.waterCoverage > 10) {
+                    const tempFactor = 1 - Math.abs(planet.temperature - 50) / 45;
+                    const radFactor = Math.min(2.0, planet.radiation * 0.4);
+                    addFactor("Temperature", tempFactor, `Optimal range 50°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                    addFactor("Solar Radiation", Math.min(1, radFactor), `Radiolysis synthesizes organics. Current: ${planet.radiation.toFixed(1)} rad/s`);
+                    addFactor("Water Coverage", planet.waterCoverage / 100, `Requires liquid water. Current: ${planet.waterCoverage.toFixed(1)}%`);
+                } else {
+                    addFactor("Global Habitat", 0, "Liquid water or temperature outside 10°C - 90°C bounds.");
+                }
+            } else if (nodeId === 'anaerobic') {
+                const tempFactor = this.getTempViability(planet.temperature, 15, 45, 80);
+                const o2Toxicity = Math.max(0.01, 1 - planet.o2 / 25.0);
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 6.0);
+                const nutrientFactor = Math.min(1.0, this.organicSoup / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal 45°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen Toxicity", o2Toxicity, `Poisoned by oxygen levels > 25%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Radiation Resilience", radViability, `Current surface radiation: ${effRad.toFixed(1)} rad/s`);
+                addFactor("Organic Soup Abundance", nutrientFactor, `Requires prebiotic nutrients. Current: ${this.organicSoup.toFixed(1)} ppm`);
+            } else if (nodeId === 'photosynthetic') {
+                const tempFactor = this.getTempViability(planet.temperature, 10, 35, 70);
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 6.0);
+                const nutrientFactor = Math.min(1.0, this.organicSoup / 20.0);
+                addFactor("Temperature", tempFactor, `Optimal 35°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Sunlight & Water", planet.waterCoverage / 100, `Requires ocean surface water. Current: ${planet.waterCoverage.toFixed(1)}%`);
+                addFactor("Radiation Mutation Rate", radViability, `Current surface radiation: ${effRad.toFixed(1)} rad/s`);
+                addFactor("Organic Soup Abundance", nutrientFactor, `Requires prebiotic nutrients. Current: ${this.organicSoup.toFixed(1)} ppm`);
+            } else if (nodeId === 'eukaryotes') {
+                const tempFactor = this.getTempViability(planet.temperature, 5, 25, 50);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 2.0);
+                const o2Viability = planet.o2 >= 15.0 ? 1.0 : (planet.o2 / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal 25°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen Level", o2Viability, `Requires O₂ >= 15.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Radiation Shielding", radViability, `Highly vulnerable to radiation. Current: ${effRad.toFixed(1)} rad/s`);
+            } else if (['sponges', 'meduses', 'worms', 'fish', 'cambrian'].includes(nodeId)) {
+                const tempRange = {
+                    sponges: { min: 5, opt: 25, max: 45 },
+                    meduses: { min: 8, opt: 25, max: 45 },
+                    worms: { min: 5, opt: 22, max: 45 },
+                    fish: { min: 4, opt: 20, max: 40 },
+                    cambrian: { min: 5, opt: 22, max: 45 }
+                }[nodeId];
+                const tempFactor = this.getTempViability(planet.temperature, tempRange.min, tempRange.opt, tempRange.max);
+                const o2Viability = planet.o2 >= 15.0 ? 1.0 : (planet.o2 / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal ${tempRange.opt}°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen Level", o2Viability, `Requires O₂ >= 15.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Ocean Habitat", planet.waterCoverage / 100, `Requires marine water. Current: ${planet.waterCoverage.toFixed(1)}%`);
+                if (nodeId === 'cambrian') {
+                    const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 4.0);
+                    addFactor("Radiation Shielding", radViability, `Current surface radiation: ${effRad.toFixed(1)} rad/s`);
+                }
+            } else if (['mosses', 'ferns', 'conifers', 'angiosperms'].includes(nodeId)) {
+                const tempRange = {
+                    mosses: { min: 0, opt: 20, max: 45 },
+                    ferns: { min: 5, opt: 25, max: 50 },
+                    conifers: { min: -15, opt: 15, max: 40 },
+                    angiosperms: { min: 5, opt: 22, max: 45 }
+                }[nodeId];
+                const tempFactor = this.getTempViability(planet.temperature, tempRange.min, tempRange.opt, tempRange.max);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const co2Viability = Math.max(0, Math.min(1, planet.co2 / 2.0));
+                const nitrogenViability = 0.5 + 0.5 * Math.max(0, Math.min(1, planet.n2 / 40.0));
+                addFactor("Temperature", tempFactor, `Optimal ${tempRange.opt}°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Land Area", landViability, `Requires dry continents. Current: ${(landViability*100).toFixed(1)}%`);
+                addFactor("Carbon Dioxide (CO₂)", co2Viability, `Requires CO₂. Current CO₂: ${planet.co2.toFixed(1)}%`);
+                addFactor("Atmospheric Nitrogen", nitrogenViability, `Requires nitrogen. Current N₂: ${planet.n2.toFixed(1)}%`);
+            } else if (nodeId === 'insects') {
+                const tempFactor = this.getTempViability(planet.temperature, 5, 25, 45);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const foodViability = Math.min(1.0, this.landPlantsPop / 15.0);
+                const radViability = Math.max(0, 1 - (effRad * (1 - this.radiationResistance)) / 3.0);
+                addFactor("Temperature", tempFactor, `Optimal 25°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Land Area", landViability, `Requires dry continents. Current: ${(landViability*100).toFixed(1)}%`);
+                addFactor("Land Flora Abundance", foodViability, `Requires plants for food. Current: ${this.landPlantsPop.toFixed(1)}`);
+                addFactor("Radiation Shielding", radViability, `Current surface radiation: ${effRad.toFixed(1)} rad/s`);
+            } else if (nodeId === 'tetrapods') {
+                const tempFactor = this.getTempViability(planet.temperature, 5, 22, 45);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const foodViability = Math.min(1.0, this.insectsPop / 15.0);
+                const o2Requirement = planet.o2 >= 18.0 ? 1.0 : (planet.o2 / 18.0);
+                addFactor("Temperature", tempFactor, `Optimal 22°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Land Area", landViability, `Requires dry continents. Current: ${(landViability*100).toFixed(1)}%`);
+                addFactor("Oxygen level", o2Requirement, `Requires O₂ >= 18.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Insect Abundance (Food)", foodViability, `Requires insects for food. Current: ${this.insectsPop.toFixed(1)}`);
+            } else if (nodeId === 'sauropsids') {
+                const tempFactor = this.getTempViability(planet.temperature, 15, 32, 48);
+                const landViability = (100 - planet.waterCoverage) / 100;
+                const foodViability = Math.min(1.0, (this.insectsPop + this.tetrapodPop) / 20.0);
+                addFactor("Temperature", tempFactor, `Optimal 32°C (Prefers warm). Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Land Area", landViability, `Requires dry continents. Current: ${(landViability*100).toFixed(1)}%`);
+                addFactor("Prey Abundance (Food)", foodViability, `Requires smaller fauna for food. Current: ${(this.insectsPop + this.tetrapodPop).toFixed(1)}`);
+            } else if (nodeId === 'synapsids') {
+                const tempFactor = this.getTempViability(planet.temperature, 5, 18, 30);
+                const plantViability = Math.min(1.0, this.landPlantsPop / 25.0);
+                const o2Requirement = planet.o2 >= 20.0 ? 1.0 : (planet.o2 / 20.0);
+                addFactor("Temperature", tempFactor, `Optimal 18°C (Prefers temperate). Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen level", o2Requirement, `Requires high O₂ >= 20.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Flora Abundance (Food)", plantViability, `Requires plants for food. Current: ${this.landPlantsPop.toFixed(1)}`);
+            } else if (nodeId === 'cognitive') {
+                const tempFactor = this.getTempViability(planet.temperature, 5, 20, 40);
+                const o2Requirement = planet.o2 >= 20.0 ? 1.0 : (planet.o2 / 20.0);
+                const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 30.0);
+                addFactor("Temperature", tempFactor, `Optimal 20°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen level", o2Requirement, `Requires high O₂ >= 20.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Ecological Complexity (Food)", foodViability, `Requires abundant prey species. Current: ${(this.synapsidPop + this.sauropsidPop).toFixed(1)}`);
+            } else if (nodeId === 'cyborg') {
+                const tempFactor = this.getTempViability(planet.temperature, 0, 20, 45);
+                const o2Requirement = planet.o2 >= 18.0 ? 1.0 : (planet.o2 / 18.0);
+                const foodViability = Math.min(1.0, (this.synapsidPop + this.sauropsidPop) / 20.0 + 0.3);
+                addFactor("Temperature", tempFactor, `Optimal 20°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Oxygen level", o2Requirement, `Requires O₂ >= 18.0%. Current O₂: ${planet.o2.toFixed(1)}%`);
+                addFactor("Nutrient & Resource Flow", foodViability, `Requires biological and raw inputs. Current: ${foodViability.toFixed(2)}`);
+            } else if (nodeId === 'ai') {
+                const magnetShieldFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 4.0);
+                addFactor("Magnetosphere Strength", magnetShieldFactor, `Requires magnetic field to shield circuits. Magnetosphere: ${planet.hasMagnetosphere ? 'ACTIVE' : 'OFFLINE'}`);
+                addFactor("Radiation Interference", radViability, `High radiation causes memory errors. Current: ${effRad.toFixed(1)} rad/s`);
+            } else if (nodeId === 'noosphere') {
+                const magnetFactor = planet.hasMagnetosphere ? 1.0 : 0.1;
+                addFactor("Planetary Magnetosphere", magnetFactor, `Requires global connection shielding. Magnetosphere: ${planet.hasMagnetosphere ? 'ACTIVE' : 'OFFLINE'}`);
+            } else if (nodeId === 'gaia_hivemind') {
+                const tempFactor = this.getTempViability(planet.temperature, 10, 22, 40);
+                addFactor("Temperature", tempFactor, `Optimal 22°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Global Biomass Health", this.cognitiveSpeciesPop / 50.0, `Requires active cognitive populations. Current: ${this.cognitiveSpeciesPop.toFixed(1)}`);
+            }
+        } else if (isAmmonia) {
+            const solventViability = planet.ammoniaCoverage / 100.0;
+            if (nodeId === 'ammonic_soup') {
+                if (planet.temperature > -80 && planet.temperature < -10 && planet.ammoniaCoverage > 10) {
+                    const tempFactor = 1 - Math.abs(planet.temperature - (-40)) / 30;
+                    addFactor("Temperature", tempFactor, `Optimal -40°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                    addFactor("Ammonia Coverage", solventViability, `Requires liquid ammonia. Current: ${planet.ammoniaCoverage.toFixed(1)}%`);
+                } else {
+                    addFactor("Global Habitat", 0, "Liquid ammonia or temperature outside -80°C - -10°C bounds.");
+                }
+            } else if (nodeId === 'ammonic_proto') {
+                const tempFactor = this.getTempViability(planet.temperature, -75, -40, -15);
+                const nutrientFactor = Math.min(1.0, this.ammonicSoup / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal -40°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Ammonia Soup Abundance", nutrientFactor, `Requires ammonic soup. Current: ${this.ammonicSoup.toFixed(1)} ppm`);
+            } else if (nodeId === 'ammonic_multi') {
+                const tempFactor = this.getTempViability(planet.temperature, -70, -40, -20);
+                addFactor("Temperature", tempFactor, `Optimal -40°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Ammonia Solvent", solventViability, `Requires ammonia oceans. Current: ${planet.ammoniaCoverage.toFixed(1)}%`);
+            } else if (nodeId === 'silico_flora') {
+                const tempFactor = this.getTempViability(planet.temperature, -70, -35, -20);
+                const landViability = (100 - planet.ammoniaCoverage) / 100;
+                addFactor("Temperature", tempFactor, `Optimal -35°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Land Area", landViability, `Requires dry continents. Current: ${(landViability*100).toFixed(1)}%`);
+            } else if (nodeId === 'cryo_fauna') {
+                const tempFactor = this.getTempViability(planet.temperature, -65, -35, -25);
+                const foodViability = Math.min(1.0, this.silicoFloraPop / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal -35°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Silico-Flora Abundance (Food)", foodViability, `Requires plants for food. Current: ${this.silicoFloraPop.toFixed(1)}`);
+            } else if (nodeId === 'crystalline_cognitive') {
+                const tempFactor = this.getTempViability(planet.temperature, -65, -35, -25);
+                const foodViability = Math.min(1.0, this.cryoFaunaPop / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal -35°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Cryo-Fauna Abundance (Food)", foodViability, `Requires fauna for food. Current: ${this.cryoFaunaPop.toFixed(1)}`);
+            } else if (nodeId === 'quantum_lattices') {
+                const magnetFactor = planet.hasMagnetosphere ? 1.0 : 0.25;
+                const radViability = Math.max(0.1, 1 - (effRad * (1 - this.radiationResistance)) / 4.0);
+                addFactor("Magnetosphere Strength", magnetFactor, `Requires magnetic field to stabilize quantum states.`);
+                addFactor("Radiation Interference", radViability, `Current surface radiation: ${effRad.toFixed(1)} rad/s`);
+            } else if (nodeId === 'cryo_hivemind') {
+                const tempFactor = this.getTempViability(planet.temperature, -60, -35, -25);
+                addFactor("Temperature", tempFactor, `Optimal -35°C. Current: ${planet.temperature.toFixed(1)}°C`);
+            }
+        } else if (isMethane) {
+            const solventViability = planet.methaneCoverage / 100.0;
+            if (nodeId === 'methane_soup') {
+                if (planet.temperature > -190 && planet.temperature < -150 && planet.methaneCoverage > 10) {
+                    const tempFactor = 1 - Math.abs(planet.temperature - (-170)) / 15;
+                    addFactor("Temperature", tempFactor, `Optimal -170°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                    addFactor("Methane Coverage", solventViability, `Requires liquid methane. Current: ${planet.methaneCoverage.toFixed(1)}%`);
+                } else {
+                    addFactor("Global Habitat", 0, "Liquid methane or temperature outside -190°C - -150°C bounds.");
+                }
+            } else if (nodeId === 'methane_proto') {
+                const tempFactor = this.getTempViability(planet.temperature, -185, -170, -155);
+                const nutrientFactor = Math.min(1.0, this.methaneSoup / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal -170°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Methane Soup Abundance", nutrientFactor, `Requires methane soup. Current: ${this.methaneSoup.toFixed(1)} ppm`);
+            } else if (nodeId === 'methane_multi') {
+                const tempFactor = this.getTempViability(planet.temperature, -180, -170, -160);
+                addFactor("Temperature", tempFactor, `Optimal -170°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Methane Solvent", solventViability, `Requires methane lakes. Current: ${planet.methaneCoverage.toFixed(1)}%`);
+            } else if (nodeId === 'cryo_organisms') {
+                const tempFactor = this.getTempViability(planet.temperature, -180, -170, -160);
+                const foodViability = Math.min(1.0, this.methaneMultiPop / 15.0);
+                addFactor("Temperature", tempFactor, `Optimal -170°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Methane Multicellular Abundance", foodViability, `Requires food. Current: ${this.methaneMultiPop.toFixed(1)}`);
+            } else if (nodeId === 'cryo_polymer_network') {
+                const tempFactor = this.getTempViability(planet.temperature, -180, -168, -160);
+                addFactor("Temperature", tempFactor, `Optimal -168°C. Current: ${planet.temperature.toFixed(1)}°C`);
+            } else if (nodeId === 'thinking_ocean') {
+                const tempFactor = this.getTempViability(planet.temperature, -180, -168, -160);
+                addFactor("Temperature", tempFactor, `Optimal -168°C. Current: ${planet.temperature.toFixed(1)}°C`);
+                addFactor("Methane Solvent", solventViability, `Requires deep methane oceans. Current: ${planet.methaneCoverage.toFixed(1)}%`);
+            } else if (nodeId === 'cryo_colloid') {
+                const tempFactor = this.getTempViability(planet.temperature, -180, -165, -160);
+                addFactor("Temperature", tempFactor, `Optimal -165°C. Current: ${planet.temperature.toFixed(1)}°C`);
+            }
+        }
+
+        // Add Mutagen nudge boost factor
+        const hasBoost = this.pendingNudges[nodeId] || (EVOLUTION_GRAPH[planet.activeSolvent]?.[nodeId]?.nudge && this.pendingNudges[EVOLUTION_GRAPH[planet.activeSolvent][nodeId].nudge.id]);
+        if (hasBoost) {
+            factors.push({ name: "Mutagen Nudge (Boost)", value: 1.0, details: "Active 3.0x mutation and growth booster" });
+        }
+
+        this.currentSimulatingNodeId = null;
+        return factors;
+    }
+
+
     /**
      * Helper to compute temperature viability curve
-     * Returns a float 0 to 1 based on an asymmetric bell curve
+     * Returns a float 0 to 1 based on an asymmetric bell curve, incorporating species-specific genotypes
      */
     getTempViability(temp, min, optimal, max) {
+        if (this.currentSimulatingNodeId) {
+            const genotype = this.evolutionEngine.getGenotype(this.currentSimulatingNodeId);
+            if (genotype && genotype.optimalTemp !== null) {
+                min = genotype.minTemp;
+                optimal = genotype.optimalTemp;
+                max = genotype.maxTemp;
+            }
+        }
         const offset = (this.thermalResilienceLevel || 0) * 2.0;
         const adjustedMin = min - offset;
         const adjustedMax = max + offset;
@@ -1876,5 +2183,31 @@ export class BiologySimulation {
         } else {
             return (adjustedMax - temp) / (adjustedMax - optimal);
         }
+    }
+
+    /**
+     * Dynamic radiation resistance getter. Returns species genotype resilience if simulated.
+     */
+    get radiationResistance() {
+        if (this.currentSimulatingNodeId) {
+            const genotype = this.evolutionEngine.getGenotype(this.currentSimulatingNodeId);
+            return genotype ? genotype.radiationResilience : 0.1;
+        }
+        return this._radiationResistance !== undefined ? this._radiationResistance : 0.1;
+    }
+
+    set radiationResistance(val) {
+        this._radiationResistance = val;
+    }
+
+    /**
+     * Helper to get species genotype resource efficiency
+     */
+    get currentResourceEfficiency() {
+        if (this.currentSimulatingNodeId) {
+            const genotype = this.evolutionEngine.getGenotype(this.currentSimulatingNodeId);
+            return genotype ? genotype.resourceEfficiency : 1.0;
+        }
+        return 1.0;
     }
 }
