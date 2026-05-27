@@ -31,10 +31,10 @@ The **Effective Surface Radiation** $R_{\text{surface}}$ represents the ionizing
 
 $$R_{\text{surface}} = R_{\text{cosmic}} \cdot \text{Shield}_{\text{mag}} \cdot (1.0 - \text{O}_3 \cdot 0.9)$$
 
-$$\text{Shield}_{\text{mag}} = \begin{cases} 0.25 & \text{if magnetosphere is active } (M \ge 20\%) \\ 1.0 & \text{if magnetosphere is lost } (M < 20\%) \end{cases}$$
+$$\text{Shield}_{\text{mag}} = \begin{cases} 0.25 & \text{if magnetosphere is active } (M \ge 20\%) \\ 1.0 & \text{if magnetosphere is lost } (M \lt 20\%) \end{cases}$$
 
 ### 1.3 Magnetic Core Decay and Lunar Tidal Flexing
-The planetary magnetic strength $M(t)$ cools down and decays. If $M < 20\%$, the planet loses its magnetosphere. If a massive Moon is present, **gravitational tidal flexing** provides tidal heating to the planetary mantle/core, slowing thermal cooling by $50\%$:
+The planetary magnetic strength $M(t)$ cools down and decays. If $M \lt 20\%$, the planet loses its magnetosphere. If a massive Moon is present, **gravitational tidal flexing** provides tidal heating to the planetary mantle/core, slowing thermal cooling by $50\%$:
 
 $$\frac{dM}{dt} = -0.07 \cdot C_{\text{decay}} \cdot \text{Tide}_{\text{moon}}$$
 
@@ -67,8 +67,8 @@ Plunging below the freezing point of the active solvent triggers glaciation. Ref
 $$\Delta T_{\text{albedo}} = \begin{cases} -35.0^\circ\text{C} & \text{if } \text{isGlaciated} = \text{true} \\ 0.0^\circ\text{C} & \text{otherwise} \end{cases}$$
 
 Glaciation boundaries:
-* **Water:** Triggers at $T < -10.0^\circ\text{C}$; melts at $T > 5.0^\circ\text{C}$.
-* **Ammonia:** Triggers at $T < -85.0^\circ\text{C}$; melts at $T > -55.0^\circ\text{C}$.
+* **Water:** Triggers at $T \lt -10.0^\circ\text{C}$; melts at $T \gt 5.0^\circ\text{C}$.
+* **Ammonia:** Triggers at $T \lt -85.0^\circ\text{C}$; melts at $T \gt -55.0^\circ\text{C}$.
 
 ### 2.4 Final Planetary Temperature Update
 The actual planetary temperature $T_{\text{actual}}$ asymptotically approaches the target temperature:
@@ -90,12 +90,12 @@ $$\frac{dT_{\text{actual}}}{dt} = \left(T_{\text{target}} - T_{\text{actual}}\ri
 ### 3.1 Prebiotic Soup Synthesis
 Under ultraviolet starlight and radiation, simple atmospheric compounds are synthesized into organic compounds (prebiotic soup) in surface basins:
 
-* **Water Worlds ($10^\circ\text{C} < T < 90^\circ\text{C}$):**
+* **Water Worlds ($10^\circ\text{C} \lt T \lt 90^\circ\text{C}$):**
   $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - 50|}{45}\right) \cdot \min(2.0, R_{\text{cosmic}} \cdot 0.4) \cdot \frac{\text{waterCoverage}}{100} \cdot 8.0 \cdot \text{Tide}_{\text{boost}}$$
   $$\text{Tide}_{\text{boost}} = \begin{cases} 2.5 & \text{if Moon is present} \\ 1.0 & \text{otherwise} \end{cases}$$
-* **Ammonia Worlds ($-80^\circ\text{C} < T < -30^\circ\text{C}$):**
+* **Ammonia Worlds ($-80^\circ\text{C} \lt T \lt -30^\circ\text{C}$):**
   $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - (-55)|}{25}\right) \cdot \min(2.0, R_{\text{cosmic}} \cdot 0.5) \cdot \frac{\text{ammoniaCoverage}}{100} \cdot 6.0$$
-* **Methane Worlds ($-185^\circ\text{C} < T < -135^\circ\text{C}$):**
+* **Methane Worlds ($-185^\circ\text{C} \lt T \lt -135^\circ\text{C}$):**
   $$\text{Rate}_{\text{synthesis}} = \max\left(0, 1 - \frac{|T - (-160)|}{25}\right) \cdot \frac{\text{methaneCoverage}}{100} \cdot 5.0$$
 
 ### 3.2 Atmospheric Photolysis
@@ -123,7 +123,7 @@ $$\text{Weathering}_{\text{silicate}} = \begin{cases} 0.004 \cdot \text{CO}_2 \c
 $$\text{CO}_2 \leftarrow \max(0.001\%, \text{CO}_2 - \text{Weathering}_{\text{silicate}} \cdot dt)$$
 
 ### 3.5 Crustal Mineral Oxidation (Oxygen Sink)
-When atmospheric oxygen exceeds Earth-like levels ($\text{O}_2 > 21\%$), it chemically reacts with exposed surface rocks (rusting of ferrous minerals), forming geological oxide buffers (representing Banded Iron Formations):
+When atmospheric oxygen exceeds Earth-like levels ($\text{O}_2 \gt 21\%$), it chemically reacts with exposed surface rocks (rusting of ferrous minerals), forming geological oxide buffers (representing Banded Iron Formations):
 
 $$\text{Oxidation}_{\text{mineral}} = (\text{O}_2 - 21.0) \cdot 0.008$$
 
@@ -143,8 +143,8 @@ $$T_{\text{min, adj}} = T_{\text{min}} - \text{Range}_{\text{expansion}}, \quad 
 $$V_{\text{temp}}(T) = \begin{cases} 
 0.0 & \text{if } T \le T_{\text{min, adj}} \text{ or } T \ge T_{\text{max, adj}} \\
 1.0 & \text{if } T = T_{\text{optimal}} \\
-\frac{T - T_{\text{min, adj}}}{T_{\text{optimal}} - T_{\text{min, adj}}} & \text{if } T_{\text{min, adj}} < T < T_{\text{optimal}} \\
-\frac{T_{\text{max, adj}} - T}{T_{\text{max, adj}} - T_{\text{optimal}}} & \text{if } T_{\text{optimal}} < T < T_{\text{max, adj}}
+\frac{T - T_{\text{min, adj}}}{T_{\text{optimal}} - T_{\text{min, adj}}} & \text{if } T_{\text{min, adj}} \lt T \lt T_{\text{optimal}} \\
+\frac{T_{\text{max, adj}} - T}{T_{\text{max, adj}} - T_{\text{optimal}}} & \text{if } T_{\text{optimal}} \lt T \lt T_{\text{max, adj}}
 \end{cases}$$
 
 ### 4.2 Logistic Population Growth Model (Verhulst Equation)
@@ -181,7 +181,7 @@ In water-based ecosystems, nitrogen gas ($\text{N}_2$) is biologically fixed and
 ### 4.4 Biodiversity & Speciation Model
 Speciation and extinction rates are simulated using discrete difference updates per tick based on living biomass ($M$) and evolutionary speed modifiers:
 
-* **Extinction Mode ($M < 0.05$):**
+* **Extinction Mode ($M \lt 0.05$):**
   $$\Delta S = -\max\left(1, \lfloor S_t \cdot 0.25 \cdot dt \rfloor\right)$$
   $$S_{t+1} = \max(0, S_t + \Delta S)$$
   *(represents exponential population decay and species extinction)*
