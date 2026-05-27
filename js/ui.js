@@ -99,6 +99,7 @@ export class GameUI {
         this.pacingStatus = document.getElementById('pacing-status');
         this.pacingPlayerFill = document.getElementById('pacing-player-fill');
         this.pacingText = document.getElementById('pacing-text');
+        this.pacingMilestoneName = document.getElementById('pacing-milestone-name');
 
         // Water Cards
         this.soupCard = document.getElementById('soup-card');
@@ -1708,6 +1709,24 @@ export class GameUI {
             }
         }
 
+        // Show empty-state placeholder when no biomass cards are visible yet
+        const activeContainer = document.getElementById(`${planet.activeSolvent}-metrics`);
+        if (activeContainer && typeof activeContainer.querySelectorAll === 'function') {
+            const visibleCards = activeContainer.querySelectorAll('.metric-card[style*="display: flex"]');
+            let emptyMsg = activeContainer.querySelector('.biomass-empty-state');
+            if (visibleCards.length === 0) {
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'biomass-empty-state';
+                    emptyMsg.textContent = 'No life detected yet.\nAdjust conditions or wait for prebiotic chemistry to begin.';
+                    activeContainer.appendChild(emptyMsg);
+                }
+                emptyMsg.style.display = 'block';
+            } else if (emptyMsg) {
+                emptyMsg.style.display = 'none';
+            }
+        }
+
         // 1. Update OEC stability gate countdown
         const showGate = (
             planet.activeSolvent === 'water' &&
@@ -1954,7 +1973,10 @@ export class GameUI {
         }
 
         if (this.pacingText) {
-            this.pacingText.textContent = `Age: ${planet.age.toFixed(1)} / ${maxAgeTarget.toFixed(0)} Myr (${milestoneName})`;
+            this.pacingText.textContent = `Age: ${planet.age.toFixed(1)} / ${maxAgeTarget.toFixed(0)} Myr`;
+        }
+        if (this.pacingMilestoneName) {
+            this.pacingMilestoneName.textContent = `⟶ ${milestoneName}`;
         }
     }
 

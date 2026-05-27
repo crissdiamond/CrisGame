@@ -233,7 +233,13 @@ body {
 
 .control-header label {
     min-width: 0;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.control-value {
+    flex-shrink: 0;
 }
 
 .control-value {
@@ -496,6 +502,17 @@ body {
 .metric-card:hover {
     border-color: rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.03);
+}
+
+.biomass-empty-state {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    line-height: 1.6;
 }
 
 .metric-header {
@@ -2328,7 +2345,23 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
+    flex: 1;
+    min-width: 0;
+    margin-right: 0.5rem;
+}
+
+.pacing-status-badge {
+    flex-shrink: 0;
+}
+
+.pacing-milestone-name {
+    font-size: 0.6rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* pacing ticks removed from HTML; rule kept harmlessly */
